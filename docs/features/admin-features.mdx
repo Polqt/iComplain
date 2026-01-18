@@ -1,0 +1,68 @@
+# Admin Features
+
+## Overview
+
+Administrators are responsible for managing, prioritizing, and resolving facility issues reported by students. This guide covers all administrative features, workflows, and implementation details.
+
+---
+
+## Feature Index
+
+- [Authentication & Authorization](#authentication--authorization)
+- [Ticket Dashboard](#ticket-dashboard)
+- [Ticket Management](#ticket-management)
+- [Status & Priority Management](#status--priority-management)
+- [Search & Filtering](#search--filtering)
+- [Location & Category Management](#location--category-management)
+- [Reports & Metrics](#reports--metrics)
+- [Audit & History](#audit--history)
+
+---
+
+## Authentication 
+
+### Description
+Role-based access control system with administrative privileges for facility management staff.
+
+### Technical Implementation
+
+**Admin Role:**
+
+There is a single admin role with full system access. All administrators have the same permissions to:
+- View and manage all tickets
+- Update ticket status and priority
+- Assign tickets to maintenance teams
+- Generate reports and analytics
+- Manage locations and categories
+
+**Endpoints:**
+```
+POST   /api/auth/admin/login/           # Admin login
+POST   /api/auth/admin/logout/          # Admin logout
+GET    /api/auth/admin/profile/         # Get admin profile
+PUT    /api/auth/admin/profile/         # Update profile
+```
+
+### Security Considerations
+
+- Admin sessions timeout after 1 hour of inactivity
+- All admin actions logged in audit trail
+- Strong password requirements enforced
+- HTTPS only in production
+
+### Related Files
+
+```
+backend/apps/users/
+├── models.py              # User model with admin role
+├── serializers.py         # Admin auth serializers
+├── views.py              # Admin auth views
+└── tests/
+    └── test_admin_auth.py # Admin auth test cases
+```
+
+---
+
+**Last Updated:** January 2026
+**Maintained by:** The Square Thing
+**Next Review:** February 2026

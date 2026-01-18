@@ -1,0 +1,68 @@
+# Student Features
+
+## Overview
+
+Students are the primary users of the Facility Management System. They can report facility issues, track progress, and provide feedback on resolutions. This guide covers all student-facing features and their implementation details.
+
+---
+
+## Feature Index
+- [Authentication](#authentication)
+- [Ticket Management](#ticket-management)
+- [Comments & Communication](#comments--communication)
+- [Ticket Status Tracking](#ticket-status-tracking)
+- [History & Audit Trail](#history--audit-trail)
+- [Email Notifications](#email-notifications)
+- [Feedback System](#feedback-system)
+
+---
+
+## Authentication
+
+### Description
+Secure authentication system allowing students to access the facility management platform using their institutional credentials.
+
+### Technical Implementation
+
+**Endpoints:**
+```
+POST   /api/auth/register/          # Student registration
+POST   /api/auth/login/             # Login with credentials
+POST   /api/auth/logout/            # Invalidate JWT token
+POST   /api/auth/refresh/           # Refresh access token
+POST   /api/auth/password-reset/    # Request password reset
+PUT    /api/auth/password-reset/confirm/  # Confirm new password
+```
+
+**Authentication Flow:**
+```
+1. Student submits credentials
+2. Backend validates against database
+3. JWT access + refresh tokens generated
+4. Tokens stored securely (cookies or local storage)
+5. Access token used for subsequent requests
+6. Refresh token renews access token when expired
+```
+
+**Security Considerations:**
+- Passwords hashed 
+- JWT tokens with short expiration (1 hour for access, 7 days for refresh)
+- Rate limiting on login attempts (max 5 per minute)
+- HTTPS only in production
+
+### Related Files
+
+```
+backend/apps/users/
+├── models.py              # User model
+├── serializers.py         # Auth serializers
+├── views.py              # Auth views
+└── tests/
+    └── test_auth.py      # Auth test cases
+```
+
+---
+
+**Last Updated:** January 2026
+**Maintained by:** The Square Thing
+**Next Review:** February 2026
