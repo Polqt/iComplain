@@ -79,7 +79,7 @@ Welcome to the **iComplain** documentation - a comprehensive facility issue trac
 - **Maulvi** - Full-Stack Developer
 - **Franz** - Full-Stack Developer
 - **Jepoy** - Project Manager
-- **Owen** - Full-Stack Developer
+- **Owen** - Full-Stack Developer & QA Tester & Horny
 
 ---
 
