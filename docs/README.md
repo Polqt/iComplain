@@ -76,9 +76,9 @@ Welcome to the **iComplain** documentation - a comprehensive facility issue trac
 
 **The Square Thing**
 
-- **Maulvi** - Full-Stack Developer
-- **Franz** - Full-Stack Developer
-- **Jepoy** - Project Manager
+- **Maulvi** - Full-Stack Developer 
+- **Franz** - Full-Stack Developer & UI/UX Designer
+- **Jepoy** - Full-Stack Developer Project Manager
 - **Owen** - Full-Stack Developer & QA Tester & Horny
 
 ---
