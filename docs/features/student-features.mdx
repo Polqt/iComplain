@@ -144,6 +144,216 @@ backend/config/
 └── settings.py           # Media storage config
 ```
 
+## Comments & Communication
+
+### Description
+Threaded comment system allowing students to communicate with administrators and provide additional context on tickets.
+
+### Technical Implementation
+
+**Endpoints:**
+```
+POST   /api/tickets/{id}/comments/            # Add comment
+GET    /api/tickets/{id}/comments/            # List comments
+PUT    /api/tickets/{id}/comments/{comment_id}/  # Edit own comment
+DELETE /api/tickets/{id}/comments/{comment_id}/  # Delete own comment
+```
+**Business Rules:**
+- Comments can only be edited within 5 minutes of creation
+- Cannot delete comments if admin has already replied
+- Comments are read-only after ticket is closed
+- Admin comments trigger email notifications to students
+
+### Related Files
+
+```
+backend/apps/tickets/
+├── models.py              # Comment model
+├── serializers.py         # Comment serializers
+└── signals.py            # Trigger notifications
+```
+
+## Ticket Status Tracking
+
+### Description
+Real-time visibility into ticket progress through the resolution lifecycle.
+
+### Status Workflow
+
+```
+Pending → In Progress → Resolved → Closed
+   ↓           ↓            ↓
+   └─────── Cancelled ──────┘
+```
+
+**Status Definitions:**
+
+| Status | Description | Student Actions |
+|--------|-------------|-----------------|
+| **Pending** | Ticket submitted, awaiting admin review | Can edit/delete |
+| **In Progress** | Admin is working on the issue | Can comment only |
+| **Resolved** | Issue fixed, awaiting student confirmation | Can provide feedback |
+| **Closed** | Ticket completed and verified | View only |
+| **Cancelled** | Ticket withdrawn by student or duplicate | View only |
+
+### Technical Implementation
+
+**Endpoints:**
+```
+GET /api/tickets/{id}/status/         # Get status history
+GET /api/tickets/{id}/timeline/       # Get full timeline
+```
+
+### Related Files
+
+```
+backend/apps/tickets/
+├── models.py              # StatusHistory model
+├── signals.py            # Auto-create history on status change
+└── views.py              # Timeline endpoint
+```
+
+## History & Audit Trail
+
+### Description
+Complete audit trail of all changes made to a ticket for transparency and accountability.
+
+### Technical Implementation
+
+**Endpoints:**
+```
+GET /api/tickets/{id}/history/        # Full audit trail
+```
+
+**Tracked Changes:**
+- Ticket creation
+- Status transitions
+- Priority changes
+- Comment additions/edits
+- File uploads/deletions
+- Ticket assignments
+- Resolution notes
+
+### Related Files
+
+```
+backend/apps/tickets/
+├── models.py              # TicketHistory model
+├── signals.py            # Auto-logging signals
+└── admin.py              # Admin interface for history
+```
+
+## Email Notifications
+
+### Description
+Automated email notifications keeping students informed about ticket progress without requiring constant system checks.
+
+### Technical Implementation
+
+**Endpoints:**
+```
+GET  /api/users/notification-preferences/
+PUT  /api/users/notification-preferences/
+```
+
+### Related Files
+
+```
+backend/apps/notifications/
+├── tasks.py              # Celery tasks
+├── templates/
+│   └── emails/
+│       ├── ticket_created.html
+│       ├── status_changed.html
+│       └── new_comment.html
+└── tests/
+    └── test_notifications.py
+
+backend/config/
+├── celery.py            # Celery configuration
+└── settings.py          # Email settings
+```
+
+## Feedback System
+
+### Description
+Post-resolution feedback mechanism allowing students to rate the facility management service and provide comments on issue resolution.
+
+### Technical Implementation
+
+**Endpoints:**
+```
+POST /api/tickets/{id}/feedback/      # Submit feedback
+GET  /api/tickets/{id}/feedback/      # View feedback
+PUT  /api/tickets/{id}/feedback/      # Update feedback
+```
+
+**Business Rules:**
+- Feedback only available after ticket marked "Resolved"
+- Can be submitted once ticket is in "Resolved" status
+- Can be edited within 24 hours
+- Ticket auto-closes after feedback or 7 days without feedback
+- Anonymous aggregated metrics visible to admins
+
+### Related Files
+
+```
+backend/apps/tickets/
+├── models.py              # Feedback model
+├── serializers.py         # Feedback serializers
+└── views.py              # Feedback endpoints
+```
+
+---
+
+## Contributing to Student Features
+### Getting Started
+
+1. **Fork and clone the repository**
+   ```bash
+   git clone https://github.com/your-org/facility-mgmt.git
+   cd facility-mgmt
+   ```
+
+2. **Set up development environment**
+   ```bash
+   docker-compose up -d
+   python manage.py migrate
+   python manage.py createsuperuser
+   ```
+
+3. **Create a feature branch**
+   ```bash
+   git checkout -b feature/student-notifications
+   ```
+
+### Development Workflow
+
+1. Read the feature specification in this document
+2. Check related files and existing code
+3. Write failing tests first (TDD approach)
+4. Implement the feature
+5. Ensure all tests pass
+6. Update documentation
+7. Submit pull request
+
+### Code Style
+
+- Follow PEP 8 for Python code
+- Use Black for formatting
+- Run `biome check` for frontend code
+- Add docstrings to all functions
+- Type hint all function signatures
+
+### Pull Request Checklist
+
+- [ ] Tests added and passing
+- [ ] Documentation updated
+- [ ] No breaking changes to existing APIs
+- [ ] Migration files included (if needed)
+- [ ] Environment variables documented
+- [ ] Related issue linked
+
 ---
 
 **Last Updated:** January 2026
