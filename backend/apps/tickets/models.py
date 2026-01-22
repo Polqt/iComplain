@@ -15,7 +15,7 @@ class Ticket(models.Model):
         ('medium', 'Medium'),
         ('high', 'High'),
         ('urgent', 'Urgent'),
-    ]
+    ] # CREATE A SEPARATE TABLE FOR THIS
     
     CATEGORY_CHOICES = [
         ('facilities', 'Facilities'),
@@ -23,21 +23,21 @@ class Ticket(models.Model):
         ('technical', 'Technical'),
         ('administrative', 'Administrative'),
         ('other', 'Other'),
-    ]
+    ] # CREATE A SEPARATE TABLE FOR THIS
     
     ticket_number = models.CharField(max_length=20, unique=True)
     title = models.CharField(max_length=200)
     description = models.TextField()
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    building = models.CharField(max_length=100, default='Unknown')
-    room_name = models.CharField(max_length=100, default='Unknown')
+    building = models.CharField(max_length=100, default='Unknown') # CREATE A SEPARATE TABLE FOR BUILDINGS AND ROOMS
+    room_name = models.CharField(max_length=100, default='Unknown') # CREATE A SEPARATE TABLE FOR BUILDINGS AND ROOMS
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs): # issue: ticket_number generation based on the last ID is vulnerable to race conditions and can violate the unique constraint under concurrent creation.
         if not self.ticket_number:
             # Get the last ticket to generate the next number
             last_ticket = Ticket.objects.all().order_by('id').last()
@@ -53,3 +53,11 @@ class Ticket(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+
+# TABLE FOR CATEGORIES
+
+# TABLE FOR LOCATIONS
+        
+# TABLE FOR TICKET_PRIORITIES
+
+# TABLE FOR TICKET_STATUS_HISTORY
