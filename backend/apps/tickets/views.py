@@ -2,13 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Ticket
+from .models import Ticket, TicketPriority
+from .forms import TicketCreateForm, TicketUpdateForm, AdminTicketUpdateForm
 
 
 def login_user(request):
-    """
-    Login page for students
-    """
+    """Login page for students"""
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -26,9 +25,7 @@ def login_user(request):
 
 
 def logout_user(request):
-    """
-    Logout user
-    """
+    """Logout user"""
     logout(request)
     messages.success(request, 'You have been logged out!')
     return redirect('login_user')
@@ -36,15 +33,11 @@ def logout_user(request):
 
 @login_required(login_url='login_user')
 def ticket_list(request):
-    """
-    SQL: SELECT * FROM tickets ORDER BY created_at DESC
-    Get all tickets from database, grouped by status for Kanban board
-    """
-    # Get all tickets or just user's tickets
+    """Get all tickets grouped by status for Kanban board"""
     if request.user.is_staff:
-        all_tickets = Ticket.objects.all()
+        all_tickets = Ticket.objects.select_related('category', 'priority', 'student').all()
     else:
-        all_tickets = Ticket.objects.filter(student=request.user)
+        all_tickets = Ticket.objects.select_related('category', 'priority').filter(student=request.user)
     
     # Group tickets by status
     tickets_pending = all_tickets.filter(status='pending').order_by('-created_at')
@@ -63,12 +56,12 @@ def ticket_list(request):
 
 @login_required(login_url='login_user')
 def ticket_detail(request, id):
-    """
-    SQL: SELECT * FROM tickets WHERE id = ?
-    Get single ticket by ID
-    """
-    ticket = get_object_or_404(Ticket, id=id)
-    
+    """View ticket details"""
+    ticket = get_object_or_404(
+        Ticket.objects.select_related('category', 'priority', 'student'),
+        id=id
+    )
+
     context = {
         'ticket': ticket,
     }
@@ -77,33 +70,34 @@ def ticket_detail(request, id):
 
 @login_required(login_url='login_user')
 def create_ticket(request):
-    """
-    SQL: INSERT INTO tickets (...) VALUES (...)
-    Create a new ticket
-    """
+    """Create a new ticket"""
     if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        category = request.POST.get('category')
-        building = request.POST.get('building')
-        room_name = request.POST.get('room_name')
-        priority = request.POST.get('priority', 'medium')
-        
-        ticket = Ticket.objects.create(
-            title=title,
-            description=description,
-            category=category,
-            building=building,
-            room_name=room_name,
-            priority=priority,
-            student=request.user,
-            status='pending'
-        )
-        
-        messages.success(request, 'Ticket created successfully!')
-        return redirect('ticket_detail', id=ticket.id)
+        form = TicketCreateForm(request.POST)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.student = request.user
+            
+            # Set default priority to "Medium"
+            try:
+                medium_priority = TicketPriority.objects.get(name='Medium')
+                ticket.priority = medium_priority
+            except TicketPriority.DoesNotExist:
+                messages.error(request, 'Default priority not found. Please contact admin.')
+                return redirect('ticket_list')
+            
+            ticket.status = 'pending'
+            ticket.save()
+            
+            messages.success(request, 'Ticket created successfully!')
+            return redirect('ticket_detail', id=ticket.id)
+        else:
+            print("FORM ERRORS:", form.errors)  # Debug
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = TicketCreateForm()
     
     context = {
+        'form': form,
         'action': 'Create',
         'is_staff': request.user.is_staff
     }
@@ -112,10 +106,7 @@ def create_ticket(request):
 
 @login_required(login_url='login_user')
 def update_ticket(request, id):
-    """
-    SQL: UPDATE tickets SET ... WHERE id = ?
-    Update existing ticket
-    """
+    """Update existing ticket"""
     ticket = get_object_or_404(Ticket, id=id)
     
     # Permission check
@@ -125,29 +116,32 @@ def update_ticket(request, id):
     
     # Students can only edit tickets with "pending" status
     if not request.user.is_staff and ticket.status != 'pending':
-        messages.error(request, 'You cannot edit tickets that are being processed by admin. Status must be "Pending".')
+        messages.error(request, 'You cannot edit tickets that are being processed by admin.')
         return redirect('ticket_detail', id=ticket.id)
     
     if request.method == 'POST':
-        # Students can edit all fields (only for pending tickets)
-        if not request.user.is_staff:
-            ticket.title = request.POST.get('title')
-            ticket.description = request.POST.get('description')
-            ticket.category = request.POST.get('category')
-            ticket.building = request.POST.get('building')
-            ticket.room_name = request.POST.get('room_name')
-        
-        # Admins can ONLY change Priority and Status
         if request.user.is_staff:
-            ticket.priority = request.POST.get('priority')
-            ticket.status = request.POST.get('status')
-        
-        ticket.save()
-        
-        messages.success(request, 'Ticket updated successfully!')
-        return redirect('ticket_detail', id=ticket.id)
+            # Admin can only change priority and status
+            form = AdminTicketUpdateForm(request.POST, instance=ticket)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Ticket updated successfully!')
+                return redirect('ticket_detail', id=ticket.id)
+        else:
+            # Student can edit all fields
+            form = TicketUpdateForm(request.POST, instance=ticket)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Ticket updated successfully!')
+                return redirect('ticket_detail', id=ticket.id)
+    else:
+        if request.user.is_staff:
+            form = AdminTicketUpdateForm(instance=ticket)
+        else:
+            form = TicketUpdateForm(instance=ticket)
     
     context = {
+        'form': form,
         'ticket': ticket,
         'action': 'Update',
         'is_staff': request.user.is_staff
@@ -157,10 +151,7 @@ def update_ticket(request, id):
 
 @login_required(login_url='login_user')
 def delete_ticket(request, id):
-    """
-    SQL: DELETE FROM tickets WHERE id = ?
-    Delete ticket by ID
-    """
+    """Delete ticket by ID"""
     ticket = get_object_or_404(Ticket, id=id)
     
     # Permission check
@@ -170,7 +161,7 @@ def delete_ticket(request, id):
     
     # Students can only delete tickets with "pending" status
     if not request.user.is_staff and ticket.status != 'pending':
-        messages.error(request, 'You cannot delete tickets that are being processed by admin. Status must be "Pending".')
+        messages.error(request, 'You cannot delete tickets that are being processed by admin.')
         return redirect('ticket_detail', id=ticket.id)
     
     if request.method == 'POST':
