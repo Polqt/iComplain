@@ -6,8 +6,6 @@ from ninja import Router
 
 from .schemas import TicketCommentSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema
 from .models import Category, Ticket, TicketPriority
-from .forms import TicketUpdateForm, AdminTicketUpdateForm
-
 
 router = Router()
 
