@@ -2,12 +2,16 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Ticket, TicketPriority
-from .forms import TicketCreateForm, TicketUpdateForm, AdminTicketUpdateForm
+from ninja import Router
 
+from .schemas import TicketCommentSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema
+from .models import Category, Ticket, TicketPriority
+from .forms import TicketUpdateForm, AdminTicketUpdateForm
+
+
+router = Router()
 
 def login_user(request):
-    """Login page for students"""
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -25,88 +29,51 @@ def login_user(request):
 
 
 def logout_user(request):
-    """Logout user"""
     logout(request)
     messages.success(request, 'You have been logged out!')
     return redirect('login_user')
 
+# Ticket Views
 
 @login_required(login_url='login_user')
+@router.get("/", response=TicketSchema)
 def ticket_list(request):
-    """Get all tickets grouped by status for Kanban board"""
     if request.user.is_staff:
         all_tickets = Ticket.objects.select_related('category', 'priority', 'student').all()
     else:
         all_tickets = Ticket.objects.select_related('category', 'priority').filter(student=request.user)
     
-    # Group tickets by status
-    tickets_pending = all_tickets.filter(status='pending').order_by('-created_at')
-    tickets_in_progress = all_tickets.filter(status='in_progress').order_by('-created_at')
-    tickets_resolved = all_tickets.filter(status='resolved').order_by('-created_at')
-    tickets_closed = all_tickets.filter(status='closed').order_by('-created_at')
+    return all_tickets
     
-    context = {
-        'tickets_pending': tickets_pending,
-        'tickets_in_progress': tickets_in_progress,
-        'tickets_resolved': tickets_resolved,
-        'tickets_closed': tickets_closed,
-    }
-    return render(request, 'tickets/ticket_list.html', context)
-
 
 @login_required(login_url='login_user')
-def ticket_detail(request, id):
-    """View ticket details"""
-    ticket = get_object_or_404(
-        Ticket.objects.select_related('category', 'priority', 'student'),
-        id=id
+@router.get("/tickets/{id}", response=TicketSchema)
+def ticket_detail(id: int):
+    ticket = get_object_or_404(Ticket, id=id)
+    return ticket
+    
+
+@login_required(login_url='login_user')
+@router.post("/", response=TicketSchema)
+def create_ticket(request, ticket: TicketCreateSchema):
+    category = Category.objects.get(id=ticket.category)
+    priority = TicketPriority.objects.get(id=ticket.priority)
+    ticket = Ticket.objects.create(
+        title=ticket.title,
+        description=ticket.description,
+        student=request.user,
+        category=category,
+        priority=priority,
+        building=ticket.building,
+        room_name=ticket.room_name,
+        status='pending'
     )
+    return ticket
 
-    context = {
-        'ticket': ticket,
-    }
-    return render(request, 'tickets/ticket_detail.html', context)
-
-
+# FRANZ WORK ON THIS
 @login_required(login_url='login_user')
-def create_ticket(request):
-    """Create a new ticket"""
-    if request.method == 'POST':
-        form = TicketCreateForm(request.POST)
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.student = request.user
-            
-            # Set default priority to "Medium"
-            try:
-                medium_priority = TicketPriority.objects.get(name='Medium')
-                ticket.priority = medium_priority
-            except TicketPriority.DoesNotExist:
-                messages.error(request, 'Default priority not found. Please contact admin.')
-                return redirect('ticket_list')
-            
-            ticket.status = 'pending'
-            ticket.save()
-            
-            messages.success(request, 'Ticket created successfully!')
-            return redirect('ticket_detail', id=ticket.id)
-        else:
-            print("FORM ERRORS:", form.errors)  # Debug
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = TicketCreateForm()
-    
-    context = {
-        'form': form,
-        'action': 'Create',
-        'is_staff': request.user.is_staff
-    }
-    return render(request, 'tickets/ticket_form.html', context)
-
-
-@login_required(login_url='login_user')
-def update_ticket(request, id):
-    """Update existing ticket"""
+@router.put("/tickets/{id}", response=TicketSchema) 
+def update_ticket(request, id: int, ticket: TicketUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
     
     # Permission check
@@ -119,39 +86,42 @@ def update_ticket(request, id):
         messages.error(request, 'You cannot edit tickets that are being processed by admin.')
         return redirect('ticket_detail', id=ticket.id)
     
-    if request.method == 'POST':
-        if request.user.is_staff:
-            # Admin can only change priority and status
-            form = AdminTicketUpdateForm(request.POST, instance=ticket)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Ticket updated successfully!')
-                return redirect('ticket_detail', id=ticket.id)
-        else:
-            # Student can edit all fields
-            form = TicketUpdateForm(request.POST, instance=ticket)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Ticket updated successfully!')
-                return redirect('ticket_detail', id=ticket.id)
-    else:
-        if request.user.is_staff:
-            form = AdminTicketUpdateForm(instance=ticket)
-        else:
-            form = TicketUpdateForm(instance=ticket)
     
-    context = {
-        'form': form,
-        'ticket': ticket,
-        'action': 'Update',
-        'is_staff': request.user.is_staff
-    }
-    return render(request, 'tickets/ticket_form.html', context)
+    # Based the code above create_ticket/ticket_detail/
+    # if request.method == 'POST':
+    #     if request.user.is_staff:
+    #         # Admin can only change priority and status
+    #         form = AdminTicketUpdateForm(request.POST, instance=ticket)
+    #         if form.is_valid():
+    #             form.save()
+    #             messages.success(request, 'Ticket updated successfully!')
+    #             return redirect('ticket_detail', id=ticket.id)
+    #     else:
+    #         # Student can edit all fields
+    #         form = TicketUpdateForm(request.POST, instance=ticket)
+    #         if form.is_valid():
+    #             form.save()
+    #             messages.success(request, 'Ticket updated successfully!')
+    #             return redirect('ticket_detail', id=ticket.id)
+    # else:
+    #     if request.user.is_staff:
+    #         form = AdminTicketUpdateForm(instance=ticket)
+    #     else:
+    #         form = TicketUpdateForm(instance=ticket)
+    
+    # context = {
+    #     'form': form,
+    #     'ticket': ticket,
+    #     'action': 'Update',
+    #     'is_staff': request.user.is_staff
+    # }
+    # return render(request, 'tickets/ticket_form.html', context)
 
 
+# FRANZ WORK ON THIS
 @login_required(login_url='login_user')
-def delete_ticket(request, id):
-    """Delete ticket by ID"""
+@router.delete("/tickets/{id}", response={204: None})
+def delete_ticket(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
     
     # Permission check
@@ -164,10 +134,36 @@ def delete_ticket(request, id):
         messages.error(request, 'You cannot delete tickets that are being processed by admin.')
         return redirect('ticket_detail', id=ticket.id)
     
-    if request.method == 'POST':
-        ticket.delete()
-        messages.success(request, 'Ticket deleted successfully!')
-        return redirect('ticket_list')
+    # Franz change this refer to create_ticket and test in Postman
+    # try:
+    #     ticket = get_object_or_404(TicketSchema, id=id)
+    #     ticket.delete()
+    #     return {
+    #         "success": True,
+    #         "redirect": redirect('ticket_list')
+    #     }
+    # except Exception as e:
+    #     messages.error(request, f'An error occurred: {str(e)}')
     
-    context = {'ticket': ticket}
-    return render(request, 'tickets/ticket_confirm_delete.html', context)
+    # context = {'ticket': ticket}
+    # return render(request, 'tickets/ticket_confirm_delete.html', context)
+
+
+# Ticket Comments Views
+@login_required(login_url='login_user')
+@router.post("/tickets/{id}/comments/create", response=TicketCommentSchema)
+def create_comment(request, comment: TicketCreateSchema):
+    
+    return redirect('ticket_detail', id=id)
+
+@login_required(login_url='login_user')
+@router.post("/tickets/{id}/comments/{comment_id}/edit")    
+def edit_comment(request, id, comment_id):
+    return redirect('ticket_detail', id=id)
+
+@login_required(login_url='login_user')
+@router.delete("/tickets/{id}/comments/{comment_id}/delete")    
+def delete_comment(request, id, comment_id):
+    return redirect('ticket_detail', id=id)
+    
+    
