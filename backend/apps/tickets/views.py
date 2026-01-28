@@ -3,11 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from ninja import Router
+from ninja.security import SessionAuth
 
 from .schemas import TicketCommentSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema
 from .models import Category, Ticket, TicketPriority
 
-router = Router()
+router = Router(auth=SessionAuth())
 
 def login_user(request):
     if request.method == 'POST':
@@ -32,9 +33,7 @@ def logout_user(request):
     return redirect('login_user')
 
 # Ticket Views
-
-@login_required(login_url='login_user')
-@router.get("/", response=TicketSchema)
+@router.get("/", response=list[TicketSchema])
 def ticket_list(request):
     if request.user.is_staff:
         all_tickets = Ticket.objects.select_related('category', 'priority', 'student').all()
@@ -44,14 +43,14 @@ def ticket_list(request):
     return all_tickets
     
 
-@login_required(login_url='login_user')
+
 @router.get("/tickets/{id}", response=TicketSchema)
 def ticket_detail(id: int):
     ticket = get_object_or_404(Ticket, id=id)
     return ticket
     
 
-@login_required(login_url='login_user')
+
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema):
     category = Category.objects.get(id=ticket.category)
@@ -69,7 +68,7 @@ def create_ticket(request, ticket: TicketCreateSchema):
     return ticket
 
 # FRANZ WORK ON THIS
-@login_required(login_url='login_user')
+
 @router.put("/tickets/{id}", response=TicketSchema) 
 def update_ticket(request, id: int, ticket: TicketUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
@@ -117,7 +116,7 @@ def update_ticket(request, id: int, ticket: TicketUpdateSchema):
 
 
 # FRANZ WORK ON THIS
-@login_required(login_url='login_user')
+
 @router.delete("/tickets/{id}", response={204: None})
 def delete_ticket(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
@@ -148,18 +147,18 @@ def delete_ticket(request, id: int):
 
 
 # Ticket Comments Views
-@login_required(login_url='login_user')
+
 @router.post("/tickets/{id}/comments/create", response=TicketCommentSchema)
 def create_comment(request, comment: TicketCreateSchema):
     
     return redirect('ticket_detail', id=id)
 
-@login_required(login_url='login_user')
+
 @router.post("/tickets/{id}/comments/{comment_id}/edit")    
 def edit_comment(request, id, comment_id):
     return redirect('ticket_detail', id=id)
 
-@login_required(login_url='login_user')
+
 @router.delete("/tickets/{id}/comments/{comment_id}/delete")    
 def delete_comment(request, id, comment_id):
     return redirect('ticket_detail', id=id)
