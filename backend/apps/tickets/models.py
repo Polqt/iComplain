@@ -104,3 +104,19 @@ class TicketStatusHistory(models.Model):
     new_status = models.CharField(max_length=20)
     changed_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     changed_at = models.DateTimeField(default=timezone.now)
+
+# TABLE FOR TICKET FEEDBACK
+class TicketFeedback(models.Model):
+    ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name='feedback')
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.PositiveSmallIntegerField()
+    comments = models.TextField(null=True, blank=True, max_length=2000)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        self.updated_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Feedback for {self.ticket.ticket_number} by {self.student}"
