@@ -157,12 +157,12 @@ def create_comment(request, comment: TicketCreateSchema):
     return redirect('ticket_detail', id=id)
 
 
-@router.post("/tickets/{id}/comments/{comment_id}/edit")    
+@router.post("/tickets/{id}/comments/{comment_id}/edit", response=TicketCommentSchema)    
 def edit_comment(request, id, comment_id):
     return redirect('ticket_detail', id=id)
 
 
-@router.delete("/tickets/{id}/comments/{comment_id}/delete")    
+@router.delete("/tickets/{id}/comments/{comment_id}/delete", response={204: None})    
 def delete_comment(request, id, comment_id):
     return redirect('ticket_detail', id=id)
 
