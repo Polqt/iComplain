@@ -14,8 +14,8 @@
     >
       <Icon icon="mdi:github" width="24" height="24" />
     </a>
-    <a aria-label="YouTube" href="https://www.usls.edu.ph/" target="_blank">
-      <Icon icon="mdi:youtube" width="24" height="24" />
+    <a aria-label="School" href="https://www.usls.edu.ph/" target="_blank">
+      <Icon icon="mdi:school" width="24" height="24" />
     </a>
     <a
       aria-label="Facebook"
