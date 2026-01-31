@@ -118,7 +118,7 @@ def delete_ticket(request, id: int):
 # Ticket Comments Views
 
 @router.post("/{id}", response=TicketCommentSchema)
-def create_comment(request, ticket_id: int, comment: TicketCreateSchema):
+def create_comment(request, ticket_id: int, payload: TicketCreateSchema):
     ticket = get_object_or_404(Ticket, id=ticket_id)
 
     if ticket.status == 'closed':
@@ -127,7 +127,7 @@ def create_comment(request, ticket_id: int, comment: TicketCreateSchema):
     comment = TicketComment.objects.create(
         ticket=ticket,
         user=request.user,
-        message=comment.message
+        message=payload.message
     )
     
     comment.save()
@@ -135,7 +135,7 @@ def create_comment(request, ticket_id: int, comment: TicketCreateSchema):
 
 
 @router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
-def edit_comment(request, comment_id: int, comment: TicketCommentUpdateSchema):
+def edit_comment(request, comment_id: int, payload: TicketCommentUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
     comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
@@ -143,11 +143,11 @@ def edit_comment(request, comment_id: int, comment: TicketCommentUpdateSchema):
     if comment.user != request.user:
         return {"detail": "You do not have permission to edit this comment."}, 403
     
-    if comment.message is not None:
-        comment.message = comment.message
+    if payload.message is not None:
+        comment.message = payload.message
     
     comment.save()
-    return redirect('ticket_detail', id=id)
+    return 200, comment
 
 
 @router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
