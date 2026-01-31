@@ -1,5 +1,4 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.utils import timezone
@@ -47,7 +46,7 @@ def ticket_list(request):
     
 
 
-@router.get("/tickets/{id}", response=TicketSchema)
+@router.get("/{id}", response=TicketSchema)
 def ticket_detail(id: int):
     ticket = get_object_or_404(Ticket, id=id)
     return ticket
@@ -70,105 +69,72 @@ def create_ticket(request, ticket: TicketCreateSchema):
     )
     return ticket
 
-# FRANZ WORK ON THIS
-
-@router.put("/tickets/{id}", response=TicketSchema) 
-def update_ticket(request, id: int, ticket: TicketUpdateSchema):
+@router.put("/{id}", response=TicketSchema)
+def update_ticket(request, id: int, payload: TicketUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
-    
+
     # Permission check
     if ticket.student != request.user and not request.user.is_staff:
-        messages.error(request, 'You do not have permission to edit this ticket.')
-        return redirect('ticket_list')
-    
+        return {"detail": "You do not have permission to edit this ticket."}, 403
+
     # Students can only edit tickets with "pending" status
     if not request.user.is_staff and ticket.status != 'pending':
-        messages.error(request, 'You cannot edit tickets that are being processed by admin.')
-        return redirect('ticket_detail', id=ticket.id)
-    
-    
-    # Based the code above create_ticket/ticket_detail/
-    # if request.method == 'POST':
-    #     if request.user.is_staff:
-    #         # Admin can only change priority and status
-    #         form = AdminTicketUpdateForm(request.POST, instance=ticket)
-    #         if form.is_valid():
-    #             form.save()
-    #             messages.success(request, 'Ticket updated successfully!')
-    #             return redirect('ticket_detail', id=ticket.id)
-    #     else:
-    #         # Student can edit all fields
-    #         form = TicketUpdateForm(request.POST, instance=ticket)
-    #         if form.is_valid():
-    #             form.save()
-    #             messages.success(request, 'Ticket updated successfully!')
-    #             return redirect('ticket_detail', id=ticket.id)
-    # else:
-    #     if request.user.is_staff:
-    #         form = AdminTicketUpdateForm(instance=ticket)
-    #     else:
-    #         form = TicketUpdateForm(instance=ticket)
-    
-    # context = {
-    #     'form': form,
-    #     'ticket': ticket,
-    #     'action': 'Update',
-    #     'is_staff': request.user.is_staff
-    # }
-    # return render(request, 'tickets/ticket_form.html', context)
+        return {"detail": "You cannot edit tickets that are being processed by admin."}, 400
 
+    if payload.title is not None:
+        ticket.title = payload.title
+    if payload.description is not None:
+        ticket.description = payload.description
+    if payload.category is not None:
+        ticket.category = Category.objects.get(id=payload.category)
+    if payload.priority is not None:
+        ticket.priority = TicketPriority.objects.get(id=payload.priority)
+    if payload.building is not None:
+        ticket.building = payload.building
+    if payload.room_name is not None:
+        ticket.room_name = payload.room_name
+    if payload.status is not None:
+        ticket.status = payload.status
 
-# FRANZ WORK ON THIS
+    ticket.updated_at = timezone.now()
+    ticket.save()
+    return ticket
 
-@router.delete("/tickets/{id}", response={204: None})
+@router.delete("/{id}", response={204: None})
 def delete_ticket(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
     
     # Permission check
     if ticket.student != request.user and not request.user.is_staff:
-        messages.error(request, 'You do not have permission to delete this ticket.')
-        return redirect('ticket_list')
+        return {"detail": "You do not have permission to delete this ticket."}, 403
     
     # Students can only delete tickets with "pending" status
     if not request.user.is_staff and ticket.status != 'pending':
-        messages.error(request, 'You cannot delete tickets that are being processed by admin.')
-        return redirect('ticket_detail', id=ticket.id)
-    
-    # Franz change this refer to create_ticket and test in Postman
-    # try:
-    #     ticket = get_object_or_404(TicketSchema, id=id)
-    #     ticket.delete()
-    #     return {
-    #         "success": True,
-    #         "redirect": redirect('ticket_list')
-    #     }
-    # except Exception as e:
-    #     messages.error(request, f'An error occurred: {str(e)}')
-    
-    # context = {'ticket': ticket}
-    # return render(request, 'tickets/ticket_confirm_delete.html', context)
+        return {"detail": "You cannot delete tickets that are being processed by admin."}, 400
 
+    ticket.delete()
+    return 204
 
 # Ticket Comments Views
 
-@router.post("/tickets/{id}/comments/create", response=TicketCommentSchema)
+@router.post("/{id}/comments/create", response=TicketCommentSchema)
 def create_comment(request, comment: TicketCreateSchema):
     
     return redirect('ticket_detail', id=id)
 
 
-@router.post("/tickets/{id}/comments/{comment_id}/edit", response=TicketCommentSchema)    
+@router.post("/{id}/comments/{comment_id}/edit", response=TicketCommentSchema)    
 def edit_comment(request, id, comment_id):
     return redirect('ticket_detail', id=id)
 
 
-@router.delete("/tickets/{id}/comments/{comment_id}/delete", response={204: None})    
+@router.delete("/{id}/comments/{comment_id}/delete", response={204: None})    
 def delete_comment(request, id, comment_id):
     return redirect('ticket_detail', id=id)
 
     
 # Ticket Feedback Views
-@router.get("/tickets/{id}/feedback/", response=TicketFeedbackSchema)
+@router.get("/{id}/feedback/", response=TicketFeedbackSchema)
 def get_feedback(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
     # Allow owner or staff to view
@@ -178,7 +144,7 @@ def get_feedback(request, id: int):
     return feedback
 
 
-@router.post("/tickets/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict})
+@router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict})
 def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema):
     ticket = get_object_or_404(Ticket, id=id)
 
@@ -207,7 +173,7 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema):
     return 201, feedback
 
 
-@router.put("/tickets/{id}/feedback/", response=TicketFeedbackSchema)
+@router.put("/{id}/feedback/", response=TicketFeedbackSchema)
 def update_feedback(request, id: int, payload: TicketFeedbackUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
     feedback = get_object_or_404(TicketFeedback, ticket=ticket)
