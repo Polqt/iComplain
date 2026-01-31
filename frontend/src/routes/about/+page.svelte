@@ -41,7 +41,7 @@
       Purpose
     </p>
     <h2 class="text-2xl font-semibold text-base-content">
-      Why iComplain exists
+      Why iComplain exists?
     </h2>
     <p class="mt-6 text-base text-base-content/60 leading-relaxed">
       A university thrives when its students feel supported by the environment
