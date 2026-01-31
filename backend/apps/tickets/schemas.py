@@ -56,6 +56,10 @@ class TicketCommentSchema(Schema):
 
 class TicketCommentCreateSchema(Schema):
     message: str
+    
+class TicketCommentUpdateSchema(Schema):
+    message: str | None = None
+    updated_at: datetime 
 
 #Feedback Schema
 class TicketFeedbackSchema(Schema):
@@ -73,4 +77,4 @@ class TicketFeedbackCreateSchema(Schema):
 class TicketFeedbackUpdateSchema(Schema):
     rating: int | None = None
     comments: str | None = None
-    updated_at: datetime | None = None
+    updated_at: datetime 
