@@ -12,6 +12,7 @@
 <header class="w-full py-6">
   <div class="flex items-center justify-between">
     <button
+      type="button"
       aria-label="iComplain Logo"
       on:click={() => goto("/")}
       class="text-lg font-semibold text-base-content hover:text-base-content/70"
