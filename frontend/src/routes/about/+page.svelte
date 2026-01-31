@@ -281,7 +281,7 @@
       campus culture in mind.
     </p>
   </section>
-  <div class="w-full max-w-8xl px-6">
+  <div class="w-full max-w-7xl px-6">
     <div class="border-t border-base-content/10"></div>
     <Footer />
   </div>
