@@ -2,11 +2,11 @@
   import Icon from "@iconify/svelte";
 </script>
 
-<footer class="footer sm:footer-horizontal text-base-content items-center p-4">
+<footer class="footer sm:footer-horizontal text-base-content items-center p-4 sm:p-6">
   <aside class="grid-flow-col items-center">
-    <p>© {new Date().getFullYear()}. All rights reserved.</p>
+    <p class="text-sm sm:text-base">© {new Date().getFullYear()}. All rights reserved.</p>
   </aside>
-  <nav class="grid-flow-col gap-4 mdd:place-self-center md:justify-self-end">
+  <nav class="grid-flow-col gap-3 sm:gap-4 md:place-self-center md:justify-self-end">
     <a
       aria-label="Github"
       href="https://github.com/Polqt/iComplain"
