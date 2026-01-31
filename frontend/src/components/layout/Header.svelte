@@ -29,14 +29,6 @@
         >About</a
       >
       <a
-        href="/learn-more"
-        class="px-3 py-2 text-sm font-medium transition-colors rounded-lg
-            {isActivePath('/learn-more')
-          ? 'bg-base-200 text-base-content'
-          : 'text-base-content/60 hover:text-base-content hover:bg-base-200/50'}"
-        >Learn More</a
-      >
-      <a
         href="/login"
         class="px-3 py-2 text-sm font-medium transition-colors rounded-lg
             {isActivePath('/login')
