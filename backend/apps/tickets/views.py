@@ -7,8 +7,8 @@ from datetime import timedelta
 from ninja import Router
 from ninja.security import SessionAuth
 
-from .schemas import TicketCommentSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
-from .models import Category, Ticket, TicketPriority, TicketFeedback
+from .schemas import TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
+from .models import Category, Ticket, TicketComment, TicketPriority, TicketFeedback
 
 router = Router(auth=SessionAuth())
 
@@ -117,19 +117,48 @@ def delete_ticket(request, id: int):
 
 # Ticket Comments Views
 
-@router.post("/{id}/comments/create", response=TicketCommentSchema)
-def create_comment(request, comment: TicketCreateSchema):
+@router.post("/{id}", response=TicketCommentSchema)
+def create_comment(request, ticket_id: int, comment: TicketCreateSchema):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if ticket.status == 'closed':
+        return {"detail": "Cannot add comments to a closed ticket."}, 400
     
+    comment = TicketComment.objects.create(
+        ticket=ticket,
+        user=request.user,
+        message=comment.message
+    )
+    
+    comment.save()
+    return 201, comment
+
+
+@router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
+def edit_comment(request, comment_id: int, comment: TicketCommentUpdateSchema):
+    ticket = get_object_or_404(Ticket, id=id)
+    comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
+    
+    
+    if comment.user != request.user:
+        return {"detail": "You do not have permission to edit this comment."}, 403
+    
+    if comment.message is not None:
+        comment.message = comment.message
+    
+    comment.save()
     return redirect('ticket_detail', id=id)
 
 
-@router.post("/{id}/comments/{comment_id}/edit", response=TicketCommentSchema)    
-def edit_comment(request, id, comment_id):
-    return redirect('ticket_detail', id=id)
-
-
-@router.delete("/{id}/comments/{comment_id}/delete", response={204: None})    
-def delete_comment(request, id, comment_id):
+@router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
+def delete_comment(request, id: int, comment_id: int):
+    ticket = get_object_or_404(Ticket, id=id)
+    comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
+    
+    if comment.user != request.user:
+        return {"detail": "You do not have permission to delete this comment."}, 403
+    
+    comment.delete()
     return redirect('ticket_detail', id=id)
 
     
@@ -143,10 +172,9 @@ def get_feedback(request, id: int):
     feedback = get_object_or_404(TicketFeedback, ticket=ticket)
     return feedback
 
-
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict})
-def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema):
-    ticket = get_object_or_404(Ticket, id=id)
+def create_feedback(request, ticket_id: int, payload: TicketFeedbackCreateSchema):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
 
     # Only owner can submit feedback and only for resolved tickets
     if ticket.student != request.user:
@@ -172,11 +200,10 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema):
 
     return 201, feedback
 
-
-@router.put("/{id}/feedback/", response=TicketFeedbackSchema)
-def update_feedback(request, id: int, payload: TicketFeedbackUpdateSchema):
+@router.put("/{id}/feedback/{feedback_id}", response=TicketFeedbackSchema)
+def update_feedback(request, id: int, feedback_id: int, payload: TicketFeedbackUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
-    feedback = get_object_or_404(TicketFeedback, ticket=ticket)
+    feedback = get_object_or_404(TicketFeedback, id=feedback_id, ticket=ticket)
 
     # Only the student who submitted feedback can edit within 24 hours
     if feedback.student != request.user:
@@ -192,3 +219,18 @@ def update_feedback(request, id: int, payload: TicketFeedbackUpdateSchema):
 
     feedback.save()
     return feedback
+
+@router.delete("/{id}/feedback/{feedback_id}", response={204: None, 400: dict})
+def delete_feedback(request, id: int, feedback_id: int):
+    ticket = get_object_or_404(Ticket, id=id)
+    feedback = get_object_or_404(TicketFeedback, id=feedback_id, ticket=ticket)
+
+    # Only the student who submitted feedback can delete within 24 hours
+    if feedback.student != request.user:
+        return {"detail": "You do not have permission to delete this feedback."}, 403
+
+    if timezone.now() > feedback.created_at + timedelta(hours=24):
+        return {"detail": "Feedback can only be deleted within 24 hours of submission."}, 400
+
+    feedback.delete()
+    return redirect('ticket_detail', id=id)
