@@ -14,14 +14,14 @@
 </script>
 
 <div class="w-full flex flex-col items-center bg-base-100 min-h-screen">
-  <div class="w-full max-w-7xl px-4">
+  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
     <Header />
   </div>
 
-  <section class="w-full max-w-3xl px-6 pt-24 pb-20">
-    <div class="flex flex-col gap-3 mb-10">
+  <section class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-12 sm:pb-16 md:pb-20">
+    <div class="flex flex-col gap-2 sm:gap-3 mb-8 sm:mb-10">
       <h1
-        class="text-5xl font-black text-base-content leading-none tracking-tight"
+        class="text-3xl sm:text-4xl md:text-5xl font-black text-base-content leading-none tracking-tight"
       >
         <span
           class="tooltip tooltip-right font-light"
@@ -36,7 +36,7 @@
         <span class="text-amber-500/30 animate-pulse">.</span>
       </h1>
       <h1
-        class="text-5xl font-black text-base-content leading-none tracking-tight"
+        class="text-3xl sm:text-4xl md:text-5xl font-black text-base-content leading-none tracking-tight"
       >
         <span
           class="tooltip tooltip-right font-light"
@@ -53,7 +53,7 @@
         >
       </h1>
       <h1
-        class="text-5xl font-black text-base-content leading-none tracking-tight"
+        class="text-3xl sm:text-4xl md:text-5xl font-black text-base-content leading-none tracking-tight"
       >
         <span
           class="tooltip tooltip-right font-light"
@@ -71,15 +71,15 @@
       </h1>
     </div>
 
-    <div class="relative mb-8">
+    <div class="relative mb-6 sm:mb-8">
       <div
-        class="w-32 h-1 bg-linear-to-r from-amber-200 via-sky-200 border-t border-base-content/10"
+        class="w-24 sm:w-32 h-1 bg-linear-to-r from-amber-200 via-sky-200 border-t border-base-content/10"
       ></div>
     </div>
 
     <div class="space-y-3">
       <p
-        class="text-lg text-base-content/80 leading-relaxed max-w-2xl font-medium"
+        class="text-base sm:text-lg text-base-content/80 leading-relaxed max-w-2xl font-medium"
       >
         Transform campus facility management with
         <span class="relative inline-block group cursor-default">
@@ -93,18 +93,18 @@
           ></span>
         </span>.
       </p>
-      <p class="text-base text-base-content/60 leading-relaxed max-w-2xl">
+      <p class="text-sm sm:text-base text-base-content/60 leading-relaxed max-w-2xl">
         Report issues instantly, track progress in real-time, and ensure every
         concern gets the attention it deserves.
       </p>
     </div>
 
-    <div class="mt-10 flex gap-4 flex-wrap">
+    <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
       <button
-        class="btn btn-primary btn-lg group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200"
+        class="btn btn-primary btn-md sm:btn-lg group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200 w-full sm:w-auto"
         onclick={handleGetStarted}
       >
-        <span class="flex items-center gap-2">
+        <span class="flex items-center justify-center gap-2">
           Start Reporting
           <Icon
             icon="lucide:arrow-right"
@@ -115,10 +115,10 @@
         </span></button
       >
       <button
-        class="btn btn-outline btn-lg group hover:scale-105 active:scale-95 hover:shadow-lg transition-all duration-200"
+        class="btn btn-outline btn-md sm:btn-lg group hover:scale-105 active:scale-95 hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
         onclick={handleLearnMore}
       >
-        <span class="flex items-center gap-2">
+        <span class="flex items-center justify-center gap-2">
           Learn More
           <Icon
             icon="lucide:external-link"
@@ -131,7 +131,7 @@
     </div>
   </section>
 
-  <div class="w-full max-w-7xl px-6">
+  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-auto">
     <div class="border-t border-base-content/10"></div>
     <Footer />
   </div>
