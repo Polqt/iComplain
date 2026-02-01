@@ -67,8 +67,8 @@ export function validatePassword(password: string): PasswordValidationResult {
     if (password.length >= 12 && score >= 3) strength = 'strong';
 
     const messages: Record<'weak' | 'medium' | 'strong', string> = {
-        weak: 'Weak! Consider adding uppercase letters, numbers, and special characters.',
-        medium: 'Good! Adding more variety can make it stronger.',
+        weak: 'Consider adding uppercase letters, numbers, and special characters.',
+        medium: 'Adding more variety can make it stronger.',
         strong: 'Strong password!',
     }
 

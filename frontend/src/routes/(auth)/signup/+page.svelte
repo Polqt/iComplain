@@ -1,14 +1,71 @@
-<script>
+<script lang="ts">
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
-  import Header from "../../../components/layout/Header.svelte";
+  import {
+    isValidEmail,
+    validatePassword,
+    validatePasswordMatch,
+  } from "../../../utils/validations.ts";
+  import AuthLayout from "../../../components/layout/AuthLayout.svelte";
 
-  let email = "";
-  let password = "";
-  let confirmPassword = "";
-  let isLoading = false;
+  let email: string = "";
+  let password: string = "";
+  let confirmPassword: string = "";
+  let isLoading: boolean = false;
 
-  async function handleSignup() {
+  let emailError: string = "";
+  let passwordError: string = "";
+  let confirmPasswordError: string = "";
+  let generalError: string = "";
+  let passwordStrength: "weak" | "medium" | "strong" = "weak";
+
+  function handleEmailBlur(): void {
+    const result = isValidEmail(email);
+    emailError = result.valid ? "" : result.message;
+  }
+
+  function handlePasswordInput(): void {
+    const result = validatePassword(password);
+    passwordError = result.valid ? "" : result.message;
+    passwordStrength = result.strength ?? "weak";
+
+    if (confirmPassword) {
+      handleConfirmPasswordBlur();
+    }
+  }
+
+  function handleConfirmPasswordBlur(): void {
+    const result = validatePasswordMatch(password, confirmPassword);
+    confirmPasswordError = result.valid ? "" : result.message;
+  }
+
+  async function handleSignup(event?: Event): Promise<void> {
+    if (event) event.preventDefault();
+
+    const emailValidation = isValidEmail(email);
+    const passwordValidation = validatePassword(password);
+    const confirmPasswordValidation = validatePasswordMatch(
+      password,
+      confirmPassword,
+    );
+
+    emailError = emailValidation.valid ? "" : emailValidation.message;
+    passwordError = passwordValidation.valid ? "" : passwordValidation.message;
+    confirmPasswordError = confirmPasswordValidation.valid
+      ? ""
+      : confirmPasswordValidation.message;
+
+    if (
+      !emailValidation.valid ||
+      !passwordValidation.valid ||
+      !confirmPasswordValidation.valid
+    ) {
+      return;
+    }
+
+    isLoading = true;
+    generalError = "";
+
     try {
       // TODO: Implement actual signup logic
       goto("/signin");
@@ -22,125 +79,180 @@
   function handleLoginRedirect() {
     goto("/signin");
   }
+
+  $: strengthColor = {
+    weak: "error",
+    medium: "warning",
+    strong: "success",
+  };
 </script>
 
-<div class="w-full flex flex-col items-center bg-base-100 min-h-screen">
-  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-    <Header />
-  </div>
-
-  <main
-    class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center py-12 sm:py-16"
-  >
-    <div class="w-full max-w-md">
-      <div class="card bg-base-100 shadow-xl border border-base-300">
-        <div class="card-body p-6 sm:p-8">
-          <div class="text-center mb-6">
-            <p
-              class="badge badge-ghost text-xs font-semibold tracking-widest uppercase mb-4"
-            >
-              Create Account
-            </p>
-            <h1
-              class="text-2xl sm:text-3xl font-semibold text-base-content leading-tight"
-            >
-              Join iComplain
-            </h1>
-            <p class="text-sm sm:text-base text-base-content/60 mt-2">
-              Sign up to start reporting and resolving issues.
-            </p>
-          </div>
-
-          <form on:submit|preventDefault={handleSignup} class="space-y-4">
-            <div class="form-control w-full">
-              <label class="label" for="email">
-                <span class="label-text text-base font-medium">Email</span>
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="your.email@usls.edu.ph"
-                class="input input-bordered w-full"
-                bind:value={email}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div class="form-control w-full">
-              <label class="label" for="password">
-                <span class="label-text text-base font-medium">Password</span>
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Create a strong password"
-                class="input input-bordered w-full"
-                bind:value={password}
-                required
-                minlength="8"
-                disabled={isLoading}
-              />
-            </div>
-
-            <div class="form-control w-full">
-              <label class="label" for="confirmPassword">
-                <span class="label-text text-base font-medium"
-                  >Confirm Password</span
-                >
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm your password"
-                class="input input-bordered w-full"
-                bind:value={confirmPassword}
-                required
-                minlength="8"
-                disabled={isLoading}
-              />
-            </div>
-
-            <button
-              class="btn btn-primary btn-block mt-6 group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200"
-              type="submit"
-              disabled={isLoading}
-            >
-              {#if isLoading}
-                <span class="loading loading-spinner loading-sm"></span>
-                Creating Account...
-              {:else}
-                <span class="flex items-center justify-center gap-2">
-                  Create Account
-                </span>
-              {/if}
-            </button>
-          </form>
-
-          <div class="divider my-6">or</div>
-
-          <div class="text-center">
-            <p class="text-sm text-base-content/60">
-              Already have an account?
-              <button
-                type="button"
-                class="link link-primary font-medium"
-                on:click={handleLoginRedirect}
-                disabled={isLoading}
-              >
-                Sign in
-              </button>
-            </p>
-          </div>
-
-          <div class="text-center mt-6">
-            <p class="text-xs text-base-content/45">
-              By creating an account, you agree to our Terms of Service and
-              Privacy Policy.
-            </p>
-          </div>
-        </div>
+<AuthLayout>
+  <div class="space-y-8">
+    {#if generalError}
+      <div class="alert alert-error">
+        <Icon icon="mdi:alert-circle" width="20" height="20" />
+        <span>{generalError}</span>
       </div>
+    {/if}
+
+    <form onsubmit={handleSignup} class="space-y-5">
+      <div class="form-control">
+        <label for="signup-email" class="label">
+          <span class="label-text font-medium">Email Address</span>
+        </label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events none text-base content/40"
+          >
+            <Icon icon="mdi:email-outline" width="20" height="20" />
+          </div>
+          <input
+            id="signup-email"
+            type="email"
+            placeholder="your.id@usls.edu.ph"
+            class="input input-bordered w-full pl-10 {emailError
+              ? 'input-error'
+              : ''}"
+            class:input-success={!emailError && email}
+            bind:value={email}
+            onblur={handleEmailBlur}
+            disabled={isLoading}
+            required
+          />
+        </div>
+        {#if emailError}
+          <!-- svelte-ignore a11y_label_has_associated_control -->
+          <label aria-label="email" class="label">
+            <span class="label-text-alt text-error">{emailError}</span>
+          </label>
+        {/if}
+      </div>
+
+      <div class="form-control">
+        <label for="signup-password" class="label">
+          <span class="label-text font-medium">Password</span>
+        </label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events none text-base content/40"
+          >
+            <Icon icon="mdi:lock-outline" width="20" height="20" />
+          </div>
+          <input
+            id="signup-password"
+            type="password"
+            placeholder="Create a strong password"
+            class="input input-bordered w-full pl-10 {passwordError
+              ? 'input-error'
+              : ''}"
+            bind:value={password}
+            oninput={handlePasswordInput}
+            disabled={isLoading}
+            required
+            minlength="8"
+          />
+        </div>
+        {#if password}
+          <div class="mt-2">
+            <div class="flex gap-1 mb-1">
+              <div
+                class="h-1 flex-1 rounded-full bg-base-300 {password.length >= 1
+                  ? strengthColor[passwordStrength]
+                  : ''}"
+              ></div>
+              <div
+                class="h-1 flex-1 rounded-full bg-base-300 {passwordStrength !==
+                'weak'
+                  ? strengthColor[passwordStrength]
+                  : ''}"
+              ></div>
+              <div
+                class="h-1 flex-1 rounded-full bg-base-300 {passwordStrength ===
+                'strong'
+                  ? strengthColor[passwordStrength]
+                  : ''}"
+              ></div>
+            </div>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <label class="label">
+              <span class="label-text-alt text-{strengthColor}">
+                {passwordError || "Password strength: " + passwordStrength}
+              </span>
+            </label>
+          </div>
+        {/if}
+      </div>
+
+      <div class="form-control">
+        <label for="signup-confirm-password" class="label">
+          <span class="label-text font-medium">Confirm Password</span>
+        </label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base content/40"
+          >
+            <Icon icon="mdi:lock-outline" width="20" height="20" />
+          </div>
+          <input
+            id="signup-confirm-password"
+            type="password"
+            placeholder="Create a strong password"
+            class="input input-bordered w-full pl-10 {confirmPasswordError
+              ? 'input-error'
+              : ''}"
+            class:input-success={!confirmPasswordError && confirmPassword}
+            bind:value={confirmPassword}
+            onblur={handleConfirmPasswordBlur}
+            disabled={isLoading}
+            required
+            minlength="8"
+          />
+        </div>
+        {#if confirmPasswordError}
+          <!-- svelte-ignore a11y_label_has_associated_control -->
+          <label class="label">
+            <span class="label-text-alt text-error">{confirmPasswordError}</span
+            >
+          </label>
+        {:else if confirmPassword && !confirmPasswordError}
+          <!-- svelte-ignore a11y_label_has_associated_control -->
+          <label class="label">
+            <span class="label-text-alt text-success flex items-center gap-1">
+              <Icon icon="lucide:check" width="14" height="14" />
+              Passwords match
+            </span>
+          </label>
+        {/if}
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-primary w-full group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200"
+        disabled={isLoading}
+      >
+        {#if isLoading}
+          <span class="loading loading-spinner loading-sm">
+            Signing Up...
+          </span>
+        {:else}
+          <span class="flex items-center gap-2">Sign Up</span>
+        {/if}
+      </button>
+    </form>
+
+    <div class="text-center pt-4">
+      <p class="text-sm text-base-content/60">
+        Already have an account?
+        <button
+          type="button"
+          class="link link-primary font-medium hover:link-hover"
+          onclick={handleLoginRedirect}
+          disabled={isLoading}
+        >
+          Sign In
+        </button>
+      </p>
     </div>
-  </main>
-</div>
+  </div>
+</AuthLayout>
