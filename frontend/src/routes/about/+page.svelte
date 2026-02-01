@@ -3,7 +3,7 @@
   import Header from "../../components/layout/Header.svelte";
 </script>
 
-<div class="w-full flex flex-col items-center bg-base-100 min-h-screen">
+<div class="w-full flex flex-col items-center bg-base-100 h-screen">
   <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
     <Header />
   </div>
@@ -240,7 +240,7 @@
         <p
           class="text-xs font-semibold text-base-content/35 uppercase tracking-wider mb-2 sm:mb-3"
         >
-          Developer & Lead
+          Developer & Project Leader
         </p>
         <h3 class="text-sm font-semibold text-base-content">Janpol Hidalgo</h3>
         <p class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed">

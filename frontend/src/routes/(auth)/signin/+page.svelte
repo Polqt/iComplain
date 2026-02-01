@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
-  import AuthLayout from "../../../components/layout/AuthLayout.svelte";
   import {
     isValidEmail,
     validatePassword,
@@ -50,7 +49,7 @@
       handleRememberMe(rememberMe, email);
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      goto("/student/dashboard");
+      goto("/dashboard");
     } catch (error) {
       generalError = handleAuthError(error);
     } finally {
@@ -79,114 +78,110 @@
   }
 </script>
 
-<AuthLayout>
-  <div class="space-y-8">
-    {#if generalError}
-      <div class="alert alert-error">
-        <Icon icon="mdi:alert-circle" width="20" height="20" />
-        <span>{generalError}</span>
-      </div>
-    {/if}
+<div class="space-y-8">
+  {#if generalError}
+    <div class="alert alert-error">
+      <Icon icon="mdi:alert-circle" width="20" height="20" />
+      <span>{generalError}</span>
+    </div>
+  {/if}
 
-    <form onsubmit={handleSignIn} class="space-y-5">
-      <div class="form-control">
-        <label for="signin-email" class="label">Email Address</label>
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base-content/40"
-          >
-            <Icon icon="mdi:email-outline" width="20" height="20" />
-          </div>
-          <input
-            id="signin-email"
-            type="email"
-            placeholder="your.id@usls.edu.ph"
-            class="input input-bordered w-full pl-10 {emailError
-              ? 'input-error'
-              : ''}"
-            bind:value={email}
-            onblur={handleEmailBlur}
-            disabled={isLoading}
-            required
-          />
+  <form onsubmit={handleSignIn} class="space-y-5">
+    <div class="form-control">
+      <label for="signin-email" class="label">Email Address</label>
+      <div class="relative">
+        <div
+          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base-content/40"
+        >
+          <Icon icon="mdi:email-outline" width="20" height="20" />
         </div>
-        {#if emailError}
-          <!-- svelte-ignore a11y_label_has_associated_control -->
-          <label aria-label="email" class="label">
-            <span class="label-text-alt text-error">{emailError}</span>
-          </label>
-        {/if}
+        <input
+          id="signin-email"
+          type="email"
+          placeholder="your.id@usls.edu.ph"
+          class="input input-bordered w-full pl-10 {emailError
+            ? 'input-error'
+            : ''}"
+          bind:value={email}
+          onblur={handleEmailBlur}
+          disabled={isLoading}
+          required
+        />
       </div>
-
-      <div class="form-control">
-        <label for="signin-password" class="label">Password</label>
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base-content/40"
-          >
-            <Icon icon="mdi:lock-outline" width="20" height="20" />
-          </div>
-          <input
-            id="signin-password"
-            type="password"
-            placeholder="Enter your password"
-            class="input input-bordered w-full pl-10 {passwordError
-              ? 'input-error'
-              : ''}"
-            class:input-success={!passwordError && password}
-            bind:value={password}
-            onblur={handlePasswordBlur}
-            disabled={isLoading}
-            required
-          />
-        </div>
-        {#if passwordError}
-          <!-- svelte-ignore a11y_label_has_associated_control -->
-          <label aria-label="password" class="label">
-            <span class="label-text-alt text-error">{passwordError}</span>
-          </label>
-        {/if}
-      </div>
-
-      <div class="flex items-center justify-between">
-        <label class="label cursor-pointer gap-2 p-0">
-          <input
-            type="checkbox"
-            class="checkbox checkbox-sm checkbox-primary"
-            bind:checked={rememberMe}
-            disabled={isLoading}
-          />
-          <span class="label-text">Remember me</span>
+      {#if emailError}
+        <!-- svelte-ignore a11y_label_has_associated_control -->
+        <label aria-label="email" class="label">
+          <span class="label-text-alt text-error">{emailError}</span>
         </label>
-      </div>
+      {/if}
+    </div>
 
+    <div class="form-control">
+      <label for="signin-password" class="label">Password</label>
+      <div class="relative">
+        <div
+          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base-content/40"
+        >
+          <Icon icon="mdi:lock-outline" width="20" height="20" />
+        </div>
+        <input
+          id="signin-password"
+          type="password"
+          placeholder="Enter your password"
+          class="input input-bordered w-full pl-10 {passwordError
+            ? 'input-error'
+            : ''}"
+          class:input-success={!passwordError && password}
+          bind:value={password}
+          onblur={handlePasswordBlur}
+          disabled={isLoading}
+          required
+        />
+      </div>
+      {#if passwordError}
+        <!-- svelte-ignore a11y_label_has_associated_control -->
+        <label aria-label="password" class="label">
+          <span class="label-text-alt text-error">{passwordError}</span>
+        </label>
+      {/if}
+    </div>
+
+    <div class="flex items-center justify-between">
+      <label class="label cursor-pointer gap-2 p-0">
+        <input
+          type="checkbox"
+          class="checkbox checkbox-sm checkbox-primary"
+          bind:checked={rememberMe}
+          disabled={isLoading}
+        />
+        <span class="label-text">Remember me</span>
+      </label>
+    </div>
+
+    <button
+      type="submit"
+      class="btn btn-primary w-full group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200"
+      disabled={isLoading}
+    >
+      {#if isLoading}
+        <span class="loading loading-spinner loading-sm"> Signing In... </span>
+      {:else}
+        <span class="flex items-center gap-2">Sign In</span>
+      {/if}
+    </button>
+  </form>
+
+  <div class="text-center pt-4">
+    <p class="text-sm text-base-content/60">
+      Don't have an account?
       <button
-        type="submit"
-        class="btn btn-primary w-full group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200"
+        type="button"
+        class="link link-primary font-medium hover:link-hover"
+        onclick={handleSignupRedirect}
         disabled={isLoading}
       >
-        {#if isLoading}
-          <span class="loading loading-spinner loading-sm">
-            Signing In...
-          </span>
-        {:else}
-          <span class="flex items-center gap-2">Sign In</span>
-        {/if}
+        Sign up
       </button>
-    </form>
-
-    <div class="text-center pt-4">
-      <p class="text-sm text-base-content/60">
-        Don't have an account?
-        <button
-          type="button"
-          class="link link-primary font-medium hover:link-hover"
-          onclick={handleSignupRedirect}
-          disabled={isLoading}
-        >
-          Sign up
-        </button>
-      </p>
-    </div>
+    </p>
   </div>
-</AuthLayout>
+</div>
