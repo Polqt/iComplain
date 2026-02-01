@@ -19,7 +19,7 @@
 
       <div class="max-w md">
         <h1 class="text-4xl lg:text-5xl text-base-content leading-tight mb-4">
-          {isSignIn ? "Welcome Back!" : "Start Making a Difference"}
+          {isSignIn ? "The Campus Awaits" : "Start Making a Difference"}
         </h1>
         <p class="text-lg text-base-content/70 leading-relaxed mb-2">
           {isSignIn

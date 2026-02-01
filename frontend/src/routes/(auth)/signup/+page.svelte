@@ -19,6 +19,18 @@
   let generalError: string = "";
   let passwordStrength: "weak" | "medium" | "strong" = "weak";
 
+  const strengthBarColor: Record<string, string> = {
+    weak: "bg-error",
+    medium: "bg-warning",
+    strong: "bg-success",
+  };
+
+  const strengthColor: Record<string, string> = {
+    weak: "text-error",
+    medium: "text-warning",
+    strong: "text-success",
+  };
+
   function handleEmailBlur(): void {
     const result = isValidEmail(email);
     emailError = result.valid ? "" : result.message;
@@ -79,12 +91,6 @@
   function handleLoginRedirect() {
     goto("/signin");
   }
-
-  $: strengthColor = {
-    weak: "error",
-    medium: "warning",
-    strong: "success",
-  };
 </script>
 
 <AuthLayout>
@@ -158,25 +164,25 @@
             <div class="flex gap-1 mb-1">
               <div
                 class="h-1 flex-1 rounded-full bg-base-300 {password.length >= 1
-                  ? strengthColor[passwordStrength]
+                  ? strengthBarColor[passwordStrength]
                   : ''}"
               ></div>
               <div
                 class="h-1 flex-1 rounded-full bg-base-300 {passwordStrength !==
                 'weak'
-                  ? strengthColor[passwordStrength]
+                  ? strengthBarColor[passwordStrength]
                   : ''}"
               ></div>
               <div
                 class="h-1 flex-1 rounded-full bg-base-300 {passwordStrength ===
                 'strong'
-                  ? strengthColor[passwordStrength]
+                  ? strengthBarColor[passwordStrength]
                   : ''}"
               ></div>
             </div>
             <!-- svelte-ignore a11y_label_has_associated_control -->
             <label class="label">
-              <span class="label-text-alt text-{strengthColor}">
+              <span class={strengthColor[passwordStrength]}>
                 {passwordError || "Password strength: " + passwordStrength}
               </span>
             </label>
