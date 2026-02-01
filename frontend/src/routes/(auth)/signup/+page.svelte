@@ -103,7 +103,7 @@
         </label>
         <div class="relative">
           <div
-            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events none text-base content/40"
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base-content/40"
           >
             <Icon icon="mdi:email-outline" width="20" height="20" />
           </div>

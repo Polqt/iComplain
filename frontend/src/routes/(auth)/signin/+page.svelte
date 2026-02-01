@@ -1,24 +1,58 @@
-<script>
+<script lang="ts">
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
-  import Footer from "../../../components/layout/Footer.svelte";
-  import Header from "../../../components/layout/Header.svelte";
+  import AuthLayout from "../../../components/layout/AuthLayout.svelte";
+  import {
+    isValidEmail,
+    validatePassword,
+  } from "../../../utils/validations.ts";
+  import {
+    getRememberEmail,
+    handleAuthErorr,
+    handleRememberMe,
+  } from "../../../utils/auth-helpers.ts";
 
-  let email = "";
-  let password = "";
-  let isLoading = false;
+  let email: string = "";
+  let password: string = "";
+  let rememberMe: boolean = !!getRememberEmail();
+  let isLoading: boolean = false;
 
-  async function handleLogin() {
+  let emailError: string = "";
+  let passwordError: string = "";
+  let generalError: string = "";
+
+  function handleEmailBlur(): void {
+    const result = isValidEmail(email);
+    emailError = result.valid ? "" : result.message;
+  }
+
+  function handlePasswordBlur(): void {
+    const result = validatePassword(password);
+    passwordError = result.valid ? "" : result.message;
+  }
+
+  async function handleSignIn(): Promise<void> {
+    const emailValidation = isValidEmail(email);
+    const passwordValidation = validatePassword(password);
+
+    if (!emailValidation.valid || !passwordValidation.valid) {
+      emailError = emailValidation.valid ? "" : emailValidation.message;
+      passwordError = passwordValidation.valid
+        ? ""
+        : passwordValidation.message;
+      return;
+    }
+
     isLoading = true;
+    generalError = "";
+
     try {
-      // TODO: Implement actual login logic
-      console.log("Login attempt:", { email, password });
-      // For now, just redirect to student dashboard
-      await new Promise(resolve => setTimeout(resolve, 1000)); 
+      handleRememberMe(rememberMe, email);
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       goto("/student/dashboard");
     } catch (error) {
-      console.error("Login error:", error);
-      alert("Login failed. Please check your credentials and try again.");
+      generalError = handleAuthErorr(error);
     } finally {
       isLoading = false;
     }
@@ -30,7 +64,7 @@
       // TODO: Implement Google OAuth
       console.log("Google sign in attempt");
       // For now, just redirect to student dashboard
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       goto("/student/dashboard");
     } catch (error) {
       console.error("Google sign in error:", error);
@@ -45,129 +79,114 @@
   }
 </script>
 
-<div class="w-full flex flex-col items-center bg-base-100 min-h-screen">
-  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-    <Header />
-  </div>
-
-  <main class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center py-12 sm:py-16">
-    <div class="w-full max-w-md">
-      <div class="card bg-base-100 shadow-xl border border-base-300">
-        <div class="card-body p-6 sm:p-8">
-          <div class="text-center mb-6">
-            <p class="badge badge-ghost text-xs font-semibold tracking-widest uppercase mb-4">
-              Welcome Back
-            </p>
-            <h1 class="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">
-              Sign In to iComplain
-            </h1>
-            <p class="text-sm sm:text-base text-base-content/60 mt-2">
-              Access your account to report and track issues
-            </p>
-          </div>
-
-          <form on:submit|preventDefault={handleLogin} class="space-y-4">
-            <div class="form-control w-full">
-              <label class="label" for="login-email">
-                <span class="label-text text-base font-medium">Email</span>
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                placeholder="your.email@usls.edu.ph"
-                class="input input-bordered w-full"
-                bind:value={email}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div class="form-control w-full">
-              <label class="label" for="login-password">
-                <span class="label-text text-base font-medium">Password</span>
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                placeholder="Enter your password"
-                class="input input-bordered w-full"
-                bind:value={password}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div class="form-control mt-6">
-              <button
-                class="btn btn-primary btn-block group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200"
-                type="submit"
-                disabled={isLoading}
-              >
-                {#if isLoading}
-                  <span class="loading loading-spinner loading-sm"></span>
-                  Signing In...
-                {:else}
-                  <span class="flex items-center justify-center gap-2">
-                    Sign In
-                    <Icon
-                      icon="lucide:log-in"
-                      width="20"
-                      height="20"
-                      class="transition-transform group-hover:translate-x-1 duration-300"
-                    />
-                  </span>
-                {/if}
-              </button>
-            </div>
-          </form>
-
-          <div class="divider my-6">or</div>
-
-          <div class="space-y-3">
-            <button
-              class="btn btn-outline btn-block group hover:scale-105 active:scale-95 hover:shadow-lg transition-all duration-200"
-              type="button"
-              on:click={handleGoogleSignIn}
-              disabled={isLoading}
-            >
-              <span class="flex items-center justify-center gap-2">
-                <Icon
-                  icon="logos:google-icon"
-                  width="20"
-                  height="20"
-                  class="transition-transform group-hover:scale-110 duration-300"
-                />
-                Sign in with Google
-              </span>
-            </button>
-          </div>
-
-          <div class="text-center mt-6">
-            <p class="text-sm text-base-content/60">
-              Don't have an account?
-              <button
-                type="button"
-                class="link link-primary font-medium"
-                on:click={handleSignupRedirect}
-                disabled={isLoading}
-              >
-                Sign up
-              </button>
-            </p>
-          </div>
-
-          <div class="text-center mt-4">
-            <p class="text-xs text-base-content/45">
-              By signing in, you agree to our Terms of Service and Privacy Policy.
-            </p>
-          </div>
-        </div>
+<AuthLayout>
+  <div class="space-y-8">
+    {#if generalError}
+      <div class="alert alert-error">
+        <Icon icon="mdi:alert-circle" width="20" height="20" />
+        <span>{generalError}</span>
       </div>
-    </div>
-  </main>
+    {/if}
 
-  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-auto">
-    <div class="border-t border-base-content/10"></div>
-    <Footer />
+    <form onsubmit={handleSignIn} class="space-y-5">
+      <div class="form-control">
+        <label for="signin-email" class="label">Email Address</label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base-content/40"
+          >
+            <Icon icon="mdi:email-outline" width="20" height="20" />
+          </div>
+          <input
+            id="signin-email"
+            type="email"
+            placeholder="your.id@usls.edu.ph"
+            class="input input-bordered w-full pl-10 {emailError
+              ? 'input-error'
+              : ''}"
+            bind:value={email}
+            onblur={handleEmailBlur}
+            disabled={isLoading}
+            required
+          />
+        </div>
+        {#if emailError}
+          <!-- svelte-ignore a11y_label_has_associated_control -->
+          <label aria-label="email" class="label">
+            <span class="label-text-alt text-error">{emailError}</span>
+          </label>
+        {/if}
+      </div>
+
+      <div class="form-control">
+        <label for="signin-password" class="label">Password</label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-base-content/40"
+          >
+            <Icon icon="mdi:lock-outline" width="20" height="20" />
+          </div>
+          <input
+            id="signin-password"
+            type="password"
+            placeholder="Enter your password"
+            class="input input-bordered w-full pl-10 {passwordError
+              ? 'input-error'
+              : ''}"
+            class:input-success={!passwordError && password}
+            bind:value={password}
+            onblur={handlePasswordBlur}
+            disabled={isLoading}
+            required
+          />
+        </div>
+        {#if passwordError}
+          <!-- svelte-ignore a11y_label_has_associated_control -->
+          <label aria-label="password" class="label">
+            <span class="label-text-alt text-error">{passwordError}</span>
+          </label>
+        {/if}
+      </div>
+
+      <div class="flex items-center justify-between">
+        <label class="label cursor-pointer gap-2 p-0">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm checkbox-primary"
+            bind:checked={rememberMe}
+            disabled={isLoading}
+          />
+          <span class="label-text">Remember me</span>
+        </label>
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-primary w-full group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200"
+        disabled={isLoading}
+      >
+        {#if isLoading}
+          <span class="loading loading-spinner loading-sm">
+            Signing In...
+          </span>
+        {:else}
+          <span class="flex items-center gap-2">Sign In</span>
+        {/if}
+      </button>
+    </form>
+
+    <div class="text-center pt-4">
+      <p class="text-sm text-base-content/60">
+        Don't have an account?
+        <button
+          type="button"
+          class="link link-primary font-medium hover:link-hover"
+          onclick={handleSignupRedirect}
+          disabled={isLoading}
+        >
+          Sign up
+        </button>
+      </p>
+    </div>
   </div>
-</div>
+</AuthLayout>
