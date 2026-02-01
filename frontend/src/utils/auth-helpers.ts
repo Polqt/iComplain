@@ -21,7 +21,7 @@ export function createFormErrors(): FormErrors {
     }
 }
 
-export function handleAuthErorr(error: any): string {
+export function handleAuthError(error: any): string {
     const errorMessages: Record<string, string> = {
         'auth/invalid-email': 'The email address is not valid.',
         'auth/user-disabled': 'The user account has been disabled.',
@@ -66,10 +66,15 @@ export function getUserSession(): UserData | null {
 /**
  * Clear user session data from local storage.
  */
-export function clearUserSession(): void {
-    if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('rememberMe');
-        sessionStorage.removeItem('userId');
+export function clearUserSession(userData: UserData | null): void {
+    if (typeof window === 'undefined') return;
+
+    if (userData) {
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('userId', userData.id);
+    } else {
+        localStorage.removeItem('user');
+        localStorage.removeItem('userId');
     }
 }
 

@@ -17,7 +17,7 @@
         ></div>
       </div>
 
-      <div class="max-w md">
+      <div class="max-w-md">
         <h1 class="text-4xl lg:text-5xl text-base-content leading-tight mb-4">
           {isSignIn ? "The Campus Awaits" : "Start Making a Difference"}
         </h1>

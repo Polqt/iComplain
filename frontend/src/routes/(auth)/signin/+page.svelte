@@ -8,7 +8,7 @@
   } from "../../../utils/validations.ts";
   import {
     getRememberEmail,
-    handleAuthErorr,
+    handleAuthError,
     handleRememberMe,
   } from "../../../utils/auth-helpers.ts";
 
@@ -52,7 +52,7 @@
       await new Promise((resolve) => setTimeout(resolve, 1000));
       goto("/student/dashboard");
     } catch (error) {
-      generalError = handleAuthErorr(error);
+      generalError = handleAuthError(error);
     } finally {
       isLoading = false;
     }
