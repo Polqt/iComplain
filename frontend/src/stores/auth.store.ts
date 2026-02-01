@@ -112,7 +112,7 @@ function createAuthStore(): AuthStore {
         updateUser: (updates: Partial<User>) => {
             update(state => ({
                 ...state,
-                usesr: state.user ? { ...state.user, ...updates } : null
+                user: state.user ? { ...state.user, ...updates } : null
             }));
         }
     }
