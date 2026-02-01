@@ -1,10 +1,14 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import Header from "./Header.svelte";
 
   $: isSignIn = $page.url.pathname.includes("/signin");
 </script>
 
 <div class="min-h-screen flex flex-col lg:flex-row">
+  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <Header />
+  </div>
   <div
     class="relative lg:w-1/2 p-8 lg:p-12 flex flex-col justify-between overflow-hidden"
   >
