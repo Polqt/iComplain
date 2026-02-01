@@ -5,7 +5,7 @@
   import Header from "../components/layout/Header.svelte";
 
   function handleGetStarted() {
-    goto("/login");
+    goto("/signin");
   }
 
   function handleLearnMore() {

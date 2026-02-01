@@ -31,7 +31,6 @@
       iComplain
     </button>
 
-    <!-- Desktop Navigation -->
     <nav class="hidden md:flex items-center gap-1">
       <a
         href="/about"
@@ -42,16 +41,15 @@
         >About</a
       >
       <a
-        href="/login"
+        href="/signin"
         class="px-3 py-2 text-sm font-medium transition-colors rounded-lg
-            {isActivePath('/login')
+            {isActivePath('/signin')
           ? 'bg-base-200 text-base-content'
           : 'text-base-content/60 hover:text-base-content hover:bg-base-200/50'}"
         >Sign In</a
       >
     </nav>
 
-    <!-- Mobile Menu Button -->
     <button
       type="button"
       aria-label="Toggle menu"
@@ -62,7 +60,6 @@
     </button>
   </div>
 
-  <!-- Mobile Navigation Menu -->
   {#if menuOpen}
     <div class="md:hidden mt-4 pb-4 border-t border-base-300 pt-4">
       <nav class="flex flex-col gap-2">
@@ -76,10 +73,10 @@
           >About</a
         >
         <a
-          href="/login"
+          href="/signin"
           on:click={closeMenu}
           class="px-3 py-2 text-sm font-medium transition-colors rounded-lg
-              {isActivePath('/login')
+              {isActivePath('/signin')
             ? 'bg-base-200 text-base-content'
             : 'text-base-content/60 hover:text-base-content hover:bg-base-200/50'}"
           >Sign In</a
