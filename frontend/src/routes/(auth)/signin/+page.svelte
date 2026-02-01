@@ -1,8 +1,8 @@
 <script>
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
-  import Footer from "../../components/layout/Footer.svelte";
-  import Header from "../../components/layout/Header.svelte";
+  import Footer from "../../../components/layout/Footer.svelte";
+  import Header from "../../../components/layout/Header.svelte";
 
   let email = "";
   let password = "";

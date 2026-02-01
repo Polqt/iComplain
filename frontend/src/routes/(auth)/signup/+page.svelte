@@ -1,8 +1,7 @@
 <script>
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
-  import Footer from "../../components/layout/Footer.svelte";
-  import Header from "../../components/layout/Header.svelte";
+  import Header from "../../../components/layout/Header.svelte";
 
   let email = "";
   let password = "";
@@ -10,20 +9,10 @@
   let isLoading = false;
 
   async function handleSignup() {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
-    isLoading = true;
     try {
       // TODO: Implement actual signup logic
-      console.log("Signup attempt:", { email, password });
-      // For now, just redirect to login
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      goto("/login");
+      goto("/signin");
     } catch (error) {
-      console.error("Signup error:", error);
       alert("Signup failed. Please try again.");
     } finally {
       isLoading = false;
@@ -31,7 +20,7 @@
   }
 
   function handleLoginRedirect() {
-    goto("/login");
+    goto("/signin");
   }
 </script>
 
@@ -40,15 +29,21 @@
     <Header />
   </div>
 
-  <main class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center py-12 sm:py-16">
+  <main
+    class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center py-12 sm:py-16"
+  >
     <div class="w-full max-w-md">
       <div class="card bg-base-100 shadow-xl border border-base-300">
         <div class="card-body p-6 sm:p-8">
           <div class="text-center mb-6">
-            <p class="badge badge-ghost text-xs font-semibold tracking-widest uppercase mb-4">
+            <p
+              class="badge badge-ghost text-xs font-semibold tracking-widest uppercase mb-4"
+            >
               Create Account
             </p>
-            <h1 class="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">
+            <h1
+              class="text-2xl sm:text-3xl font-semibold text-base-content leading-tight"
+            >
               Join iComplain
             </h1>
             <p class="text-sm sm:text-base text-base-content/60 mt-2">
@@ -90,7 +85,9 @@
 
             <div class="form-control w-full">
               <label class="label" for="confirmPassword">
-                <span class="label-text text-base font-medium">Confirm Password</span>
+                <span class="label-text text-base font-medium"
+                  >Confirm Password</span
+                >
               </label>
               <input
                 id="confirmPassword"
@@ -115,12 +112,6 @@
               {:else}
                 <span class="flex items-center justify-center gap-2">
                   Create Account
-                  <Icon
-                    icon="lucide:user-plus"
-                    width="20"
-                    height="20"
-                    class="transition-transform group-hover:translate-x-1 duration-300"
-                  />
                 </span>
               {/if}
             </button>
@@ -144,16 +135,12 @@
 
           <div class="text-center mt-6">
             <p class="text-xs text-base-content/45">
-              By creating an account, you agree to our Terms of Service and Privacy Policy.
+              By creating an account, you agree to our Terms of Service and
+              Privacy Policy.
             </p>
           </div>
         </div>
       </div>
     </div>
   </main>
-
-  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-auto">
-    <div class="border-t border-base-content/10"></div>
-    <Footer />
-  </div>
 </div>
