@@ -3,10 +3,12 @@ from django.urls import path
 from ninja import NinjaAPI
 
 from apps.tickets.views import login_user, logout_user, router as tickets_router
+from apps.notifications.views import router as notifications_router
 
 api = NinjaAPI()
 
 api.add_router("tickets/", tickets_router)
+api.add_router("notifications/", notifications_router)
 # api.add_router("/user/", user_router)
 
 urlpatterns = [
