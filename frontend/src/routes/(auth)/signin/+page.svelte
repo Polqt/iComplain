@@ -50,7 +50,7 @@
       handleRememberMe(rememberMe, email);
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      goto("/student/dashboard");
+      goto("/dashboard");
     } catch (error) {
       generalError = handleAuthError(error);
     } finally {
