@@ -69,13 +69,9 @@ export function getUserSession(): UserData | null {
 export function clearUserSession(userData: UserData | null): void {
     if (typeof window === 'undefined') return;
 
-    if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('userId', userData.id);
-    } else {
-        localStorage.removeItem('user');
-        localStorage.removeItem('userId');
-    }
+    localStorage.removeItem("rememberMe");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userId");
 }
 
 /**
