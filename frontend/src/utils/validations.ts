@@ -117,13 +117,13 @@ export function validateField(
             return isValidEmail(sanitized);
         case 'password':
             return validatePassword(sanitized);
-        case 'confirmPassowrd':
+        case 'confirmPassword':
             return validatePasswordMatch(option.password || '', sanitized);
         default:
             if (!sanitized) {
                 return {
                     valid: false,
-                    message: `{fieldName} is required.`,
+                    message: `${fieldName} is required.`,
                 }
             }
             return {
