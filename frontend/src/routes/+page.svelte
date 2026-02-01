@@ -13,12 +13,14 @@
   }
 </script>
 
-<div class="w-full flex flex-col items-center bg-base-100 min-h-screen">
+<div class="flex flex-col items-center bg-base-100 h-screen overflow-hidden">
   <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
     <Header />
   </div>
 
-  <section class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-12 sm:pb-16 md:pb-20">
+  <section
+    class="w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-12 sm:pb-16 md:pb-20"
+  >
     <div class="flex flex-col gap-2 sm:gap-3 mb-8 sm:mb-10">
       <h1
         class="text-3xl sm:text-4xl md:text-5xl font-black text-base-content leading-none tracking-tight"
@@ -93,13 +95,15 @@
           ></span>
         </span>.
       </p>
-      <p class="text-sm sm:text-base text-base-content/60 leading-relaxed max-w-2xl">
+      <p
+        class="text-sm sm:text-base text-base-content/60 leading-relaxed max-w-2xl"
+      >
         Report issues instantly, track progress in real-time, and ensure every
         concern gets the attention it deserves.
       </p>
     </div>
 
-    <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
+    <div class="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
       <button
         class="btn btn-primary btn-md sm:btn-lg group hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-200 w-full sm:w-auto"
         onclick={handleGetStarted}
