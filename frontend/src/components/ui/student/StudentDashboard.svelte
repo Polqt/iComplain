@@ -1,1 +1,3 @@
-<h1>Hi</h1>
+<script lang="ts">
+  import StudentLayout from "../../layout/StudentLayout.svelte";
+</script>

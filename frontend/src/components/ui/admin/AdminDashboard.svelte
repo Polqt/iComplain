@@ -1,1 +1,4 @@
-<h1>Hello</h1>
+<script lang="ts">
+  import AdminLayout from "../../layout/AdminLayout.svelte";
+
+</script>
