@@ -18,20 +18,26 @@
   onMount(() => {
     window.addEventListener("keydown", handleKeyDown);
   });
+
+  const navigation = [
+    {
+      name: "Dashboard",
+      icon: "mdi:view-dashboard-outline",
+      href: "/dashboard",
+    },
+    { name: "Reports", icon: "mdi:file-document-outline", href: "/reports" },
+    { name: "Settings", icon: "mdi:cog-outline", href: "/settings" },
+  ];
 </script>
 
-<div class="min-h-screen flex flex-col w-full">
+<div class="min-h-screen flex flex-col w-full bg-gray-50">
   <aside>
     <div class="drawer lg:drawer-open">
-      <input id="my-drawer-4" type="checkbox" class="drawer-toggle" />
+      <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content">
-        <nav class="navbar w-full border-b">
-          <label
-            for="my-drawer-4"
-            aria-label="open sidebar"   
-            class="btn btn-square btn-ghost"
-          >
-            <Icon icon="lucide:sidebar-open"  width="24" height="24" />
+        <nav class="navbar w-full border-b border-gray-400">
+          <label for="my-drawer-3" class="btn btn-square btn-ghost lg:hidden">
+            <Icon icon="lucide:sidebar-open" width="24" height="24" />
           </label>
           {#if showModal}
             <div
@@ -45,62 +51,102 @@
                   on:click={closeModal}
                   aria-label="Close"
                 >
-                  ✕
+                  <Icon icon="lucide:x" width="20" height="20" />
                 </button>
                 <h2 class="text-xl font-bold mb-4">Search</h2>
                 <input
                   type="search"
-                  class="input input-bordered w-full"
+                  class="input w-full"
                   placeholder="Type to search..."
                 />
               </div>
             </div>
           {/if}
-          <div class="px-4">
-            <div class="flex flex-row justify-between items-center w-full">
-              <label class="input rounded-lg">
-                <svg
-                  class="h-[1em] opacity-50"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
+          <div class="px-4 flex justify-between w-full">
+            <div
+              class="flex flex-row justify-between items-center w-full gap-4"
+            >
+              <div class="flex-1">
+                <label
+                  class="flex items-center gap-2 bg-white rounded-lg shadow px-4 py-2 w-full"
                 >
-                  <g
-                    stroke-linejoin="round"
-                    stroke-linecap="round"
-                    stroke-width="2.5"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.3-4.3"></path>
-                  </g>
-                </svg>
-                <input
-                  type="search"
-                  required
-                  placeholder="Start searching here..."
+                  <Icon
+                    icon="lucide:search"
+                    width="24"
+                    height="24"
+                    class="text-base-content/50"
+                  />
+                  <input
+                    type="search"
+                    required
+                    placeholder="Start searching here..."
+                    class="flex-1 bg-transparent outline-none border-none focus:ring-0"
+                  />
+                  <kbd class="kbd">⌘ K</kbd>
+                </label>
+              </div>
+
+              <div
+                class="flex items-center gap-2 bg-white rounded-lg shadow px-3 py-2"
+              >
+                <button
+                  aria-label="moon"
+                  type="button"
+                  class="btn btn-ghost btn-sm rounded-full"
+                >
+                  <Icon icon="lucide:moon" width="20" height="20" />
+                </button>
+                <button
+                  aria-label="sun"
+                  type="button"
+                  class="btn btn-ghost btn-sm rounded-full"
+                >
+                  <Icon icon="lucide:sun" width="20" height="20" />
+                </button>
+              </div>
+
+              <div
+                class="flex items-center gap-3 bg-white rounded-lg shadow px-4 py-2 min-w-fit"
+              >
+                <Icon
+                  icon="solar:calendar-line-duotone"
+                  width="20"
+                  height="20"
                 />
-                <kbd class="kbd">⌘ K</kbd>
-              </label>
+                <span class="text-base font-medium">15 Jan 2025</span>
+                <span class="mx-1 text-gray-300">|</span>
+                <Icon icon="lucide:bell" width="20" height="20" />
+                <div class="avatar">
+                  <div class="w-8 h-8 ml-2 rounded-full overflow-hidden">
+                    <img
+                      src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
+                      alt="User"
+                      width="32"
+                      height="32"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </nav>
         <div class="p-4">Page Content</div>
       </div>
 
-      <div
-        class="drawer-side is-drawer-close:overflow-visible border-r"
-      >
+      <div class="drawer-side">
         <label
-          for="my-drawer-4"
+          for="my-drawer-3"
           aria-label="close sidebar"
           class="drawer-overlay"
         ></label>
-        <div
-          class="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64"
+        <ul
+          class="menu bg-gray-50 min-h-full w-20 p-4 border-r border-gray-400 flex items-center justify-center-safe"
         >
-          <ul class="menu w-full grow"></ul>
-        </div>
+          <!-- Sidebar content here -->
+          {#each navigation as item}
+            <li></li>
+          {/each}
+        </ul>
       </div>
     </div>
   </aside>
