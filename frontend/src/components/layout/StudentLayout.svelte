@@ -4,6 +4,11 @@
   import { formattedDate } from "../../utils/date.ts";
 
   let showModal: boolean = false;
+  let theme: string = "lofi";
+
+  function toggleTheme() {
+    setTheme(theme === "lofi" ? "night" : "lofi");
+  }
 
   function handleKeyDown(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -16,8 +21,16 @@
     showModal = false;
   }
 
+  function setTheme(newTheme: string) {
+    theme = newTheme;
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", newTheme);
+  }
+
   onMount(() => {
     window.addEventListener("keydown", handleKeyDown);
+    const savedTheme = localStorage.getItem("theme") || "lofi";
+    setTheme(savedTheme);
   });
 
   const items = [
@@ -38,7 +51,7 @@
   };
 </script>
 
-<div class="min-h-screen flex flex-col w-full bg-gray-50">
+<div class="min-h-screen flex flex-col w-full bg-base-100 dark:bg-base-300 ">
   <aside class="h-screen">
     <div class="drawer lg:drawer-open h-screen">
       <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
@@ -76,7 +89,7 @@
             >
               <div class="flex-1">
                 <label
-                  class="flex items-center gap-2 bg-white rounded-lg shadow px-4 py-2 w-full"
+                  class="flex items-center gap-2 bg-base-100 dark:bg-base-300 rounded-lg shadow px-4 py-2 w-full"
                 >
                   <Icon
                     icon="lucide:search"
@@ -95,27 +108,31 @@
               </div>
 
               <div
-                class="flex items-center gap-2 bg-white rounded-lg shadow px-3 py-2"
+                class="flex items-center gap-2 bg-base-100 dark:bg-base-300 rounded-lg shadow px-3 py-2"
               >
                 <button
-                  aria-label="moon"
+                  aria-label="light-theme"
                   type="button"
                   class="btn btn-ghost btn-sm rounded-full"
+                  on:click={() => setTheme("lofi")}
+                  disabled={theme === "lofi"}
                 >
-                  <Icon icon="lucide:moon" width="20" height="20" />
+                  <Icon icon="lucide:sun" width="20" height="20" />
                 </button>
                 <span class="text-gray-300">|</span>
                 <button
-                  aria-label="sun"
+                  aria-label="dark-theme"
                   type="button"
                   class="btn btn-ghost btn-sm rounded-full"
+                  on:click={() => setTheme("night")}
+                  disabled={theme === "night"}
                 >
-                  <Icon icon="lucide:sun" width="20" height="20" />
+                  <Icon icon="lucide:moon" width="20" height="20" />
                 </button>
               </div>
 
               <div
-                class="flex items-center gap-3 bg-white rounded-lg shadow px-4 py-2 min-w-fit"
+                class="flex items-center gap-3 bg-base-100 dark:bg-base-300 rounded-lg shadow px-4 py-2 min-w-fit"
               >
                 <Icon
                   icon="solar:calendar-line-duotone"
@@ -139,7 +156,9 @@
             </div>
           </div>
         </nav>
-        <div class="p-4">Page Content</div>
+        <div class="p-4">
+          <slot />
+        </div>
       </div>
 
       <div class="drawer-side p-2 mx-2 lg:overflow-visible lg:relative">
@@ -149,7 +168,7 @@
           class="drawer-overlay"
         ></label>
         <ul
-          class="menu h-full bg-white shadow rounded-lg w-16 flex flex-col items-center gap-2"
+          class="menu h-full bg-base-100 dark:bg-base-300 shadow rounded-lg w-16 flex flex-col items-center gap-2"
         >
           {#each items as item}
             <li>
