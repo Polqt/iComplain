@@ -142,7 +142,7 @@
         <div class="p-4">Page Content</div>
       </div>
 
-      <div class="drawer-side px-2 py-2 mx-2">
+      <div class="drawer-side p-2 mx-2 lg:overflow-visible lg:relative">
         <label
           for="my-drawer-3"
           aria-label="close sidebar"
@@ -155,7 +155,8 @@
             <li>
               <a
                 href={item.href}
-                class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition"
+                class="tooltip tooltip-right flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition"
+                data-tip={item.name}
               >
                 <Icon icon={item.icon} width="28" height="28" />
               </a>
@@ -164,7 +165,8 @@
           <li class="mt-auto">
             <a
               href={profileItem.href}
-              class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition"
+              class="tooltip tooltip-right flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition"
+              data-tip={profileItem.name}
             >
               <Icon icon={profileItem.icon} width="28" height="28" />
             </a>
