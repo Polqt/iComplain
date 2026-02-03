@@ -171,13 +171,19 @@
               class="sm:w-5 sm:h-5"
             />
             <div class="avatar">
-              <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden">
+              <div
+                class="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden dropdown dropdown-center"
+              >
                 <img
                   src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
                   alt="User"
                   width="32"
                   height="32"
                 />
+                <ul
+                  tabindex="-1"
+                  class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
+                ></ul>
               </div>
             </div>
           </div>
@@ -189,7 +195,7 @@
     </div>
 
     <div
-      class="drawer-side z-40 overflow-visible lg:p-2 lg:mx-2 lg:overflow-visible lg:relative sm:p-0 sm:mx-0"
+      class="drawer-side z-40 overflow-visible lg:p-2 lg:mx-2 lg:overflow-visible lg:sticky lg:top-0 lg:h-screen sm:p-0 sm:mx-0"
     >
       <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"
       ></label>
