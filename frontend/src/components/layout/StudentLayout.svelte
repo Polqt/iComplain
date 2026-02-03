@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
+  import { formattedDate } from "../../utils/date.ts";
 
   let showModal: boolean = false;
 
@@ -19,23 +20,30 @@
     window.addEventListener("keydown", handleKeyDown);
   });
 
-  const navigation = [
+  const items = [
     {
-      name: "Dashboard",
-      icon: "mdi:view-dashboard-outline",
-      href: "/dashboard",
+      name: "Home",
+      icon: "lucide:home",
+      href: "/student/dashboard",
     },
-    { name: "Reports", icon: "mdi:file-document-outline", href: "/reports" },
-    { name: "Settings", icon: "mdi:cog-outline", href: "/settings" },
+    { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
+    { name: "Notifications", icon: "lucide:bell", href: "/notifications" },
+    { name: "History", icon: "lucide:clock", href: "/history" },
   ];
+
+  const profileItem = {
+    name: "Profile",
+    icon: "lucide:user-circle",
+    href: "/profile",
+  };
 </script>
 
 <div class="min-h-screen flex flex-col w-full bg-gray-50">
-  <aside>
-    <div class="drawer lg:drawer-open">
+  <aside class="h-screen">
+    <div class="drawer lg:drawer-open h-screen">
       <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content">
-        <nav class="navbar w-full border-b border-gray-400">
+        <nav class="navbar w-full">
           <label for="my-drawer-3" class="btn btn-square btn-ghost lg:hidden">
             <Icon icon="lucide:sidebar-open" width="24" height="24" />
           </label>
@@ -51,7 +59,7 @@
                   on:click={closeModal}
                   aria-label="Close"
                 >
-                  <Icon icon="lucide:x" width="20" height="20" />
+                  <Icon icon="lucide:x" width="16" height="16" />
                 </button>
                 <h2 class="text-xl font-bold mb-4">Search</h2>
                 <input
@@ -82,7 +90,7 @@
                     placeholder="Start searching here..."
                     class="flex-1 bg-transparent outline-none border-none focus:ring-0"
                   />
-                  <kbd class="kbd">⌘ K</kbd>
+                  <kbd class="kbd sm:kbd-xs lg:kbd-lg md:kbd-md">⌘ K</kbd>
                 </label>
               </div>
 
@@ -96,6 +104,7 @@
                 >
                   <Icon icon="lucide:moon" width="20" height="20" />
                 </button>
+                <span class="text-gray-300">|</span>
                 <button
                   aria-label="sun"
                   type="button"
@@ -113,7 +122,7 @@
                   width="20"
                   height="20"
                 />
-                <span class="text-base font-medium">15 Jan 2025</span>
+                <span class="text-base font-medium">{formattedDate}</span>
                 <span class="mx-1 text-gray-300">|</span>
                 <Icon icon="lucide:bell" width="20" height="20" />
                 <div class="avatar">
@@ -133,19 +142,33 @@
         <div class="p-4">Page Content</div>
       </div>
 
-      <div class="drawer-side">
+      <div class="drawer-side px-2 py-2 mx-2">
         <label
           for="my-drawer-3"
           aria-label="close sidebar"
           class="drawer-overlay"
         ></label>
         <ul
-          class="menu bg-gray-50 min-h-full w-20 p-4 border-r border-gray-400 flex items-center justify-center-safe"
+          class="menu h-full bg-white shadow rounded-lg w-16 flex flex-col items-center gap-2"
         >
-          <!-- Sidebar content here -->
-          {#each navigation as item}
-            <li></li>
+          {#each items as item}
+            <li>
+              <a
+                href={item.href}
+                class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition"
+              >
+                <Icon icon={item.icon} width="28" height="28" />
+              </a>
+            </li>
           {/each}
+          <li class="mt-auto">
+            <a
+              href={profileItem.href}
+              class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition"
+            >
+              <Icon icon={profileItem.icon} width="28" height="28" />
+            </a>
+          </li>
         </ul>
       </div>
     </div>
