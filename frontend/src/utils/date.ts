@@ -10,6 +10,16 @@ function formatDateToCustomString(date: Date): string {
     return `${day} ${month} ${year}`;
 }
 
+function formatMobileDate(date: Date): string {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const day = date.getDate();
+
+    const month = months[date.getMonth()];
+
+    return `${month} ${day}`;
+}
 
 const currentDate = new Date();
 export const formattedDate = formatDateToCustomString(currentDate);
+export const mobileFormattedDate = formatMobileDate(currentDate);
