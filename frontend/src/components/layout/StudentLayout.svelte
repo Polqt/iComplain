@@ -6,10 +6,6 @@
   let showModal: boolean = false;
   let theme: string = "lofi";
 
-  function toggleTheme() {
-    setTheme(theme === "lofi" ? "night" : "lofi");
-  }
-
   function handleKeyDown(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
       event.preventDefault();
@@ -51,7 +47,7 @@
   };
 </script>
 
-<div class="min-h-screen flex flex-col w-full bg-base-100 dark:bg-base-300 ">
+<div class="min-h-screen flex flex-col w-full bg-base-300 dark:bg-base-300">
   <aside class="h-screen">
     <div class="drawer lg:drawer-open h-screen">
       <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
@@ -89,7 +85,7 @@
             >
               <div class="flex-1">
                 <label
-                  class="flex items-center gap-2 bg-base-100 dark:bg-base-300 rounded-lg shadow px-4 py-2 w-full"
+                  class="flex items-center gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-4 py-2 w-full"
                 >
                   <Icon
                     icon="lucide:search"
@@ -108,7 +104,7 @@
               </div>
 
               <div
-                class="flex items-center gap-2 bg-base-100 dark:bg-base-300 rounded-lg shadow px-3 py-2"
+                class="flex items-center gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-3 py-2"
               >
                 <button
                   aria-label="light-theme"
@@ -132,7 +128,7 @@
               </div>
 
               <div
-                class="flex items-center gap-3 bg-base-100 dark:bg-base-300 rounded-lg shadow px-4 py-2 min-w-fit"
+                class="flex items-center gap-3 bg-base-100 dark:bg-base-100 rounded-lg shadow px-4 py-2 min-w-fit"
               >
                 <Icon
                   icon="solar:calendar-line-duotone"
@@ -168,7 +164,7 @@
           class="drawer-overlay"
         ></label>
         <ul
-          class="menu h-full bg-base-100 dark:bg-base-300 shadow rounded-lg w-16 flex flex-col items-center gap-2"
+          class="menu h-full bg-base-100 dark:bg-base-100 shadow rounded-lg w-16 flex flex-col items-center gap-2"
         >
           {#each items as item}
             <li>
