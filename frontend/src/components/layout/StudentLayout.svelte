@@ -4,6 +4,7 @@
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
 
   let showModal: boolean = false;
+  let theme: string = "lofi";
   let isMobile: boolean = false;
 
   function handleKeyDown(event: KeyboardEvent) {
@@ -17,12 +18,20 @@
     showModal = false;
   }
 
+  function setTheme(newTheme: string) {
+    theme = newTheme;
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", newTheme);
+  }
+
   function checkMobile() {
     isMobile = window.innerWidth < 768;
   }
 
   onMount(() => {
     window.addEventListener("keydown", handleKeyDown);
+    const savedTheme = localStorage.getItem("theme") || "lofi";
+    setTheme(savedTheme);
     window.addEventListener("resize", checkMobile);
     checkMobile();
 
@@ -50,16 +59,15 @@
   };
 </script>
 
-<div class="min-h-screen w-full bg-gray-50">
+<div class="min-h-screen w-full bg-base-300 dark:bg-base-300">
   <div class="drawer lg:drawer-open">
     <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
-    
-    <!--Main na di-->
     <div class="drawer-content flex flex-col w-full">
-      <!--Nav-->
       <nav class="navbar w-full px-2 sm:px-4 py-2">
-        <!--Mobile -->
-        <label for="my-drawer-3" class="btn btn-square btn-ghost lg:hidden flex-shrink-0">
+        <label
+          for="my-drawer-3"
+          class="btn btn-square btn-ghost lg:hidden shrink-0"
+        >
           <Icon icon="lucide:menu" width="24" height="24" />
         </label>
 
@@ -87,18 +95,18 @@
           </div>
         {/if}
 
-        <!--Navbar content wrapz-->
-        <div class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden">
-          <!--Search made respo-->
+        <div
+          class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden"
+        >
           <div class="flex-1 min-w-0">
             <label
-              class="flex items-center gap-2 bg-white rounded-lg shadow px-2 sm:px-4 py-2 w-full"
+              class="flex items-center gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-4 py-2 w-full"
             >
               <Icon
                 icon="lucide:search"
                 width="20"
                 height="20"
-                class="text-base-content/50 flex-shrink-0"
+                class="text-base-content/50 shrink-0"
               />
               <input
                 type="search"
@@ -106,45 +114,48 @@
                 placeholder={isMobile ? "Search..." : "Start searching here..."}
                 class="flex-1 min-w-0 bg-transparent outline-none border-none focus:ring-0 text-sm sm:text-base"
               />
-              <!-- Hide kbd on mobile -->
-              <kbd class="kbd kbd-sm hidden sm:inline-flex">⌘ K</kbd>
+              <kbd class="kbd kbd-sm hidden sm:inline-flex lg:kbd-md">⌘ K</kbd>
             </label>
           </div>
 
-          <!--L&D mode, will display only 1 icon if mobile-->
           <div
-            class="flex items-center gap-1 sm:gap-2 bg-white rounded-lg shadow px-2 sm:px-3 py-2 flex-shrink-0"
+            class="flex items-center gap-1 sm:gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-3 py-2 shrink-0"
           >
             <button
-              aria-label="Toggle theme"
+              aria-label="Light Theme"
               type="button"
               class="btn btn-ghost btn-xs sm:btn-sm rounded-full"
-            >
-              <Icon icon="lucide:moon" width="18" height="18" class="sm:w-5 sm:h-5" />
-            </button>
-            <!-- Hide separator and sun icon on mobile -->
-            <span class="text-gray-300 hidden sm:inline">|</span>
-            <button
-              aria-label="Light mode"
-              type="button"
-              class="btn btn-ghost btn-xs sm:btn-sm rounded-full hidden sm:flex"
+              on:click={() => setTheme("lofi")}
+              disabled={theme === "lofi"}
             >
               <Icon icon="lucide:sun" width="20" height="20" />
             </button>
+            <span class="text-gray-300 hidden sm:inline">|</span>
+            <button
+              aria-label="Dark Theme"
+              type="button"
+              class="btn btn-ghost btn-xs sm:btn-sm rounded-full hidden sm:flex"
+              on:click={() => setTheme("night")}
+              disabled={theme === "night"}
+            >
+              <Icon
+                icon="lucide:moon"
+                width="18"
+                height="18"
+                class="sm:w-5 sm:h-5"
+              />
+            </button>
           </div>
 
-          <!--Profile-->
           <div
-            class="flex items-center gap-1 sm:gap-3 bg-white rounded-lg shadow px-2 sm:px-4 py-2 flex-shrink-0"
+            class="flex items-center gap-1 sm:gap-3 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-4 py-2 shrink-0"
           >
-            <!--Calender icon (hidden if mobile view)-->
             <Icon
               icon="solar:calendar-line-duotone"
               width="18"
               height="18"
               class="hidden xs:block sm:w-5 sm:h-5"
             />
-            <!--Date -->
             <span class="text-xs sm:text-base font-medium whitespace-nowrap">
               {#if isMobile}
                 {mobileFormattedDate}
@@ -152,11 +163,13 @@
                 {formattedDate}
               {/if}
             </span>
-            <!--Separator-->
             <span class="mx-1 text-gray-300 hidden sm:inline">|</span>
-            <!--Bell icon-->
-            <Icon icon="lucide:bell" width="18" height="18" class="sm:w-5 sm:h-5" />
-            <!--Avatar-->
+            <Icon
+              icon="lucide:bell"
+              width="18"
+              height="18"
+              class="sm:w-5 sm:h-5"
+            />
             <div class="avatar">
               <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden">
                 <img
@@ -170,24 +183,19 @@
           </div>
         </div>
       </nav>
-
-      <!--Content-->
       <main class="flex-1 p-2 sm:p-4 w-full">
         <slot />
       </main>
     </div>
 
-    <!--Sidebar-->
-    <div class="drawer-side z-40 overflow-visible">
-      <label
-        for="my-drawer-3"
-        aria-label="close sidebar"
-        class="drawer-overlay"
+    <div
+      class="drawer-side z-40 overflow-visible lg:p-2 lg:mx-2 lg:overflow-visible lg:relative sm:p-0 sm:mx-0"
+    >
+      <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"
       ></label>
       <ul
-        class="menu min-h-full bg-white shadow-lg w-20 flex flex-col items-center gap-2 py-4 overflow-visible"
+        class="menu min-h-full bg-base-100 dark:bg-base-100 shadow-lg w-16 lg:rounded-lg sm:rounded-md flex flex-col items-center gap-2 py-4 overflow-visible"
       >
-        
         {#each items as item}
           <li>
             <a

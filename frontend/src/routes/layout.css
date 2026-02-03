@@ -3,7 +3,7 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 @plugin "daisyui" {
-  themes: lofi --default;
+  themes: lofi --default, night --prefersdark;
 }
 
 @layer base {
