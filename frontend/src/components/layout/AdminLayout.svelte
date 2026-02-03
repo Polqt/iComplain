@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
+  import { formattedDate } from "../../utils/date.ts";
 
   let showModal: boolean = false;
 
@@ -113,7 +114,7 @@
                   width="20"
                   height="20"
                 />
-                <span class="text-base font-medium">15 Jan 2025</span>
+                <span class="text-base font-medium">{formattedDate}</span>
                 <span class="mx-1 text-gray-300">|</span>
                 <Icon icon="lucide:bell" width="20" height="20" />
                 <div class="avatar">
