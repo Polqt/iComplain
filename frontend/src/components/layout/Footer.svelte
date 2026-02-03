@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
 </script>
 
-<footer class="footer sm:footer-horizontal text-base-content items-center p-4 sm:p-6">
+<footer class="footer footer-horizontal text-base-content items-center p-4 sm:p-6">
   <aside class="grid-flow-col items-center">
     <p class="text-sm sm:text-base">© {new Date().getFullYear()}. All rights reserved.</p>
   </aside>
