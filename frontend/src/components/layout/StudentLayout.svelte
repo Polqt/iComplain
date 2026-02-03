@@ -188,11 +188,13 @@
       </main>
     </div>
 
-    <div class="drawer-side z-40 overflow-visible">
+    <div
+      class="drawer-side z-40 overflow-visible lg:p-2 lg:mx-2 lg:overflow-visible lg:relative sm:p-0 sm:mx-0"
+    >
       <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"
       ></label>
       <ul
-        class="menu min-h-full bg-base-100 dark:bg-base-100 shadow-lg w-20 flex flex-col items-center gap-2 py-4 overflow-visible"
+        class="menu min-h-full bg-base-100 dark:bg-base-100 shadow-lg w-16 lg:rounded-lg sm:rounded-md flex flex-col items-center gap-2 py-4 overflow-visible"
       >
         {#each items as item}
           <li>
