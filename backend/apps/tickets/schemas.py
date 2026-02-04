@@ -1,5 +1,6 @@
 from datetime import datetime
 from ninja import Schema
+from pydantic import model_validator
 
 
 class TicketSchema(Schema):
@@ -8,7 +9,7 @@ class TicketSchema(Schema):
     description: str
     student: int
     category: int
-    priority: int
+    priority: int # Franz fix this extract the input from foreign key. So if I input 1, then it will target the id of the priority 1 which is low.
     building: str
     room_name: str
     status: str
