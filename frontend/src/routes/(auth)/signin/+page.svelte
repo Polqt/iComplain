@@ -47,7 +47,7 @@
 
     try {
       handleRememberMe(rememberMe, email);
-
+      
       await new Promise((resolve) => setTimeout(resolve, 1000));
       goto("/dashboard");
     } catch (error) {
