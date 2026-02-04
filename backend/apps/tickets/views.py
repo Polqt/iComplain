@@ -43,7 +43,7 @@ def create_ticket(request, ticket: TicketCreateSchema):
         room_name=ticket.room_name,
         status='pending'
     )
-    return ticket
+    return TicketSchema.from_orm(ticket)
 
 @router.put("/{id}", response=TicketSchema)
 def update_ticket(request, id: int, payload: TicketUpdateSchema):
