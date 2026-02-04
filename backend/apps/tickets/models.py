@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
@@ -32,12 +33,6 @@ class TicketPriority(models.Model):
 
 
 class Ticket(models.Model):
-    student = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-
-    )
-
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('in_progress', 'In Progress'),
@@ -50,7 +45,7 @@ class Ticket(models.Model):
     description = models.TextField()
 
     # Foreign Keys for Category and Priority
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tickets')
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='tickets')
     priority = models.ForeignKey(TicketPriority, on_delete=models.PROTECT, related_name='tickets')
 
@@ -64,7 +59,6 @@ class Ticket(models.Model):
     updated_at = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
-        # Fix race condition with transaction atomic
         if not self.ticket_number:
             with transaction.atomic():
                 last_ticket = Ticket.objects.select_for_update().order_by('id').last()
@@ -89,7 +83,7 @@ class Ticket(models.Model):
 #TABLE FOR TICKET COMMENTS
 class TicketComment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     message = models.TextField(max_length=2000)
     created_at = models.DateTimeField(default=timezone.now)
     
@@ -97,7 +91,7 @@ class TicketComment(models.Model):
 # TABLE FOR TICKET ATTACHMENTS    
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     file_path = models.FileField(upload_to='ticket_attachments/')
     file_type = models.CharField(max_length=50)
     uploaded_at = models.DateTimeField(default=timezone.now)
@@ -108,13 +102,13 @@ class TicketStatusHistory(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='status_history')
     old_status = models.CharField(max_length=20)
     new_status = models.CharField(max_length=20)
-    changed_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     changed_at = models.DateTimeField(default=timezone.now)
 
 # TABLE FOR TICKET FEEDBACK
 class TicketFeedback(models.Model):
     ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name='feedback')
-    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     rating = models.PositiveSmallIntegerField()
     comments = models.TextField(null=True, blank=True, max_length=2000)
     created_at = models.DateTimeField(default=timezone.now)
