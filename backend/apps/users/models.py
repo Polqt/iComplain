@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 
 
-
 # Create your models here.
 class CustomUserManager(BaseUserManager): #custom user model since intended to use email and password only
     def create_user(self, email, password=None, **extra_fields):
