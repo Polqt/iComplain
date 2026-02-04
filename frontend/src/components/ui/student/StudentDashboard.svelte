@@ -153,7 +153,7 @@
 </script>
 
 <StudentLayout>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-fullchr">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-black text-base-content">My Reports</h1>
 
