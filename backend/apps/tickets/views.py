@@ -1,38 +1,14 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
 
 from ninja import Router
 from ninja.security import SessionAuth
 
-from .schemas import TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
+from .schemas import TicketCommentCreateSchema, TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
 from .models import Category, Ticket, TicketComment, TicketPriority, TicketFeedback
 
 router = Router(auth=SessionAuth())
-
-def login_user(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            login(request, user)
-            messages.success(request, f'Welcome {username}!')
-            return redirect('ticket_list')
-        else:
-            messages.error(request, 'Invalid username or password.')
-    
-    return render(request, 'tickets/login.html')
-
-
-def logout_user(request):
-    logout(request)
-    messages.success(request, 'You have been logged out!')
-    return redirect('login_user')
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
@@ -40,14 +16,14 @@ def ticket_list(request):
     if request.user.is_staff:
         all_tickets = Ticket.objects.select_related('category', 'priority', 'student').all()
     else:
-        all_tickets = Ticket.objects.select_related('category', 'priority').filter(student=request.user)
+        all_tickets = Ticket.objects.select_related('category', 'priority', 'student').filter(student=request.user)
     
     return all_tickets
     
 
 
 @router.get("/{id}", response=TicketSchema)
-def ticket_detail(id: int):
+def ticket_detail(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
     return ticket
     
@@ -113,13 +89,13 @@ def delete_ticket(request, id: int):
         return {"detail": "You cannot delete tickets that are being processed by admin."}, 400
 
     ticket.delete()
-    return 204
+    return 204, None
 
 # Ticket Comments Views
 
-@router.post("/{id}", response=TicketCommentSchema)
-def create_comment(request, ticket_id: int, payload: TicketCreateSchema):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
+@router.post("/{id}/comments", response=TicketCommentSchema)
+def create_comment(request, id: int, payload: TicketCommentCreateSchema):
+    ticket = get_object_or_404(Ticket, id=id)
 
     if ticket.status == 'closed':
         return {"detail": "Cannot add comments to a closed ticket."}, 400
@@ -135,7 +111,7 @@ def create_comment(request, ticket_id: int, payload: TicketCreateSchema):
 
 
 @router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
-def edit_comment(request, comment_id: int, payload: TicketCommentUpdateSchema):
+def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
     comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
@@ -159,7 +135,7 @@ def delete_comment(request, id: int, comment_id: int):
         return {"detail": "You do not have permission to delete this comment."}, 403
     
     comment.delete()
-    return redirect('ticket_detail', id=id)
+    return redirect('ticket_list')
 
     
 # Ticket Feedback Views
@@ -233,4 +209,4 @@ def delete_feedback(request, id: int, feedback_id: int):
         return {"detail": "Feedback can only be deleted within 24 hours of submission."}, 400
 
     feedback.delete()
-    return redirect('ticket_detail', id=id)
+    return redirect('ticket_list')

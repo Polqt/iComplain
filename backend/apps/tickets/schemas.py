@@ -32,7 +32,6 @@ class TicketUpdateSchema(Schema):
     building: str | None = None
     room_name: str | None = None
     status: str | None = None
-    updated_at: datetime 
     
 
 class TicketAttachmentSchema(Schema):    
@@ -59,7 +58,7 @@ class TicketCommentCreateSchema(Schema):
     
 class TicketCommentUpdateSchema(Schema):
     message: str | None = None
-    updated_at: datetime 
+
 
 #Feedback Schema
 class TicketFeedbackSchema(Schema):
@@ -77,4 +76,3 @@ class TicketFeedbackCreateSchema(Schema):
 class TicketFeedbackUpdateSchema(Schema):
     rating: int | None = None
     comments: str | None = None
-    updated_at: datetime 
