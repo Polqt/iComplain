@@ -1,14 +1,20 @@
 from django.db import models
-from django.contrib.auth.models import User
-
+from django.conf import settings
 
 class Ticket(models.Model):
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+
+    )
+
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('in_progress', 'In Progress'),
         ('resolved', 'Resolved'),
         ('closed', 'Closed'),
     ]
+    
     
     PRIORITY_CHOICES = [
         ('low', 'Low'),
@@ -33,7 +39,6 @@ class Ticket(models.Model):
     room_name = models.CharField(max_length=100, default='Unknown') # CREATE A SEPARATE TABLE FOR BUILDINGS AND ROOMS
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    student = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
