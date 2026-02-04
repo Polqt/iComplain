@@ -2,6 +2,9 @@ annotated-types==0.7.0
 asgiref==3.11.0
 Django==6.0.1
 django-ninja==1.5.3
+dnspython==2.8.0
+email-validator==2.3.0
+idna==3.11
 psycopg2-binary==2.9.11
 pydantic==2.12.5
 pydantic_core==2.41.5
