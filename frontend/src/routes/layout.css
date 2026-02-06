@@ -3,7 +3,7 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 @plugin "daisyui" {
-  themes: lofi --default, night --prefersdark;
+  themes: lofi --default, night, cyberpunk, synthwave, dracula, cmyk, autumn, business, acid, black, luxury, light, dark, cupcake;
 }
 
 @layer base {

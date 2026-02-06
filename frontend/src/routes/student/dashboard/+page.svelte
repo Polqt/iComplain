@@ -12,7 +12,7 @@
     date: string;
     comments: number;
     links: number;
-    attachments: string; // e.g. "2/3"
+    attachments: string;
   }
 
   interface Column {
@@ -153,9 +153,9 @@
 </script>
 
 <StudentLayout>
-  <div class="flex flex-col h-full">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-black text-base-content">My Reports</h1>
+  <div class="flex flex-col h-[calc(100vh-8rem)]">
+    <div class="flex items-center justify-between mb-6 shrink-0">
+      <h1 class="text-2xl font-black text-base-content">Ticket Status Board</h1>
 
       <div class="flex items-center gap-2 bg-base-200 p-1 rounded-lg">
         <button
@@ -176,10 +176,14 @@
     </div>
 
     {#if viewMode === "grid"}
-      <div class="flex gap-6 pb-4 flex-1">
+      <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
         {#each columns as column}
-          <div class="flex flex-col flex-1 max-w-sm w-full bg-base-100 dark:bg-base-100 shadow p-6 rounded-lg">
-            <div class="flex items-center justify-between mb-4">
+          <div
+            class="flex flex-col shrink-0 w-80 bg-base-100 dark:bg-base-100 shadow rounded-lg h-full"
+          >
+            <div
+              class="flex items-center justify-between p-4 border-b border-base-content/5 shrink-0"
+            >
               <div class="flex items-center gap-2">
                 <div class="{column.dotColor} w-2 h-2 rounded-full"></div>
                 <h2 class="font-semibold text-sm {column.color}">
@@ -191,18 +195,15 @@
               </div>
               <div class="flex items-center gap-1">
                 <button class="btn btn-ghost btn-xs btn-circle">
-                  <Icon icon="mdi:plus" width="16" height="16" />
-                </button>
-                <button class="btn btn-ghost btn-xs btn-circle">
                   <Icon icon="mdi:dots-horizontal" width="16" height="16" />
                 </button>
               </div>
             </div>
 
-            <div class="flex flex-col gap-3 flex-1 ">
+            <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1">
               {#each column.reports as report}
                 <div
-                  class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5"
+                  class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0"
                 >
                   <div class="card-body p-4">
                     <div class="flex items-center justify-between mb-3">
@@ -250,7 +251,6 @@
                       </div>
                     </div>
 
-                    <!-- Date & Priority -->
                     <div class="flex items-center justify-between mb-3">
                       <div
                         class="flex items-center gap-1 text-xs text-base-content/60"
@@ -279,11 +279,11 @@
                           width="14"
                           height="14"
                         />
-                        <span>{report.comments} Comments</span>
+                        <span>{report.comments}</span>
                       </div>
                       <div class="flex items-center gap-1">
                         <Icon icon="mdi:link-variant" width="14" height="14" />
-                        <span>{report.links} Links</span>
+                        <span>{report.links}</span>
                       </div>
                       <div class="flex items-center gap-1">
                         <Icon icon="mdi:paperclip" width="14" height="14" />
@@ -298,7 +298,7 @@
         {/each}
       </div>
     {:else}
-      <div class="space-y-2">
+      <div class="flex-1 overflow-y-auto space-y-2 pr-2">
         {#each columns as column}
           {#each column.reports as report}
             <div
