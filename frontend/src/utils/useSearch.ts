@@ -71,3 +71,7 @@ export function saveRecentSearches(searches: string[]): void {
         console.error('Failed to save recent searches:', error);
     }
 }
+
+export function clearRecentSearchesStorage() {
+    localStorage.removeItem('recentSearches');
+}

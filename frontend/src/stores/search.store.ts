@@ -1,9 +1,10 @@
 import { derived, get, writable } from "svelte/store";
 import type { SearchResult, SearchState } from "../types/search.ts";
-import { loadRecentSearches, performSearch, saveRecentSearches } from "../utils/useSearch.ts";
+import { clearRecentSearchesStorage, loadRecentSearches, performSearch, saveRecentSearches } from "../utils/useSearch.ts";
+
 
 export function createSearchStore() {
-    const { subscribe, set, update } = writable<SearchState>({
+    const store = writable<SearchState>({
         query: '',
         results: [],
         recentSearches: [],
@@ -11,7 +12,13 @@ export function createSearchStore() {
         selectedIndex: -1
     });
 
+    const { subscribe, set, update } = store;
+
     let searchTimeout: ReturnType<typeof setTimeout>;
+
+    const selectedResult = derived(store, $state => 
+        $state.results[$state.selectedIndex] || null
+    )
 
     return {
         subscribe,
@@ -49,7 +56,7 @@ export function createSearchStore() {
             set({
                 query: '',
                 results: [],
-                recentSearches: get(searchStore).recentSearches,
+                recentSearches: get(store).recentSearches,
                 isSearching: false,
                 selectedIndex: -1
             })
@@ -71,7 +78,7 @@ export function createSearchStore() {
         },
 
         clearRecentSearches: () => {
-            localStorage.removeItem('recentSearches');
+            clearRecentSearchesStorage();
             update(state => ({ ...state, recentSearches: [] }));
         },
 
@@ -91,10 +98,7 @@ export function createSearchStore() {
             })
         },
 
-        getSelectedResult: (): SearchResult | null => {
-            const state = get(searchStore);
-            return state.results[state.selectedIndex] || null;
-        }
+        getSelectedResult: (): SearchResult | null => get(selectedResult),
     };
 }
 
