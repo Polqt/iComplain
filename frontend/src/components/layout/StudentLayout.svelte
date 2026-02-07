@@ -2,16 +2,15 @@
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
+  import SearchModal from "../ui/SearchModal.svelte";
+  import SearchBar from "../ui/SearchBar.svelte";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
 
-  function handleKeyDown(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-      event.preventDefault();
-      showModal = true;
-    }
+  function openModal() {
+    showModal = true;
   }
 
   function closeModal() {
@@ -29,14 +28,12 @@
   }
 
   onMount(() => {
-    window.addEventListener("keydown", handleKeyDown);
     const savedTheme = localStorage.getItem("theme") || "lofi";
     setTheme(savedTheme);
     window.addEventListener("resize", checkMobile);
     checkMobile();
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", checkMobile);
     };
   });
@@ -48,7 +45,11 @@
       href: "/student/dashboard",
     },
     { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
-    { name: "Notifications", icon: "lucide:bell", href: "/notifications" },
+    {
+      name: "Notifications",
+      icon: "lucide:bell",
+      href: "student/notifications",
+    },
     { name: "History", icon: "lucide:clock", href: "/history" },
   ];
 
@@ -71,52 +72,12 @@
           <Icon icon="lucide:menu" width="24" height="24" />
         </label>
 
-        {#if showModal}
-          <div
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          >
-            <div
-              class="bg-base-100 rounded-lg shadow-lg p-4 sm:p-8 max-w-md w-[90%] sm:w-full relative mx-4"
-            >
-              <button
-                class="absolute top-2 right-2 btn btn-sm btn-ghost"
-                on:click={closeModal}
-                aria-label="Close"
-              >
-                <Icon icon="lucide:x" width="16" height="16" />
-              </button>
-              <h2 class="text-xl font-bold mb-4">Search</h2>
-              <input
-                type="search"
-                class="input w-full"
-                placeholder="Type to search..."
-              />
-            </div>
-          </div>
-        {/if}
+        <SearchModal isOpen={showModal} on:close={closeModal} />
 
         <div
           class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden"
         >
-          <div class="flex-1 min-w-0">
-            <label
-              class="flex items-center gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-4 py-2 w-full"
-            >
-              <Icon
-                icon="lucide:search"
-                width="20"
-                height="20"
-                class="text-base-content/50 shrink-0"
-              />
-              <input
-                type="search"
-                required
-                placeholder={isMobile ? "Search..." : "Start searching here..."}
-                class="flex-1 min-w-0 bg-transparent outline-none border-none focus:ring-0 text-sm sm:text-base"
-              />
-              <kbd class="kbd kbd-sm hidden sm:inline-flex lg:kbd-md">⌘ K</kbd>
-            </label>
-          </div>
+          <SearchBar {isMobile} on:openModal={openModal} />
 
           <div
             class="flex items-center gap-1 sm:gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-3 py-2 shrink-0"
