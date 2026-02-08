@@ -1,13 +1,28 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
-  import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
   import SearchModal from "../ui/SearchModal.svelte";
   import SearchBar from "../ui/SearchBar.svelte";
+  import NotificationBell from "../ui/NotificationBell.svelte";
+  import Profile from "../ui/Profile.svelte";
+  import { goto } from "$app/navigation";
+  import type { Notification } from "../../types/notifications.js";
+  import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
+
+  // TODO: Replace with actual user data from API
+  let user = {
+    name: "Juan Dela Cruz",
+    email: "juan.delacruz@usls.edu.ph",
+    avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
+    role: "Student",
+  };
+
+  let notifications: Notification[] = [];
+  let unreadCount: number = 0;
 
   function openModal() {
     showModal = true;
@@ -27,11 +42,88 @@
     isMobile = window.innerWidth < 768;
   }
 
+  function handleLogout() {
+    localStorage.removeItem("authToken");
+    sessionStorage.clear();
+
+    goto("/signin");
+  }
+
+  function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
+    const { id } = event.detail;
+
+    // Update local state
+    notifications = notifications.map((n) =>
+      n.id === id ? { ...n, read: true } : n,
+    );
+
+    // Recalculate unread count
+    unreadCount = notifications.filter((n) => !n.read).length;
+
+    // TODO: Call API to mark as read
+    // await api.markNotificationAsRead(id);
+  }
+
+  function handleNotificationClick(
+    event: CustomEvent<{ notification: Notification }>,
+  ) {
+    const { notification } = event.detail;
+
+    // Navigate to notification URL if available
+    if (notification.actionUrl) {
+      goto(notification.actionUrl);
+    }
+  }
+
+  function handleViewAllNotifications() {
+    goto("/student/notifications");
+  }
+
   onMount(() => {
     const savedTheme = localStorage.getItem("theme") || "lofi";
     setTheme(savedTheme);
     window.addEventListener("resize", checkMobile);
     checkMobile();
+
+    // TODO: Fetch user data from API
+    // user = await api.getCurrentUser();
+
+    // TODO: Fetch latest notifications from API
+    // const data = await api.getNotifications({ limit: 5 });
+    // notifications = data.notifications;
+    // unreadCount = data.unreadCount;
+
+    notifications = [
+      {
+        id: "1",
+        type: "success",
+        title: "Report Resolved",
+        message: "Your report about the broken AC unit has been resolved.",
+        timestamp: "5 minutes ago",
+        read: false,
+        actionUrl: "/student/reports/1",
+      },
+      {
+        id: "2",
+        type: "info",
+        title: "Report Update",
+        message: "Your leaking faucet report is being reviewed.",
+        timestamp: "2 hours ago",
+        read: false,
+        actionUrl: "/student/reports/2",
+      },
+      {
+        id: "3",
+        type: "warning",
+        title: "Action Required",
+        message: "Your report needs additional information.",
+        timestamp: "1 day ago",
+        read: true,
+        actionUrl: "/student/reports/3",
+      },
+    ];
+
+    unreadCount = notifications.filter((n) => !n.read).length;
 
     return () => {
       window.removeEventListener("resize", checkMobile);
@@ -50,13 +142,36 @@
       icon: "lucide:bell",
       href: "/student/notifications",
     },
-    { name: "History", icon: "lucide:clock", href: "/history" },
+    { name: "History", icon: "lucide:clock", href: "/student/history" },
   ];
 
   const profileItem = {
     name: "Profile",
     icon: "lucide:user-circle",
     href: "/profile",
+  };
+
+  const notificationsConfig = {
+    success: {
+      icon: "lucide:check-circle",
+      bgColor: "bg-success",
+      iconColor: "text-success",
+    },
+    info: {
+      icon: "lucide:info",
+      bgColor: "bg-info",
+      iconColor: "text-info",
+    },
+    warning: {
+      icon: "lucide:alert-circle",
+      bgColor: "bg-warning",
+      iconColor: "text-warning",
+    },
+    error: {
+      icon: "lucide:x-circle",
+      bgColor: "bg-error",
+      iconColor: "text-error",
+    },
   };
 </script>
 
@@ -75,7 +190,7 @@
         <SearchModal isOpen={showModal} on:close={closeModal} />
 
         <div
-          class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden"
+          class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-visible"
         >
           <SearchBar {isMobile} on:openModal={openModal} />
 
@@ -125,28 +240,16 @@
               {/if}
             </span>
             <span class="mx-1 text-gray-300 hidden sm:inline">|</span>
-            <Icon
-              icon="lucide:bell"
-              width="18"
-              height="18"
-              class="sm:w-5 sm:h-5"
+            <NotificationBell
+              {notifications}
+              {unreadCount}
+              {notificationsConfig}
+              on:markAsRead={handleMarkAsRead}
+              on:notificationClick={handleNotificationClick}
+              on:viewAll={handleViewAllNotifications}
             />
-            <div class="avatar">
-              <div
-                class="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden dropdown dropdown-center"
-              >
-                <img
-                  src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
-                  alt="User"
-                  width="32"
-                  height="32"
-                />
-                <ul
-                  tabindex="-1"
-                  class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
-                ></ul>
-              </div>
-            </div>
+
+            <Profile {user} on:logout={handleLogout} />
           </div>
         </div>
       </nav>
