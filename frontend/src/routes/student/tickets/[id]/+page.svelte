@@ -8,12 +8,14 @@
     statusConfig,
     priorityConfig,
     TicketCreateModal,
+    TicketDeleteModal,
   } from "../../../../components/ui/tickets";
 
   // Get ticket ID from URL
   $: ticketId = $page.params.id;
 
   let showEditModal = false;
+  let showDeleteModal = false;
   let formData: Partial<Ticket> = {};
 
   // Mock data - replace with actual API call
@@ -100,6 +102,22 @@
   function closeEditModal() {
     showEditModal = false;
     formData = {};
+  }
+
+  function openDeleteModal() {
+    showDeleteModal = true;
+  }
+
+  function closeDeleteModal() {
+    showDeleteModal = false;
+  }
+
+  function confirmDelete() {
+    if (!ticket) return;
+    // TODO: call delete API when available
+    mockTickets = mockTickets.filter((t) => t.id !== ticket.id);
+    closeDeleteModal();
+    goBack();
   }
 </script>
 
@@ -198,7 +216,7 @@
                 <Icon icon="mdi:pencil-outline" width="18" height="18" />
                 Edit
               </button>
-              <button class="btn btn-error gap-2 w-full sm:w-auto">
+              <button class="btn btn-error gap-2 w-full sm:w-auto" onclick={openDeleteModal}>
                 <Icon icon="mdi:delete-outline" width="18" height="18" />
                 Delete
               </button>
@@ -233,5 +251,11 @@
       );
       closeEditModal();
     }}
+  />
+  <TicketDeleteModal
+    open={showDeleteModal}
+    ticket={ticket ?? null}
+    onclose={closeDeleteModal}
+    onconfirm={confirmDelete}
   />
 </StudentLayout>

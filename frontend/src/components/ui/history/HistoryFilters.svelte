@@ -51,6 +51,20 @@
     >
       Closed
     </button>
+    <button
+      type="button"
+      class="tab {activeFilter === 'commented' ? 'tab-active' : ''}"
+      on:click={() => (activeFilter = "commented")}
+    >
+      Commented
+    </button>
+    <button
+      type="button"
+      class="tab {activeFilter === 'reopened' ? 'tab-active' : ''}"
+      on:click={() => (activeFilter = "reopened")}
+    >
+      Reopened
+    </button>
   </div>
 
   <!-- Sort and Search Controls -->

@@ -57,17 +57,37 @@
   }
 
   function handleSubmit(data: Partial<Ticket>) {
-    if (modalMode === "create") {
-      console.log("Creating ticket:", data);
-    } else if (modalMode === "edit") {
-      console.log("Updating ticket:", data);
+    if (modalMode === "create" && data) {
+      const newTicket: Ticket = {
+        id: `TKT-${String(Date.now()).slice(-6)}`,
+        title: data.title ?? "",
+        description: data.description ?? "",
+        status: data.status ?? "not-started",
+        priority: data.priority ?? "low",
+        assignees: data.assignees ?? [],
+        date:
+          data.date ??
+          new Date().toLocaleDateString("en-US", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+        comments: data.comments ?? 0,
+        links: data.links ?? 0,
+        attachments: data.attachments ?? "0/3",
+      };
+      mockTickets = [...mockTickets, newTicket];
+    } else if (modalMode === "edit" && selectedReport && data) {
+      mockTickets = mockTickets.map((t) =>
+        t.id === selectedReport!.id ? ({ ...t, ...data } as Ticket) : t
+      );
     }
     closeModal();
   }
 
   function handleDelete() {
     if (selectedReport) {
-      console.log("Deleting ticket:", selectedReport.id);
+      mockTickets = mockTickets.filter((t) => t.id !== selectedReport!.id);
     }
     closeModal();
   }
@@ -76,116 +96,107 @@
     goto(`/student/tickets/${reportId}`);
   }
 
-  const columns: Column[] = [
+  const statusToColumnId: Record<string, string> = {
+    "not-started": "pending",
+    "in-research": "in-progress",
+    "on-track": "in-progress",
+    complete: "resolved",
+  };
+
+  const columnConfigs = [
+    { id: "pending", title: "Pending", color: "text-yellow-300", dotColor: "bg-yellow-300" },
+    { id: "in-progress", title: "In Progress", color: "text-info", dotColor: "bg-info" },
+    { id: "resolved", title: "Resolved", color: "text-green-300", dotColor: "bg-green-300" },
+    { id: "closed", title: "Closed", color: "text-gray-300", dotColor: "bg-gray-300" },
+  ];
+
+  let mockTickets: Ticket[] = [
     {
-      id: "pending",
-      title: "Pending",
-      color: "text-yellow-300",
-      dotColor: "bg-yellow-300",
-      reports: [
-        {
-          id: "TKT-001",
-          title: "Broken AC Unit in Room 301",
-          description:
-            "Air conditioning not working properly, temperature control issues...",
-          status: "not-started",
-          priority: "low",
-          assignees: ["JD", "AS"],
-          date: "25 Mar 2023",
-          comments: 5,
-          links: 2,
-          attachments: "3/3",
-        },
-        {
-          id: "TKT-002",
-          title: "Leaking Faucet in Restroom",
-          description: "Water dripping continuously from the main sink...",
-          status: "in-research",
-          priority: "medium",
-          assignees: ["MJ"],
-          date: "28 Mar 2023",
-          comments: 12,
-          links: 1,
-          attachments: "2/3",
-        },
-      ],
+      id: "TKT-001",
+      title: "Broken AC Unit in Room 301",
+      description:
+        "Air conditioning not working properly, temperature control issues...",
+      status: "not-started",
+      priority: "low",
+      assignees: ["JD", "AS"],
+      date: "25 Mar 2023",
+      comments: 5,
+      links: 2,
+      attachments: "3/3",
     },
     {
-      id: "in-progress",
-      title: "In Progress",
-      color: "text-info",
-      dotColor: "bg-info",
-      reports: [
-        {
-          id: "TKT-003",
-          title: "Flickering Hallway Lights",
-          description:
-            "Lights in 3F hallway flickering intermittently during evening hours...",
-          status: "in-research",
-          priority: "high",
-          assignees: ["AS", "JD"],
-          date: "30 Mar 2023",
-          comments: 8,
-          links: 1,
-          attachments: "2/3",
-        },
-        {
-          id: "TKT-004",
-          title: "Broken Projector Screen",
-          description:
-            "Projection screen won't retract properly in lecture hall...",
-          status: "on-track",
-          priority: "low",
-          assignees: ["MJ"],
-          date: "02 Apr 2023",
-          comments: 3,
-          links: 0,
-          attachments: "2/3",
-        },
-      ],
+      id: "TKT-002",
+      title: "Leaking Faucet in Restroom",
+      description: "Water dripping continuously from the main sink...",
+      status: "in-research",
+      priority: "medium",
+      assignees: ["MJ"],
+      date: "28 Mar 2023",
+      comments: 12,
+      links: 1,
+      attachments: "2/3",
     },
     {
-      id: "resolved",
-      title: "Resolved",
-      color: "text-green-300",
-      dotColor: "bg-green-300",
-      reports: [
-        {
-          id: "TKT-005",
-          title: "Door Lock Malfunction",
-          description:
-            "Main entrance lock mechanism was jammed and needed repair...",
-          status: "complete",
-          priority: "high",
-          assignees: ["AS"],
-          date: "07 Apr 2023",
-          comments: 6,
-          links: 0,
-          attachments: "1/3",
-        },
-        {
-          id: "TKT-006",
-          title: "Missing Whiteboard Markers",
-          description:
-            "Classroom 205 needed new dry-erase markers for teaching...",
-          status: "not-started",
-          priority: "low",
-          assignees: ["JD", "MJ"],
-          date: "10 Apr 2023",
-          comments: 4,
-          links: 2,
-          attachments: "0/3",
-        },
-      ],
+      id: "TKT-003",
+      title: "Flickering Hallway Lights",
+      description:
+        "Lights in 3F hallway flickering intermittently during evening hours...",
+      status: "in-research",
+      priority: "high",
+      assignees: ["AS", "JD"],
+      date: "30 Mar 2023",
+      comments: 8,
+      links: 1,
+      attachments: "2/3",
     },
     {
-      id: "closed",
-      title: "Closed",
-      color: "text-gray-300",
-      dotColor: "bg-gray-300",
-      reports: [],
+      id: "TKT-004",
+      title: "Broken Projector Screen",
+      description:
+        "Projection screen won't retract properly in lecture hall...",
+      status: "on-track",
+      priority: "low",
+      assignees: ["MJ"],
+      date: "02 Apr 2023",
+      comments: 3,
+      links: 0,
+      attachments: "2/3",
+    },
+    {
+      id: "TKT-005",
+      title: "Door Lock Malfunction",
+      description:
+        "Main entrance lock mechanism was jammed and needed repair...",
+      status: "complete",
+      priority: "high",
+      assignees: ["AS"],
+      date: "07 Apr 2023",
+      comments: 6,
+      links: 0,
+      attachments: "1/3",
+    },
+    {
+      id: "TKT-006",
+      title: "Missing Whiteboard Markers",
+      description:
+        "Classroom 205 needed new dry-erase markers for teaching...",
+      status: "not-started",
+      priority: "low",
+      assignees: ["JD", "MJ"],
+      date: "10 Apr 2023",
+      comments: 4,
+      links: 2,
+      attachments: "0/3",
     },
   ];
+
+  $: columns: Column[] = columnConfigs.map((config) => ({
+    ...config,
+    reports:
+      config.id === "closed"
+        ? []
+        : mockTickets.filter((t) => statusToColumnId[t.status] === config.id),
+  }));
 </script>
 
 <StudentLayout>

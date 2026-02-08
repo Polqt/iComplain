@@ -4,7 +4,7 @@ export type HistoryStatus = "pending" | "in-progress" | "resolved" | "closed";
 
 export type HistoryPriority = "low" | "medium" | "high";
 
-export type HistoryFilterType = "all" | "created" | "updated" | "resolved" | "closed";
+export type HistoryFilterType = "all" | "created" | "updated" | "resolved" | "closed" | "commented" | "reopened";
 
 export type HistorySortType = "newest" | "oldest";
 

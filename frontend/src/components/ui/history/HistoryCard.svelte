@@ -6,7 +6,35 @@
   export let item: HistoryItem;
   /** Base URL for "View Ticket" link, e.g. "/student/tickets". Item.ticketId is appended. */
   export let ticketUrlPrefix: string = "/student/tickets";
+
+  let menuOpen = false;
+  let menuButtonEl: HTMLButtonElement;
+
+  function handleToggleMenu() {
+    menuOpen = !menuOpen;
+  }
+
+  function handleMenuKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") menuOpen = false;
+  }
+
+  $: menuId = `history-card-menu-${item.id}`;
+
+  function handleClickOutside(e: MouseEvent) {
+    const target = e.target as Node;
+    if (menuOpen && menuButtonEl && !menuButtonEl.contains(target)) {
+      const menuEl = document.getElementById(menuId);
+      if (menuEl && !menuEl.contains(target)) menuOpen = false;
+    }
+  }
+
+  $: if (menuOpen) {
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }
 </script>
+
+<svelte:window on:keydown={handleMenuKeydown} />
 
 <div
   class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5"
@@ -31,9 +59,38 @@
           {item.description}
         </p>
       </div>
-      <button type="button" class="btn btn-ghost btn-xs btn-circle shrink-0">
-        <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-      </button>
+      <div class="relative shrink-0">
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs btn-circle"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-controls={menuId}
+          aria-label="Open actions menu"
+          bind:this={menuButtonEl}
+          on:click={handleToggleMenu}
+        >
+          <Icon icon="mdi:dots-horizontal" width="16" height="16" />
+        </button>
+        {#if menuOpen}
+          <ul
+            id={menuId}
+            role="menu"
+            class="absolute right-0 top-full mt-1 menu bg-base-100 rounded-box w-40 p-2 shadow-lg border border-base-content/10 z-10"
+          >
+            <li role="none">
+              <a
+                role="menuitem"
+                href={`${ticketUrlPrefix}/${item.ticketId}`}
+                class="gap-2"
+              >
+                <Icon icon="mdi:eye-outline" width="16" height="16" />
+                View Ticket
+              </a>
+            </li>
+          </ul>
+        {/if}
+      </div>
     </div>
 
     <div class="flex items-center justify-between pt-3 border-t border-base-content/5">
@@ -66,7 +123,7 @@
 
     <div class="mt-3">
       <a
-        href="{ticketUrlPrefix}/{item.ticketId}"
+        href={`${ticketUrlPrefix}/${item.ticketId}`}
         class="btn btn-sm btn-outline btn-primary w-full sm:w-auto"
       >
         <Icon icon="mdi:eye-outline" width="16" height="16" />
