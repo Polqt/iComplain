@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
+  import { onDestroy } from "svelte";
   import Icon from "@iconify/svelte";
   import type { HistoryItem } from "../../../types/history.js";
   import { historyConfig, statusConfig, priorityConfig } from "../../../utils/historyConfig.js";
@@ -28,10 +30,17 @@
     }
   }
 
-  $: if (menuOpen) {
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+  $: if (browser) {
+    if (menuOpen) {
+      document.addEventListener("click", handleClickOutside);
+    } else {
+      document.removeEventListener("click", handleClickOutside);
+    }
   }
+
+  onDestroy(() => {
+    if (browser) document.removeEventListener("click", handleClickOutside);
+  });
 </script>
 
 <svelte:window on:keydown={handleMenuKeydown} />

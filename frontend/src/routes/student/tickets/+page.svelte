@@ -33,7 +33,7 @@
       formData = {
         title: "",
         description: "",
-        status: "not-started",
+        status: "pending",
         priority: "low",
         assignees: [],
         date: new Date().toLocaleDateString("en-US", {
@@ -62,7 +62,7 @@
         id: `TKT-${String(Date.now()).slice(-6)}`,
         title: data.title ?? "",
         description: data.description ?? "",
-        status: data.status ?? "not-started",
+        status: data.status ?? "pending",
         priority: data.priority ?? "low",
         assignees: data.assignees ?? [],
         date:
@@ -97,10 +97,10 @@
   }
 
   const statusToColumnId: Record<string, string> = {
-    "not-started": "pending",
-    "in-research": "in-progress",
-    "on-track": "in-progress",
-    complete: "resolved",
+    pending: "pending",
+    in_progress: "in-progress",
+    resolved: "resolved",
+    closed: "closed",
   };
 
   const columnConfigs = [
@@ -128,7 +128,7 @@
       id: "TKT-002",
       title: "Leaking Faucet in Restroom",
       description: "Water dripping continuously from the main sink...",
-      status: "in-research",
+      status: "in_progress",
       priority: "medium",
       assignees: ["MJ"],
       date: "28 Mar 2023",
@@ -141,7 +141,7 @@
       title: "Flickering Hallway Lights",
       description:
         "Lights in 3F hallway flickering intermittently during evening hours...",
-      status: "in-research",
+      status: "in_progress",
       priority: "high",
       assignees: ["AS", "JD"],
       date: "30 Mar 2023",
@@ -154,7 +154,7 @@
       title: "Broken Projector Screen",
       description:
         "Projection screen won't retract properly in lecture hall...",
-      status: "on-track",
+      status: "in_progress",
       priority: "low",
       assignees: ["MJ"],
       date: "02 Apr 2023",
@@ -167,7 +167,7 @@
       title: "Door Lock Malfunction",
       description:
         "Main entrance lock mechanism was jammed and needed repair...",
-      status: "complete",
+      status: "resolved",
       priority: "high",
       assignees: ["AS"],
       date: "07 Apr 2023",
@@ -190,13 +190,13 @@
     },
   ];
 
-  $: columns: Column[] = columnConfigs.map((config) => ({
+  $: columns = columnConfigs.map((config) => ({
     ...config,
     reports:
       config.id === "closed"
         ? []
         : mockTickets.filter((t) => statusToColumnId[t.status] === config.id),
-  }));
+  })) as Column[];
 </script>
 
 <StudentLayout>

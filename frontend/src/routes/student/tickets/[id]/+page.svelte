@@ -25,7 +25,7 @@
       title: "Broken AC Unit in Room 301",
       description:
         "Air conditioning not working properly, temperature control issues. The unit makes strange noises and doesn't cool the room effectively.",
-      status: "not-started",
+      status: "pending",
       priority: "low",
       assignees: ["JD", "AS"],
       date: "25 Mar 2023",
@@ -37,7 +37,7 @@
       id: "TKT-002",
       title: "Leaking Faucet in Restroom",
       description: "Water dripping continuously from the main sink. This is causing water wastage and potential damage to the floor.",
-      status: "in-research",
+      status: "in_progress",
       priority: "medium",
       assignees: ["MJ"],
       date: "28 Mar 2023",
@@ -50,7 +50,7 @@
       title: "Flickering Hallway Lights",
       description:
         "Lights in 3F hallway flickering intermittently during evening hours. This creates safety concerns for students walking through the area.",
-      status: "in-research",
+      status: "in_progress",
       priority: "high",
       assignees: ["AS", "JD"],
       date: "30 Mar 2023",
@@ -63,7 +63,7 @@
       title: "Door Lock Malfunction",
       description:
         "Main entrance lock mechanism was jammed and needed repair...",
-      status: "complete",
+      status: "resolved",
       priority: "high",
       assignees: ["AS"],
       date: "07 Apr 2023",
@@ -76,7 +76,7 @@
       title: "Missing Whiteboard Markers",
       description:
         "Classroom 205 needed new dry-erase markers for teaching...",
-      status: "not-started",
+      status: "pending",
       priority: "low",
       assignees: ["JD", "MJ"],
       date: "10 Apr 2023",

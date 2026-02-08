@@ -1,4 +1,4 @@
-import type { HistoryAction, HistoryStatus, HistoryPriority, HistoryItem, HistoryFilterType, HistorySortType } from "../types/history.ts";
+import type { HistoryAction, HistoryStatus, HistoryPriority, HistoryItem, HistoryFilterType, HistorySortType } from "../types/history.js";
 
 export const historyConfig: Record<HistoryAction, {
     label: string;

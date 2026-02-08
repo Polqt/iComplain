@@ -1,16 +1,21 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import type { Ticket } from "../../../types/tickets.js";
+  import { statusConfig, priorityConfig } from "../../../utils/ticketConfig.js";
 
   export let open = false;
   export let mode: "create" | "edit" = "create";
+  /** When false (e.g. student), priority/status are hidden on create and read-only on edit. */
+  export let canEditPriorityStatus = false;
   export let formData: Partial<Ticket> = {};
   export let onclose: () => void = () => {};
   export let onsubmit: (data: Partial<Ticket>) => void = () => {};
 
   function handleSubmit(event: Event) {
     event.preventDefault();
-    onsubmit(formData);
+    // Students must not send priority/status; only admins can change them
+    const data = canEditPriorityStatus ? formData : (({ priority, status, ...rest }) => rest)(formData);
+    onsubmit(data);
   }
 </script>
 
@@ -44,35 +49,60 @@
           <textarea
             bind:value={formData.description}
             placeholder="Describe the issue in detail..."
-            class="textarea textarea-bordered h-32"
+            class="textarea textarea-bordered w-full h-32"
             required
           ></textarea>
         </div>
 
-        <!-- Priority and Status Row -->
-        <div class="grid grid-cols-2 gap-4">
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Priority</span>
-            </label>
-            <select bind:value={formData.priority} class="select select-bordered w-full">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
+        <!-- Priority and Status: editable only for admin (canEditPriorityStatus), else view-only in edit or hidden in create -->
+        {#if canEditPriorityStatus}
+          <div class="grid grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Priority</span>
+              </label>
+              <select bind:value={formData.priority} class="select select-bordered w-full">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Status</span>
+              </label>
+              <select bind:value={formData.status} class="select select-bordered w-full">
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
           </div>
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Status</span>
-            </label>
-            <select bind:value={formData.status} class="select select-bordered w-full">
-              <option value="not-started">Not Started</option>
-              <option value="in-research">In Research</option>
-              <option value="on-track">On Track</option>
-              <option value="complete">Complete</option>
-            </select>
+        {:else if mode === "edit" && formData.status && formData.priority}
+          <div class="grid grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Status</span>
+              </label>
+              <div class="flex items-center gap-2 pt-2">
+                <span class="badge {statusConfig[formData.status].color}">
+                  {statusConfig[formData.status].label}
+                </span>
+              </div>
+            </div>
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Priority</span>
+              </label>
+              <div class="flex items-center gap-2 pt-2">
+                <span class="badge {priorityConfig[formData.priority].color}">
+                  {priorityConfig[formData.priority].label}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
+        {/if}
 
         <div class="modal-action">
           <button type="button" class="btn btn-ghost" onclick={onclose}>

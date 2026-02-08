@@ -52,7 +52,7 @@
       category: "Electrical",
     },
     {
-      id: "4",
+      id: "TKT-004",
       ticketId: "TKT-004",
       title: "Broken Projector Screen",
       action: "created",
@@ -64,7 +64,7 @@
       category: "Equipment",
     },
     {
-      id: "5",
+      id: "TKT-005",
       ticketId: "TKT-005",
       title: "Door Lock Malfunction",
       action: "closed",
@@ -76,7 +76,7 @@
       category: "Security",
     },
     {
-      id: "6",
+      id: "TKT-006",
       ticketId: "TKT-006",
       title: "Missing Whiteboard Markers",
       action: "resolved",
@@ -86,30 +86,6 @@
       status: "resolved",
       priority: "low",
       category: "Supplies",
-    },
-    {
-      id: "7",
-      ticketId: "TKT-007",
-      title: "Noisy Ventilation System",
-      action: "reopened",
-      description: "Ticket reopened due to recurring issue",
-      timestamp: "5 days ago",
-      date: "03 Feb 2026",
-      status: "in-progress",
-      priority: "medium",
-      category: "Facilities",
-    },
-    {
-      id: "8",
-      ticketId: "TKT-008",
-      title: "Broken Window in Classroom 205",
-      action: "updated",
-      description: "Priority changed from Low to High",
-      timestamp: "1 week ago",
-      date: "01 Feb 2026",
-      status: "pending",
-      priority: "high",
-      category: "Facilities",
     },
   ];
 

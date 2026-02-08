@@ -1,13 +1,13 @@
-import type { TicketPriority, TicketStatus } from "../types/tickets.js";
+import type { TicketPriority, TicketStatus } from "../types/tickets.ts";
 
 export const statusConfig: Record<
   TicketStatus,
   { label: string; color: string }
 > = {
-  "not-started": { label: "Not Started", color: "badge-primary" },
-  "in-research": { label: "In Research", color: "badge-warning" },
-  "on-track": { label: "On Track", color: "badge-secondary" },
-  complete: { label: "Complete", color: "badge-success" },
+  pending: { label: "Pending", color: "badge-warning" },
+  in_progress: { label: "In Progress", color: "badge-info" },
+  resolved: { label: "Resolved", color: "badge-success" },
+  closed: { label: "Closed", color: "badge-ghost" },
 };
 
 export const priorityConfig: Record<
