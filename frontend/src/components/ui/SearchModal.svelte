@@ -35,10 +35,9 @@
     report: "text-primary",
     notification: "text-warning",
     page: "text-info",
-
   };
 
-  // Keyboard shortcut handler
+  // Global keyboard shortcut handler (Cmd+K to open modal)
   function handleKeyDown(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
       event.preventDefault();
@@ -46,17 +45,10 @@
         isOpen = true;
       }
     }
-
-    // Close modal with Escape
-    if (event.key === "Escape" && isOpen) {
-      closeModal();
-    }
   }
 
-  // Modal keyboard navigation
-  function handleModalKeyDown(event: KeyboardEvent) {
-    if (!isOpen) return;
-
+  // Input keyboard handler - THIS HANDLES ARROW KEYS AND ENTER
+  function handleInputKeyDown(event: KeyboardEvent) {
     switch (event.key) {
       case "ArrowDown":
         event.preventDefault();
@@ -72,6 +64,10 @@
         if (selected) {
           handleSelectResult(selected);
         }
+        break;
+      case "Escape":
+        event.preventDefault();
+        closeModal();
         break;
     }
   }
@@ -108,11 +104,9 @@
   onMount(() => {
     searchStore.loadRecentSearches();
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keydown", handleModalKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keydown", handleModalKeyDown);
     };
   });
 
@@ -133,12 +127,9 @@
   >
     <div
       class="bg-base-100 rounded-lg shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
-      role="button"
-      tabindex="0"
+      role="presentation"
       onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => e.stopPropagation()}
     >
-      <!-- Search Input -->
       <div class="flex items-center gap-3 p-4 border-b border-base-content/10">
         <Icon
           icon="lucide:search"
@@ -147,12 +138,14 @@
           class="text-base-content/50"
         />
         <input
+          aria-label="Search input"
           bind:this={inputElement}
           type="text"
           placeholder="Search reports, notifications, pages..."
           class="flex-1 bg-transparent outline-none border-none focus:ring-0 text-base"
           value={query}
           oninput={handleInputChange}
+          onkeydown={handleInputKeyDown}
         />
         {#if isSearching}
           <span class="loading loading-spinner loading-sm text-base-content/40"
@@ -211,7 +204,6 @@
                     </div>
                   {/if}
                 </div>
-                <!-- Meta -->
                 {#if result.meta}
                   <div class="shrink-0">
                     <span class="text-xs text-base-content/50">

@@ -48,7 +48,7 @@
     {
       name: "Notifications",
       icon: "lucide:bell",
-      href: "student/notifications",
+      href: "/student/notifications",
     },
     { name: "History", icon: "lucide:clock", href: "/history" },
   ];

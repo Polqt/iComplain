@@ -1,9 +1,12 @@
+<svelte:head>
+  <title>iComplain</title>
+</svelte:head>
+
 <script>
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
   import Footer from "../components/layout/Footer.svelte";
   import Header from "../components/layout/Header.svelte";
-
   function handleGetStarted() {
     goto("/signin");
   }

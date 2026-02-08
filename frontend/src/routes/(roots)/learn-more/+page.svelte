@@ -1,24 +1,34 @@
 <script>
-  import Footer from "../../components/layout/Footer.svelte";
-  import Header from "../../components/layout/Header.svelte";
+  import Footer from "../../../components/layout/Footer.svelte";
+  import Header from "../../../components/layout/Header.svelte";
 </script>
+
+<svelte:head>
+  <title>Learn More | iComplain</title>
+</svelte:head>
 
 <div class="w-full flex flex-col items-center bg-base-100 min-h-screen">
   <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
     <Header />
   </div>
 
-  <section class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-12 sm:pb-16 md:pb-20">
+  <section
+    class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-12 sm:pb-16 md:pb-20"
+  >
     <p
       class="badge badge-ghost text-xs font-semibold tracking-widest uppercase mb-4 sm:mb-6"
     >
       Learn More
     </p>
-    <h1 class="text-3xl sm:text-4xl md:text-5xl font-semibold text-base-content leading-tight">
+    <h1
+      class="text-3xl sm:text-4xl md:text-5xl font-semibold text-base-content leading-tight"
+    >
       Making campus maintenance simpler, smarter, and more transparent
     </h1>
     <div class="mt-4 sm:mt-6 w-8 sm:w-12 h-px bg-base-content/20"></div>
-    <p class="mt-4 sm:mt-6 text-sm sm:text-base text-base-content/60 leading-relaxed max-w-2xl">
+    <p
+      class="mt-4 sm:mt-6 text-sm sm:text-base text-base-content/60 leading-relaxed max-w-2xl"
+    >
       Learn how iComplain transforms facility reporting into a structured system
       that empowers students and streamlines administrative work across the USLS
       campus.
@@ -35,11 +45,15 @@
     >
       Overview
     </p>
-    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">What is iComplain?</h2>
+    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">
+      What is iComplain?
+    </h2>
     <p class="text-xs sm:text-sm text-base-content/45 mt-1">
       A centralized system for reporting and resolving facility issues
     </p>
-    <p class="mt-4 sm:mt-6 text-sm sm:text-base text-base-content/60 leading-relaxed">
+    <p
+      class="mt-4 sm:mt-6 text-sm sm:text-base text-base-content/60 leading-relaxed"
+    >
       iComplain acts as the reporting hub for all facility-related concerns
       within the University of St. La Salle. Instead of scattered messages,
       unclear requests, or lost reports, the system gathers every complaint into
@@ -88,7 +102,9 @@
     >
       Capabilities
     </p>
-    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">Key Capabilities</h2>
+    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">
+      Key Capabilities
+    </h2>
 
     <div
       class="mt-6 sm:mt-8 flex flex-col gap-px bg-base-content/8 rounded-lg overflow-hidden border border-base-content/10"
@@ -103,7 +119,9 @@
           <h3 class="text-sm font-semibold text-base-content">
             Streamlined Ticket Submission
           </h3>
-          <p class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Submit issues in seconds with photos, location tags, and severity
             levels.
           </p>
@@ -117,7 +135,9 @@
           <h3 class="text-sm font-semibold text-base-content">
             Role-Based Access
           </h3>
-          <p class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Students report. Administrators manage. Maintenance teams resolve,
             each with the right level of access.
           </p>
@@ -131,7 +151,9 @@
           <h3 class="text-sm font-semibold text-base-content">
             Notifications & Updates
           </h3>
-          <p class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Real-time notifications keep you informed on every status change.
           </p>
         </div>
@@ -146,7 +168,9 @@
           <h3 class="text-sm font-semibold text-base-content">
             Comment System
           </h3>
-          <p class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Students, admins, and maintenance staff can communicate directly
             within each ticket for clarity.
           </p>
@@ -160,7 +184,9 @@
           <h3 class="text-sm font-semibold text-base-content">
             Full Audit Trail
           </h3>
-          <p class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-2 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Every action is logged, ensuring transparency and accountability
             throughout the entire resolution process.
           </p>
@@ -182,7 +208,9 @@
     <h2 class="text-xl sm:text-2xl font-semibold text-base-content">
       Why a Dedicated System Matters?
     </h2>
-    <p class="mt-3 sm:mt-4 text-sm sm:text-base text-base-content/60 leading-relaxed">
+    <p
+      class="mt-3 sm:mt-4 text-sm sm:text-base text-base-content/60 leading-relaxed"
+    >
       Most universities rely on scattered communication; email, messenger,
       handwritten logs, or verbal reports. These methods are easy to forget,
       hard to track, and impossible to measure. iComplain solves this by
@@ -202,7 +230,9 @@
           <div
             class="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0"
           ></div>
-          <p class="text-xs sm:text-sm text-base-content/65">Traceable case history</p>
+          <p class="text-xs sm:text-sm text-base-content/65">
+            Traceable case history
+          </p>
         </div>
         <div class="flex items-center gap-3">
           <div
@@ -216,7 +246,9 @@
           <div
             class="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0"
           ></div>
-          <p class="text-xs sm:text-sm text-base-content/65">Faster turnaround times</p>
+          <p class="text-xs sm:text-sm text-base-content/65">
+            Faster turnaround times
+          </p>
         </div>
         <div class="flex items-center gap-3">
           <div
@@ -253,7 +285,9 @@
     >
       Process
     </p>
-    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">The Workflow</h2>
+    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">
+      The Workflow
+    </h2>
 
     <div class="mt-8 sm:mt-10 flex flex-col gap-0">
       <div class="flex gap-4 sm:gap-6">
@@ -263,11 +297,15 @@
           >
             <span class="text-xs font-semibold text-base-content/50">1</span>
           </div>
-          <div class="w-px h-full bg-base-content/10 mt-1 mb-1 min-h-12 sm:min-h-15"></div>
+          <div
+            class="w-px h-full bg-base-content/10 mt-1 mb-1 min-h-12 sm:min-h-15"
+          ></div>
         </div>
         <div class="pb-6 sm:pb-8 pt-0.5">
           <h3 class="text-sm font-semibold text-base-content">Report</h3>
-          <p class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Students report a facility issue through the online form.
           </p>
         </div>
@@ -279,11 +317,15 @@
           >
             <span class="text-xs font-semibold text-base-content/50">2</span>
           </div>
-          <div class="w-px h-full bg-base-content/10 mt-1 mb-1 min-h-12 sm:min-h-15"></div>
+          <div
+            class="w-px h-full bg-base-content/10 mt-1 mb-1 min-h-12 sm:min-h-15"
+          ></div>
         </div>
         <div class="pb-6 sm:pb-8 pt-0.5">
           <h3 class="text-sm font-semibold text-base-content">Review</h3>
-          <p class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Admins verify information, classify the issue, and assign it to the
             right team.
           </p>
@@ -296,11 +338,15 @@
           >
             <span class="text-xs font-semibold text-base-content/50">3</span>
           </div>
-          <div class="w-px h-full bg-base-content/10 mt-1 mb-1 min-h-12 sm:min-h-15"></div>
+          <div
+            class="w-px h-full bg-base-content/10 mt-1 mb-1 min-h-12 sm:min-h-15"
+          ></div>
         </div>
         <div class="pb-6 sm:pb-8 pt-0.5">
           <h3 class="text-sm font-semibold text-base-content">Resolve</h3>
-          <p class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Maintenance staff perform repairs or inspections and update the
             system.
           </p>
@@ -318,7 +364,9 @@
           <h3 class="text-sm font-semibold text-base-content">
             Confirm & Close
           </h3>
-          <p class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed">
+          <p
+            class="mt-1 text-xs sm:text-sm text-base-content/50 leading-relaxed"
+          >
             Students receive status updates and admins close the ticket once
             resolved.
           </p>
@@ -331,13 +379,17 @@
     <div class="border-t border-base-content/10"></div>
   </div>
 
-  <section class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 pb-20 sm:pb-28">
+  <section
+    class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 pb-20 sm:pb-28"
+  >
     <p
       class="text-xs font-semibold tracking-widest uppercase text-base-content/35 mb-3"
     >
       Stakeholders
     </p>
-    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">Who Benefits?</h2>
+    <h2 class="text-xl sm:text-2xl font-semibold text-base-content">
+      Who Benefits?
+    </h2>
 
     <div class="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
       <div
@@ -392,6 +444,6 @@
   </section>
   <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-auto">
     <div class="border-t border-base-content/10"></div>
-      <Footer />
+    <Footer />
   </div>
 </div>
