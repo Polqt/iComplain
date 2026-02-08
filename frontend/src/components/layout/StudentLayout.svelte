@@ -1,17 +1,31 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
+  import SearchModal from "../ui/SearchModal.svelte";
+  import SearchBar from "../ui/SearchBar.svelte";
+  import NotificationBell from "../ui/NotificationBell.svelte";
+  import Profile from "../ui/Profile.svelte";
+  import { goto } from "$app/navigation";
+  import type { Notification } from "../../types/notifications.js";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
 
-  function handleKeyDown(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-      event.preventDefault();
-      showModal = true;
-    }
+  // TODO: Replace with actual user data from API
+  let user = {
+    name: "Juan Dela Cruz",
+    email: "juan.delacruz@usls.edu.ph",
+    avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
+    role: "Student",
+  };
+
+  let notifications: Notification[] = [];
+  let unreadCount: number = 0;
+
+  function openModal() {
+    showModal = true;
   }
 
   function closeModal() {
@@ -28,15 +42,90 @@
     isMobile = window.innerWidth < 768;
   }
 
+  function handleLogout() {
+    localStorage.removeItem("authToken");
+    sessionStorage.clear();
+
+    goto("/signin");
+  }
+
+  function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
+    const { id } = event.detail;
+
+    // Update local state
+    notifications = notifications.map((n) =>
+      n.id === id ? { ...n, read: true } : n,
+    );
+
+    // Recalculate unread count
+    unreadCount = notifications.filter((n) => !n.read).length;
+
+    // TODO: Call API to mark as read
+    // await api.markNotificationAsRead(id);
+  }
+
+  function handleNotificationClick(
+    event: CustomEvent<{ notification: Notification }>,
+  ) {
+    const { notification } = event.detail;
+
+    // Navigate to notification URL if available
+    if (notification.actionUrl) {
+      goto(notification.actionUrl);
+    }
+  }
+
+  function handleViewAllNotifications() {
+    goto("/student/notifications");
+  }
+
   onMount(() => {
-    window.addEventListener("keydown", handleKeyDown);
     const savedTheme = localStorage.getItem("theme") || "lofi";
     setTheme(savedTheme);
     window.addEventListener("resize", checkMobile);
     checkMobile();
 
+    // TODO: Fetch user data from API
+    // user = await api.getCurrentUser();
+
+    // TODO: Fetch latest notifications from API
+    // const data = await api.getNotifications({ limit: 5 });
+    // notifications = data.notifications;
+    // unreadCount = data.unreadCount;
+
+    notifications = [
+      {
+        id: "1",
+        type: "success",
+        title: "Report Resolved",
+        message: "Your report about the broken AC unit has been resolved.",
+        timestamp: "5 minutes ago",
+        read: false,
+        actionUrl: "/student/reports/1",
+      },
+      {
+        id: "2",
+        type: "info",
+        title: "Report Update",
+        message: "Your leaking faucet report is being reviewed.",
+        timestamp: "2 hours ago",
+        read: false,
+        actionUrl: "/student/reports/2",
+      },
+      {
+        id: "3",
+        type: "warning",
+        title: "Action Required",
+        message: "Your report needs additional information.",
+        timestamp: "1 day ago",
+        read: true,
+        actionUrl: "/student/reports/3",
+      },
+    ];
+
+    unreadCount = notifications.filter((n) => !n.read).length;
+
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", checkMobile);
     };
   });
@@ -47,15 +136,42 @@
       icon: "lucide:home",
       href: "/student/dashboard",
     },
-    { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
-    { name: "Notifications", icon: "lucide:bell", href: "/notifications" },
-    { name: "History", icon: "lucide:clock", href: "/history" },
+    { name: "Tickets", icon: "lucide:ticket", href: "/student/tickets" },
+    {
+      name: "Notifications",
+      icon: "lucide:bell",
+      href: "/student/notifications",
+    },
+    { name: "History", icon: "lucide:clock", href: "/student/history" },
   ];
 
   const profileItem = {
     name: "Profile",
     icon: "lucide:user-circle",
     href: "/profile",
+  };
+
+  const notificationsConfig = {
+    success: {
+      icon: "lucide:check-circle",
+      bgColor: "bg-success",
+      iconColor: "text-success",
+    },
+    info: {
+      icon: "lucide:info",
+      bgColor: "bg-info",
+      iconColor: "text-info",
+    },
+    warning: {
+      icon: "lucide:alert-circle",
+      bgColor: "bg-warning",
+      iconColor: "text-warning",
+    },
+    error: {
+      icon: "lucide:x-circle",
+      bgColor: "bg-error",
+      iconColor: "text-error",
+    },
   };
 </script>
 
@@ -71,52 +187,12 @@
           <Icon icon="lucide:menu" width="24" height="24" />
         </label>
 
-        {#if showModal}
-          <div
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          >
-            <div
-              class="bg-base-100 rounded-lg shadow-lg p-4 sm:p-8 max-w-md w-[90%] sm:w-full relative mx-4"
-            >
-              <button
-                class="absolute top-2 right-2 btn btn-sm btn-ghost"
-                on:click={closeModal}
-                aria-label="Close"
-              >
-                <Icon icon="lucide:x" width="16" height="16" />
-              </button>
-              <h2 class="text-xl font-bold mb-4">Search</h2>
-              <input
-                type="search"
-                class="input w-full"
-                placeholder="Type to search..."
-              />
-            </div>
-          </div>
-        {/if}
+        <SearchModal isOpen={showModal} on:close={closeModal} />
 
         <div
-          class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden"
+          class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-visible"
         >
-          <div class="flex-1 min-w-0">
-            <label
-              class="flex items-center gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-4 py-2 w-full"
-            >
-              <Icon
-                icon="lucide:search"
-                width="20"
-                height="20"
-                class="text-base-content/50 shrink-0"
-              />
-              <input
-                type="search"
-                required
-                placeholder={isMobile ? "Search..." : "Start searching here..."}
-                class="flex-1 min-w-0 bg-transparent outline-none border-none focus:ring-0 text-sm sm:text-base"
-              />
-              <kbd class="kbd kbd-sm hidden sm:inline-flex lg:kbd-md">⌘ K</kbd>
-            </label>
-          </div>
+          <SearchBar {isMobile} on:openModal={openModal} />
 
           <div
             class="flex items-center gap-1 sm:gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-3 py-2 shrink-0"
@@ -164,22 +240,16 @@
               {/if}
             </span>
             <span class="mx-1 text-gray-300 hidden sm:inline">|</span>
-            <Icon
-              icon="lucide:bell"
-              width="18"
-              height="18"
-              class="sm:w-5 sm:h-5"
+            <NotificationBell
+              {notifications}
+              {unreadCount}
+              {notificationsConfig}
+              on:markAsRead={handleMarkAsRead}
+              on:notificationClick={handleNotificationClick}
+              on:viewAll={handleViewAllNotifications}
             />
-            <div class="avatar">
-              <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden">
-                <img
-                  src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
-                  alt="User"
-                  width="32"
-                  height="32"
-                />
-              </div>
-            </div>
+
+            <Profile {user} on:logout={handleLogout} />
           </div>
         </div>
       </nav>
@@ -189,7 +259,7 @@
     </div>
 
     <div
-      class="drawer-side z-40 overflow-visible lg:p-2 lg:mx-2 lg:overflow-visible lg:relative sm:p-0 sm:mx-0"
+      class="drawer-side z-40 overflow-visible lg:p-2 lg:mx-2 lg:overflow-visible lg:sticky lg:top-0 lg:h-screen sm:p-0 sm:mx-0"
     >
       <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"
       ></label>

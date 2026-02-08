@@ -1,63 +1,37 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
 
-from ninja import Router
+from ninja import File, Router, UploadedFile
 from ninja.security import SessionAuth
 
-from .schemas import TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
-from .models import Category, Ticket, TicketComment, TicketPriority, TicketFeedback
+from .validation import validate_file
+
+from .schemas import TicketCommentCreateSchema, TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
+from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback
 
 router = Router(auth=SessionAuth())
-
-def login_user(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            login(request, user)
-            messages.success(request, f'Welcome {username}!')
-            return redirect('ticket_list')
-        else:
-            messages.error(request, 'Invalid username or password.')
-    
-    return render(request, 'tickets/login.html')
-
-
-def logout_user(request):
-    logout(request)
-    messages.success(request, 'You have been logged out!')
-    return redirect('login_user')
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
 def ticket_list(request):
     if request.user.is_staff:
-        all_tickets = Ticket.objects.select_related('category', 'priority', 'student').all()
+        return Ticket.objects.select_related('category', 'priority', 'student').all()
     else:
-        all_tickets = Ticket.objects.select_related('category', 'priority').filter(student=request.user)
+        return Ticket.objects.select_related('category', 'priority', 'student').filter(student=request.user)
     
-    return all_tickets
-    
-
 
 @router.get("/{id}", response=TicketSchema)
-def ticket_detail(id: int):
+def ticket_detail(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
-    return ticket
+    return TicketSchema.from_orm(ticket)
     
 
-
 @router.post("/", response=TicketSchema)
-def create_ticket(request, ticket: TicketCreateSchema):
+def create_ticket(request, ticket: TicketCreateSchema, attachment: UploadedFile = File(None)):
     category = Category.objects.get(id=ticket.category)
     priority = TicketPriority.objects.get(id=ticket.priority)
-    ticket = Ticket.objects.create(
+    ticket_obj = Ticket.objects.create(
         title=ticket.title,
         description=ticket.description,
         student=request.user,
@@ -67,7 +41,17 @@ def create_ticket(request, ticket: TicketCreateSchema):
         room_name=ticket.room_name,
         status='pending'
     )
-    return ticket
+    
+    if attachment:
+        validate_file(attachment)
+        TicketAttachment.objects.create(
+        ticket=ticket_obj,
+            uploaded_by=request.user,
+            file_path=attachment,
+            file_type=attachment.content_type,
+        )
+    
+    return TicketSchema.from_orm(ticket_obj)
 
 @router.put("/{id}", response=TicketSchema)
 def update_ticket(request, id: int, payload: TicketUpdateSchema):
@@ -98,7 +82,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema):
 
     ticket.updated_at = timezone.now()
     ticket.save()
-    return ticket
+    return TicketSchema.from_orm(ticket)
 
 @router.delete("/{id}", response={204: None})
 def delete_ticket(request, id: int):
@@ -113,13 +97,13 @@ def delete_ticket(request, id: int):
         return {"detail": "You cannot delete tickets that are being processed by admin."}, 400
 
     ticket.delete()
-    return 204
+    return 204, None
 
 # Ticket Comments Views
 
-@router.post("/{id}", response=TicketCommentSchema)
-def create_comment(request, ticket_id: int, payload: TicketCreateSchema):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
+@router.post("/{id}/comments", response=TicketCommentSchema)
+def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachment: UploadedFile = File(None)):
+    ticket = get_object_or_404(Ticket, id=id)
 
     if ticket.status == 'closed':
         return {"detail": "Cannot add comments to a closed ticket."}, 400
@@ -130,12 +114,21 @@ def create_comment(request, ticket_id: int, payload: TicketCreateSchema):
         message=payload.message
     )
     
+    if attachment:
+        validate_file(attachment)
+        TicketAttachment.objects.create(
+            comment=comment,
+            uploaded_by=request.user,
+            file_path=attachment,
+            file_type=attachment.content_type,
+        )
+        
     comment.save()
-    return 201, comment
+    return TicketCommentSchema.from_orm(comment)
 
 
 @router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
-def edit_comment(request, comment_id: int, payload: TicketCommentUpdateSchema):
+def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
     comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
@@ -147,7 +140,8 @@ def edit_comment(request, comment_id: int, payload: TicketCommentUpdateSchema):
         comment.message = payload.message
     
     comment.save()
-    return 200, comment
+    
+    return TicketCommentSchema.from_orm(comment)
 
 
 @router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
@@ -159,7 +153,7 @@ def delete_comment(request, id: int, comment_id: int):
         return {"detail": "You do not have permission to delete this comment."}, 403
     
     comment.delete()
-    return redirect('ticket_detail', id=id)
+    return redirect('ticket_list')
 
     
 # Ticket Feedback Views
@@ -173,8 +167,8 @@ def get_feedback(request, id: int):
     return feedback
 
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict})
-def create_feedback(request, ticket_id: int, payload: TicketFeedbackCreateSchema):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
+def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attachment: UploadedFile = File(None)):
+    ticket = get_object_or_404(Ticket, id=id)
 
     # Only owner can submit feedback and only for resolved tickets
     if ticket.student != request.user:
@@ -193,6 +187,15 @@ def create_feedback(request, ticket_id: int, payload: TicketFeedbackCreateSchema
         rating=payload.rating,
         comments=payload.comments
     )
+    
+    if attachment:
+        validate_file(attachment)
+        TicketAttachment.objects.create(
+            feedback=feedback,
+            uploaded_by=request.user,
+            file_path=attachment,
+            file_type=attachment.content_type,
+        )
 
     # Auto-close ticket upon feedback
     ticket.status = 'closed'
@@ -233,4 +236,4 @@ def delete_feedback(request, id: int, feedback_id: int):
         return {"detail": "Feedback can only be deleted within 24 hours of submission."}, 400
 
     feedback.delete()
-    return redirect('ticket_detail', id=id)
+    return redirect('ticket_list')

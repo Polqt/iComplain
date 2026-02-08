@@ -33,6 +33,14 @@
 
     <nav class="hidden md:flex items-center gap-1">
       <a
+        href="/docs"
+        class="px-3 py-2 text-sm font-medium transition-colors rounded-lg
+            {isActivePath('/docs')
+          ? 'bg-base-200 text-base-content'
+          : 'text-base-content/60 hover:text-base-content hover:bg-base-200/50'}"
+        >Docs</a
+      >
+      <a
         href="/about"
         class="px-3 py-2 text-sm font-medium transition-colors rounded-lg
             {isActivePath('/about')
@@ -43,7 +51,7 @@
       <a
         href="/signin"
         class="px-3 py-2 text-sm font-medium transition-colors rounded-lg
-            {isActivePath('/signin')
+            {isActivePath('/signin') && currentPath !== '/signup'
           ? 'bg-base-200 text-base-content'
           : 'text-base-content/60 hover:text-base-content hover:bg-base-200/50'}"
         >Sign In</a

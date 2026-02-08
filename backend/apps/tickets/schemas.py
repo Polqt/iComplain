@@ -1,19 +1,42 @@
+from pydantic import BaseModel
 from datetime import datetime
 from ninja import Schema
 
+class UserSchema(BaseModel):
+    id: int
+    email: str
+    class Config:
+        from_attributes = True
 
-class TicketSchema(Schema):
+class CategorySchema(BaseModel):
+    id: int
+    name: str
+    class Config:
+        from_attributes = True
+
+
+class TicketPrioritySchema(BaseModel):
+    id: int
+    name: str
+    class Config:
+        from_attributes = True
+
+
+class TicketSchema(BaseModel):
     id: int
     title: str
     description: str
-    student: int
-    category: int
-    priority: int
+    student: UserSchema
+    category: CategorySchema
+    priority: TicketPrioritySchema
     building: str
     room_name: str
     status: str
     created_at: datetime
     updated_at: datetime
+    ticket_number: str
+    class Config:
+        from_attributes = True
 
 
 class TicketCreateSchema(Schema):
@@ -32,7 +55,6 @@ class TicketUpdateSchema(Schema):
     building: str | None = None
     room_name: str | None = None
     status: str | None = None
-    updated_at: datetime 
     
 
 class TicketAttachmentSchema(Schema):    
@@ -44,28 +66,32 @@ class TicketAttachmentSchema(Schema):
     uploaded_at: datetime
 
 
-    
 # COMMENT SCHEMA
      
-class TicketCommentSchema(Schema):
+class TicketCommentSchema(BaseModel):
     id: int
-    ticket: int
-    user: int
+    ticket: TicketSchema
+    user: UserSchema
     message: str
     created_at: datetime
+    class Config:
+        from_attributes = True
+    class Config:
+        from_attributes = True
+
 
 class TicketCommentCreateSchema(Schema):
     message: str
     
 class TicketCommentUpdateSchema(Schema):
     message: str | None = None
-    updated_at: datetime 
+
 
 #Feedback Schema
 class TicketFeedbackSchema(Schema):
     id: int
-    ticket: int
-    student: int
+    ticket: TicketSchema
+    student: UserSchema
     rating: int
     comments: str | None = None
     created_at: datetime
@@ -77,4 +103,4 @@ class TicketFeedbackCreateSchema(Schema):
 class TicketFeedbackUpdateSchema(Schema):
     rating: int | None = None
     comments: str | None = None
-    updated_at: datetime 
+    
