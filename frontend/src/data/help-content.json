@@ -1,0 +1,139 @@
+{
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "icon": "mdi:rocket-launch-outline",
+      "content": "Welcome to iComplain! This platform helps you report and track facility issues at USLS Bacolod. Get started by learning how to submit your first report.",
+      "faqs": [
+        {
+          "question": "How do I create my first report?",
+          "answer": "Click the \"New Report\" button in the sidebar or navigation. Fill in the location, title, and description of the facility issue. You can also attach photos to help maintenance staff understand the problem better."
+        },
+        {
+          "question": "What information should I include in a report?",
+          "answer": "Include: (1) Specific location (building, room number), (2) Clear title describing the issue, (3) Detailed description of the problem, (4) Photos if applicable. The more details you provide, the faster the issue can be resolved."
+        },
+        {
+          "question": "Can I edit my report after submission?",
+          "answer": "Yes, but only while the report is in \"Pending\" status. Once an admin starts working on it (\"In Progress\"), you can only add comments but cannot edit the original report details."
+        }
+      ]
+    },
+    {
+      "id": "reports",
+      "title": "Managing Reports",
+      "icon": "mdi:file-document-outline",
+      "content": "Learn how to create, edit, and track your facility reports. Understand the different statuses and what actions you can take at each stage.",
+      "faqs": [
+        {
+          "question": "What do the different report statuses mean?",
+          "answer": "Pending: Your report is waiting for admin review. In Progress: Maintenance is actively working on the issue. Resolved: The issue has been fixed, awaiting your confirmation. Closed: Report completed and verified. Cancelled: Report withdrawn or marked as duplicate."
+        },
+        {
+          "question": "Can I delete a report?",
+          "answer": "You can only delete reports that are in \"Pending\" status. Once a report moves to \"In Progress\" or beyond, it cannot be deleted to maintain audit trail integrity."
+        },
+        {
+          "question": "How many photos can I attach?",
+          "answer": "You can attach up to 5 photos per report. Each file must be under 5MB and in JPEG, PNG, or WebP format. Images help maintenance staff assess the issue more accurately."
+        },
+        {
+          "question": "What happens after I submit a report?",
+          "answer": "Your report enters 'Pending' status and is added to the admin queue. You'll receive an email notification when an admin reviews it and changes the status. You can track progress anytime in the 'My Reports' section."
+        }
+      ]
+    },
+    {
+      "id": "status-tracking",
+      "title": "Status & Progress",
+      "icon": "mdi:chart-timeline-variant",
+      "content": "Track the progress of your reports through each stage of resolution. Understand what each status means and when you can expect updates.",
+      "faqs": [
+        {
+          "question": "How long does it take to resolve a report?",
+          "answer": "Resolution time varies based on issue severity and complexity. Minor issues (lighting, cleaning) typically resolve within 2-3 days. Major repairs (plumbing, electrical) may take 1-2 weeks. You can check estimated completion times in your report details."
+        },
+        {
+          "question": "Will I be notified of status changes?",
+          "answer": "Yes! You'll receive email notifications whenever your report status changes, when admins add comments, or when maintenance requests additional information. You can customize notification preferences in Settings."
+        },
+        {
+          "question": "Can I see the history of changes?",
+          "answer": "Absolutely. Click on any report to view its complete timeline, including all status changes, comments, file uploads, and admin actions. This provides full transparency on your report's progress."
+        }
+      ]
+    },
+    {
+      "id": "communication",
+      "title": "Communication",
+      "icon": "mdi:message-text-outline",
+      "content": "Stay in touch with administrators through the comment system. Get updates, provide additional information, and clarify details about your reports.",
+      "faqs": [
+        {
+          "question": "How do I add comments to my report?",
+          "answer": "Open any report and scroll to the comments section at the bottom. Type your message and click 'Send'. Admins will be notified of your comment via email."
+        },
+        {
+          "question": "Can I edit or delete my comments?",
+          "answer": "You can edit comments within 5 minutes of posting. You cannot delete comments if an admin has already replied, as this maintains conversation context."
+        },
+        {
+          "question": "When should I use comments vs creating a new report?",
+          "answer": "Use comments for: follow-up information, clarifications, or updates on existing reports. Create a new report for: different issues, new locations, or unrelated problems."
+        }
+      ]
+    },
+    {
+      "id": "feedback",
+      "title": "Feedback & Ratings",
+      "icon": "mdi:star-outline",
+      "content": "After an issue is resolved, share your feedback to help us improve our facility management services. Your input matters!",
+      "faqs": [
+        {
+          "question": "When can I provide feedback?",
+          "answer": "Feedback becomes available after your report is marked \"Resolved\". You'll receive a notification prompting you to rate the service and leave comments."
+        },
+        {
+          "question": "Is my feedback anonymous?",
+          "answer": "Your individual feedback is visible to admins for quality improvement, but aggregated ratings are anonymous. Your honest feedback helps improve the system for everyone."
+        },
+        {
+          "question": "What happens after I submit feedback?",
+          "answer": "After you submit feedback, your report automatically moves to \"Closed\" status. If you don't provide feedback within 7 days, the report auto-closes."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting",
+      "icon": "mdi:help-circle-outline",
+      "content": "Having issues with the platform? Find solutions to common problems and learn who to contact for technical support.",
+      "faqs": [
+        {
+          "question": "I can't upload photos to my report",
+          "answer": "Check: (1) File size is under 5MB, (2) File format is JPEG, PNG, or WebP, (3) You haven't exceeded the 5-photo limit. Try compressing large images or using a different browser if problems persist."
+        },
+        {
+          "question": "I'm not receiving email notifications",
+          "answer": "Check your spam/junk folder first. Then verify your email address in Settings and ensure notifications are enabled. If issues persist, contact IT support at support@usls.edu.ph."
+        },
+        {
+          "question": "How do I reset my password?",
+          "answer": "Click \"Forgot Password\" on the login page. Enter your institutional email and follow the reset link sent to your inbox. The link expires in 1 hour for security."
+        },
+        {
+          "question": "Who do I contact for urgent facility emergencies?",
+          "answer": "For life-threatening emergencies, call Campus Security immediately at (+63) 966-455-5103. For urgent non-emergency issues (flooding, power outage), mark your report as 'High Priority' and contact the Admin Office at admin@usls.edu.ph."
+        }
+      ]
+    }
+  ],
+  "contact": {
+    "email": "support@usls.edu.ph",
+    "phone": "0344951032",
+    "phoneDisplay": "(+63) 966-455-5103",
+    "emergencyPhone": "0344951032",
+    "emergencyPhoneDisplay": "(+63) 966-455-5103"
+  }
+}

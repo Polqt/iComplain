@@ -14,6 +14,7 @@
   $: filteredSections = filterHelpSections(helpData.sections);
   $: activeSection = helpData.sections.find((s) => s.id === activeTab);
 
+  // Functions
   function toggleAccordion(id: string) {
     if (openAccordions.has(id)) {
       openAccordions.delete(id);
