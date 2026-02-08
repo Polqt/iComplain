@@ -1,6 +1,6 @@
 import type { HistoryAction, HistoryStatus, HistoryPriority, HistoryItem, HistoryFilterType, HistorySortType } from "../types/history.ts";
 
-export const actionConfig: Record<HistoryAction, {
+export const historyConfig: Record<HistoryAction, {
     label: string;
     icon: string;
     color: string;

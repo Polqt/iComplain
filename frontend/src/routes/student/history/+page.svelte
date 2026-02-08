@@ -3,7 +3,7 @@
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
   import type { HistoryItem, HistoryFilterType, HistorySortType } from "../../../types/history.ts";
   import { 
-    actionConfig, 
+    historyConfig, 
     statusConfig, 
     priorityConfig,
     filterAndSortHistory 
@@ -234,7 +234,7 @@
           Showing <span class="font-semibold text-primary">{filteredItems.length}</span>
           {filteredItems.length === 1 ? "activity" : "activities"}
           {#if activeFilter !== "all"}
-            in <span class="font-semibold">{actionConfig[activeFilter].label}</span>
+            in <span class="font-semibold">{historyConfig[activeFilter].label}</span>
           {/if}
         </p>
       </div>
@@ -273,13 +273,13 @@
               <!-- Timeline Line -->
               <div class="flex flex-col items-center">
                 <div
-                  class="w-10 h-10 rounded-full {actionConfig[item.action].bgColor} flex items-center justify-center shrink-0"
+                  class="w-10 h-10 rounded-full {historyConfig[item.action].bgColor} flex items-center justify-center shrink-0"
                 >
                   <Icon
-                    icon={actionConfig[item.action].icon}
+                    icon={historyConfig[item.action].icon}
                     width="20"
                     height="20"
-                    class={actionConfig[item.action].color}
+                    class={historyConfig[item.action].color}
                   />
                 </div>
                 {#if index < filteredItems.length - 1}
@@ -298,9 +298,9 @@
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-2">
                           <span
-                            class="badge badge-sm {actionConfig[item.action].color} {actionConfig[item.action].bgColor} border-0"
+                            class="badge badge-sm {historyConfig[item.action].color} {historyConfig[item.action].bgColor} border-0"
                           >
-                            {actionConfig[item.action].label}
+                            {historyConfig[item.action].label}
                           </span>
                           <span class="text-xs text-base-content/50">
                             {item.ticketId}
