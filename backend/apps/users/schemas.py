@@ -20,10 +20,15 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
-    is_active: bool
+    is_active: bool = True
 
 class AuthResponse(BaseModel):
     success: bool

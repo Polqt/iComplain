@@ -1,13 +1,15 @@
 <script lang="ts">
+  import { onMount, tick } from "svelte";
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
+  import { authStore } from "../../../stores/auth.store.ts";
+  import { API_BASE, GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
   import {
     isValidEmail,
     validatePassword,
   } from "../../../utils/validations.ts";
   import {
     getRememberEmail,
-    handleAuthError,
     handleRememberMe,
   } from "../../../utils/auth-helpers.ts";
 
@@ -15,6 +17,8 @@
   let password: string = "";
   let rememberMe: boolean = !!getRememberEmail();
   let isLoading: boolean = false;
+  let googleButtonEl: HTMLDivElement;
+  let googleWrapperEl: HTMLDivElement;
 
   let emailError: string = "";
   let passwordError: string = "";
@@ -46,39 +50,146 @@
     generalError = "";
 
     try {
+      const res = await fetch(`${API_BASE}/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      let data: { success?: boolean; user?: { id: number; email: string }; message?: string };
+      try {
+        data = await res.json();
+      } catch {
+        generalError = "Invalid response from server. Please try again.";
+        return;
+      }
+      if (!res.ok) {
+        generalError = data?.message || `Request failed (${res.status}). Please try again.`;
+        return;
+      }
+      if (!data.success || !data.user) {
+        generalError = data.message || "Sign-in failed. Please try again.";
+        return;
+      }
       handleRememberMe(rememberMe, email);
-      
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      goto("/dashboard");
+      authStore.login({
+        id: String(data.user.id),
+        email: data.user.email,
+        role: "student",
+      });
+      goto("/student/dashboard");
     } catch (error) {
-      generalError = handleAuthError(error);
+      generalError = error instanceof Error ? error.message : "Sign-in failed. Please try again.";
     } finally {
       isLoading = false;
     }
   }
 
-  async function handleGoogleSignIn() {
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    if (typeof err === "object" && err !== null && "message" in err && typeof (err as { message: unknown }).message === "string") {
+      return (err as { message: string }).message;
+    }
+    return "Google sign-in failed. Please try again.";
+  }
+
+  async function handleGoogleCallback(response: { credential: string }): Promise<void> {
+    generalError = "";
     isLoading = true;
     try {
-      // TODO: Implement Google OAuth
-      console.log("Google sign in attempt");
-      // For now, just redirect to student dashboard
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch(`${API_BASE}/user/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id_token: response.credential }),
+      });
+      let data: { success?: boolean; user?: { id: number; email: string }; message?: string };
+      try {
+        data = await res.json();
+      } catch {
+        generalError = "Invalid response from server. Please try again.";
+        return;
+      }
+      if (!res.ok) {
+        generalError = data?.message || `Request failed (${res.status}). Please try again.`;
+        return;
+      }
+      if (!data.success || !data.user) {
+        generalError = data.message || "Google sign-in failed. Please try again.";
+        return;
+      }
+      authStore.login({
+        id: String(data.user.id),
+        email: data.user.email,
+        role: "student",
+      });
       goto("/student/dashboard");
-    } catch (error) {
-      console.error("Google sign in error:", error);
-      alert("Google sign in failed. Please try again.");
+    } catch (err) {
+      generalError = getErrorMessage(err);
     } finally {
       isLoading = false;
+      (document.activeElement as HTMLElement)?.blur();
     }
   }
 
   function handleSignupRedirect() {
     goto("/signup");
   }
+
+  onMount(async () => {
+    await tick();
+    if (!GOOGLE_CLIENT_ID || !googleButtonEl || !googleWrapperEl) return;
+
+    let retryCount = 0;
+    const MAX_RETRIES = 50; // ~5 seconds at 100ms intervals
+
+    const initGoogle = () => {
+      const g = (window as unknown as {
+        google?: {
+          accounts: {
+            id: {
+              initialize: (c: object) => void;
+              renderButton: (el: HTMLElement, o: object) => void;
+            };
+          };
+        };
+      }).google;
+
+      if (!g?.accounts?.id) {
+        retryCount += 1;
+        if (retryCount > MAX_RETRIES) {
+          generalError =
+            "Google sign-in is unavailable. Please check your connection or disable any script blockers and try again.";
+          return;
+        }
+        setTimeout(initGoogle, 100);
+        return;
+      }
+
+      g.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (res: { credential: string }) => handleGoogleCallback(res),
+      });
+      const width = Math.max(googleWrapperEl.offsetWidth || 320, 320);
+      g.accounts.id.renderButton(googleButtonEl, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        width,
+      });
+    };
+
+    initGoogle();
+  });
 </script>
 
-<div class="space-y-8">
+<style>
+  .google-btn-wrapper :global(iframe) {
+    outline: none !important;
+  }
+</style>
+
+<div class="space-y-8 max-w-[400px]">
   {#if generalError}
     <div class="alert alert-error">
       <Icon icon="mdi:alert-circle" width="20" height="20" />
@@ -170,6 +281,23 @@
       {/if}
     </button>
   </form>
+
+  {#if GOOGLE_CLIENT_ID}
+    <div class="flex items-center gap-4 my-6">
+      <div class="flex-1 h-px bg-base-content/20"></div>
+      <span class="text-sm text-base-content/60">or</span>
+      <div class="flex-1 h-px bg-base-content/20"></div>
+    </div>
+    <div
+      class="google-btn-wrapper flex w-full transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+      bind:this={googleWrapperEl}
+    >
+      <div
+        class="w-full min-h-12 rounded-btn overflow-hidden"
+        bind:this={googleButtonEl}
+      ></div>
+    </div>
+  {/if}
 
   <div class="text-center pt-4">
     <p class="text-sm text-base-content/60">

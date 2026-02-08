@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv
 from pathlib import Path
@@ -13,9 +14,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 NINJA_SKIP_SESSION_AUTH_CSRF = True
 
+# Google OAuth (school email sign-in)
+GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID', '')
+_allowed_domains_raw = os.getenv('ALLOWED_EMAIL_DOMAINS', 'usls.edu.ph')
+ALLOWED_EMAIL_DOMAINS = [d.strip() for d in _allowed_domains_raw.split(',') if d.strip()]
+
+# Validate at startup: warn if domains are empty while Google OAuth is configured
+_logger = logging.getLogger(__name__)
+if not ALLOWED_EMAIL_DOMAINS and GOOGLE_OAUTH2_CLIENT_ID:
+    _logger.warning(
+        "ALLOWED_EMAIL_DOMAINS is empty but GOOGLE_OAUTH2_CLIENT_ID is set; "
+        "all Google logins will be rejected. Set ALLOWED_EMAIL_DOMAINS in .env."
+    )
 
 # Application definition
 
@@ -45,7 +58,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Cross-origin: frontend uses credentials: 'include'.
+# Never use CORS_ALLOW_ALL_ORIGINS with CORS_ALLOW_CREDENTIALS in production.
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+_cors_origins_raw = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins_raw.split(',') if o.strip()]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-language",
+    "content-type",
+    "origin",
+]
 
 CORS_ALLOW_METHODS = (
     "DELETE",
@@ -55,6 +79,16 @@ CORS_ALLOW_METHODS = (
     "POST",
     "PUT",
 )
+
+# Session cookie: SameSite=None requires Secure=True (browsers drop the cookie otherwise).
+# In local HTTP dev, use Lax; in production over HTTPS, use None + Secure.
+if DEBUG:
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = False
+else:
+    SESSION_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
 
 AUTH_USER_MODEL = 'users.CustomUser'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
