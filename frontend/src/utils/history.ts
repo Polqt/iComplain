@@ -63,9 +63,6 @@ export const priorityConfig: Record<HistoryPriority, {
     high: { label: "High", color: "badge-error" },
 };
 
-/**
- * Filter history items by action type
- */
 export function filterHistoryByAction(
     items: HistoryItem[],
     filter: HistoryFilterType
@@ -74,10 +71,6 @@ export function filterHistoryByAction(
     return items.filter(item => item.action === filter);
 }
 
-/**
- * Filter history items by search query
- * Searches in title, ticketId, and description
- */
 export function searchHistory(
     items: HistoryItem[],
     query: string
@@ -92,18 +85,14 @@ export function searchHistory(
     );
 }
 
-/**
- * Sort history items by date
- */
 export function sortHistory(
     items: HistoryItem[],
     sortBy: HistorySortType
 ): HistoryItem[] {
     return [...items].sort((a, b) => {
-        // Simple sort by id for demo (in real app, use actual timestamps)
-        return sortBy === "newest" 
-            ? parseInt(b.id) - parseInt(a.id)
-            : parseInt(a.id) - parseInt(b.id);
+        const dateA = new Date(a.timestamp).getTime();
+        const dateB = new Date(b.timestamp).getTime();
+        return sortBy === "newest" ? dateB - dateA : dateA - dateB;
     });
 }
 
