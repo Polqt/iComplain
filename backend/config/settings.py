@@ -13,9 +13,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 NINJA_SKIP_SESSION_AUTH_CSRF = True
 
+# Google OAuth (school email sign-in)
+GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID', '')
+ALLOWED_EMAIL_DOMAINS = [
+    d.strip() for d in os.getenv('ALLOWED_EMAIL_DOMAINS', '').split(',') if d.strip()
+]
 
 # Application definition
 
@@ -44,7 +49,15 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Cross-origin: frontend uses credentials: 'include'. django-cors-headers echoes request Origin when both are True.
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-language",
+    "content-type",
+    "origin",
+]
 
 CORS_ALLOW_METHODS = (
     "DELETE",
@@ -54,6 +67,11 @@ CORS_ALLOW_METHODS = (
     "POST",
     "PUT",
 )
+
+# So session cookie is sent on cross-origin requests (e.g. from frontend on :5173 to API on :8000).
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = False  # Set True in production over HTTPS
+SESSION_COOKIE_HTTPONLY = True
 
 AUTH_USER_MODEL = 'users.CustomUser'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

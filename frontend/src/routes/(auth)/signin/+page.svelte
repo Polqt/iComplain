@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
+  import { authStore } from "../../../stores/auth.store.ts";
+  import { API_BASE, GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
   import {
     isValidEmail,
     validatePassword,
@@ -15,6 +18,7 @@
   let password: string = "";
   let rememberMe: boolean = !!getRememberEmail();
   let isLoading: boolean = false;
+  let googleButtonEl: HTMLDivElement;
 
   let emailError: string = "";
   let passwordError: string = "";
@@ -47,7 +51,7 @@
 
     try {
       handleRememberMe(rememberMe, email);
-      
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
       goto("/dashboard");
     } catch (error) {
@@ -57,17 +61,29 @@
     }
   }
 
-  async function handleGoogleSignIn() {
+  async function handleGoogleCallback(response: { credential: string }): Promise<void> {
+    generalError = "";
     isLoading = true;
     try {
-      // TODO: Implement Google OAuth
-      console.log("Google sign in attempt");
-      // For now, just redirect to student dashboard
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch(`${API_BASE}/user/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id_token: response.credential }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.user) {
+        generalError = data.message || "Google sign-in failed. Please try again.";
+        return;
+      }
+      authStore.login({
+        id: String(data.user.id),
+        email: data.user.email,
+        role: "student",
+      });
       goto("/student/dashboard");
-    } catch (error) {
-      console.error("Google sign in error:", error);
-      alert("Google sign in failed. Please try again.");
+    } catch (err) {
+      generalError = err?.message || "Google sign-in failed. Please try again.";
     } finally {
       isLoading = false;
     }
@@ -76,6 +92,28 @@
   function handleSignupRedirect() {
     goto("/signup");
   }
+
+  onMount(() => {
+    if (!GOOGLE_CLIENT_ID || !googleButtonEl) return;
+    const initGoogle = () => {
+      const g = (window as unknown as { google?: { accounts: { id: { initialize: (c: object) => void; renderButton: (el: HTMLElement, o: object) => void } } } }).google;
+      if (!g?.accounts?.id) {
+        setTimeout(initGoogle, 100);
+        return;
+      }
+      g.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (res: { credential: string }) => handleGoogleCallback(res),
+      });
+      g.accounts.id.renderButton(googleButtonEl, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        width: 320,
+      });
+    };
+    initGoogle();
+  });
 </script>
 
 <div class="space-y-8">
@@ -170,6 +208,15 @@
       {/if}
     </button>
   </form>
+
+  {#if GOOGLE_CLIENT_ID}
+    <div class="flex items-center gap-4 my-6">
+      <div class="flex-1 h-px bg-base-content/20"></div>
+      <span class="text-sm text-base-content/60">or</span>
+      <div class="flex-1 h-px bg-base-content/20"></div>
+    </div>
+    <div class="flex justify-center" bind:this={googleButtonEl}></div>
+  {/if}
 
   <div class="text-center pt-4">
     <p class="text-sm text-base-content/60">
