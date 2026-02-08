@@ -44,7 +44,7 @@
       icon: "lucide:home",
       href: "/student/dashboard",
     },
-    { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
+    { name: "Tickets", icon: "lucide:ticket", href: "/student/tickets" },
     {
       name: "Notifications",
       icon: "lucide:bell",
