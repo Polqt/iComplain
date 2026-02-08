@@ -85,14 +85,22 @@ export function searchHistory(
     );
 }
 
+/** Get a numeric time for sorting; uses timestamp if parseable, otherwise date (e.g. "08 Feb 2026"). */
+function getSortTime(item: HistoryItem): number {
+    const fromTimestamp = new Date(item.timestamp).getTime();
+    if (!Number.isNaN(fromTimestamp)) return fromTimestamp;
+    const fromDate = new Date(item.date).getTime();
+    return Number.isNaN(fromDate) ? 0 : fromDate;
+}
+
 export function sortHistory(
     items: HistoryItem[],
     sortBy: HistorySortType
 ): HistoryItem[] {
     return [...items].sort((a, b) => {
-        const dateA = new Date(a.timestamp).getTime();
-        const dateB = new Date(b.timestamp).getTime();
-        return sortBy === "newest" ? dateB - dateA : dateA - dateB;
+        const timeA = getSortTime(a);
+        const timeB = getSortTime(b);
+        return sortBy === "newest" ? timeB - timeA : timeA - timeB;
     });
 }
 
