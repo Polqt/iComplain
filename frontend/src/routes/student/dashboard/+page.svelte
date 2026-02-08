@@ -1,29 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-  
-  interface Report {
-    id: string;
-    title: string;
-    description: string;
-    status: "not-started" | "in-research" | "on-track" | "complete";
-    priority: "low" | "medium" | "high";
-    assignees: string[];
-    date: string;
-    comments: number;
-    links: number;
-    attachments: string;
-  }
-
-  interface Column {
-    id: string;
-    title: string;
-    color: string;
-    dotColor: string;
-    reports: Report[];
-  }
-
-  type ViewMode = "grid" | "list";
+  import type { Column, ViewMode } from "../../../types/reports.ts";
 
   let viewMode: ViewMode = "grid";
 
