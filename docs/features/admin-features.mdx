@@ -12,7 +12,6 @@ Administrators are responsible for managing, prioritizing, and resolving facilit
 - [Ticket Dashboard](#ticket-dashboard)
 - [Ticket Management](#ticket-management)
 - [Status & Priority Management](#status--priority-management)
-- [Search & Filtering](#search--filtering)
 - [Location & Category Management](#location--category-management)
 - [Reports & Metrics](#reports--metrics)
 - [Audit & History](#audit--history)
@@ -60,6 +59,489 @@ backend/apps/users/
 └── tests/
     └── test_admin_auth.py # Admin auth test cases
 ```
+
+## Ticket Dashboard
+
+### Description
+Centralized view of all facility tickets with real-time statistics and quick access to critical issues.
+
+**Priority Queue:**
+- Critical issues (red badge)
+- High priority (orange badge)
+- Medium priority (yellow badge)
+- Low priority (green badge)
+
+**Recent Activity Timeline:**
+- New tickets
+- Status changes
+- Resolved issues
+- Student feedback
+
+### Technical Implementation
+
+**Endpoints:**
+```
+GET /api/admin/dashboard/                # Dashboard summary
+GET /api/admin/dashboard/stats/          # Statistics
+GET /api/admin/dashboard/activity/       # Recent activity
+GET /api/admin/dashboard/critical/       # Critical issues
+```
+
+### Related Files
+
+```
+backend/apps/admin/
+├── views.py              # Dashboard views
+├── serializers.py        # Dashboard serializers
+├── utils.py              # Stats calculation
+└── tests/
+    └── test_dashboard.py
+```
+
+### Performance Optimization
+
+- Cache dashboard stats (5-minute TTL)
+- Use database aggregations for counts
+- Implement pagination for ticket lists
+- Use Redis for real-time counters
+
+## Ticket Management
+
+### Description
+Administrative interface for viewing, editing, and managing all facility tickets across the institution.
+
+### Technical Implementation
+
+**Endpoints:**
+```
+GET    /api/admin/tickets/               # List all tickets
+GET    /api/admin/tickets/{id}/          # Get ticket details
+PUT    /api/admin/tickets/{id}/          # Update ticket
+PATCH  /api/admin/tickets/{id}/          # Partial update
+POST   /api/admin/tickets/{id}/notes/    # Add internal note
+POST   /api/admin/tickets/merge/         # Merge tickets
+DELETE /api/admin/tickets/{id}/          # Archive ticket
+```
+
+**Business Rules:**
+- Admins can edit any field at any time
+- Internal notes only visible to admins
+- Cannot delete tickets (soft delete/archive only)
+- Merging tickets combines all comments and attachments
+- Email notifications sent on significant changes
+
+### Bulk Actions
+
+```
+POST /api/admin/tickets/bulk-update/     # Bulk status/priority change
+POST /api/admin/tickets/bulk-assign/     # Bulk assignment
+POST /api/admin/tickets/bulk-close/      # Bulk close
+```
+
+### Related Files
+
+```
+backend/apps/admin/
+├── views.py              # Admin ticket views
+├── serializers.py        # Admin serializers
+├── permissions.py        # Admin permissions
+└── filters.py            # Advanced filtering
+```
+
+## Status & Priority Management
+
+### Description
+System for managing ticket lifecycle through status transitions and priority adjustments.
+
+### Status Management
+
+**Status Workflow:**
+```
+┌─────────┐    ┌────────────┐    ┌──────────┐    ┌────────┐
+│ Pending │───>│In Progress │───>│ Resolved │───>│ Closed │
+└─────────┘    └────────────┘    └──────────┘    └────────┘
+     │                │                 │
+     └────────────────┴─────────────────┴────> Cancelled
+```
+
+**Endpoints:**
+```
+PATCH /api/admin/tickets/{id}/status/        # Update status
+POST  /api/admin/tickets/{id}/resolve/       # Mark resolved
+POST  /api/admin/tickets/{id}/close/         # Close ticket
+POST  /api/admin/tickets/{id}/reopen/        # Reopen ticket
+```
+
+**Status Definitions:**
+
+| Status | Description | Required Fields | Auto Actions |
+|--------|-------------|-----------------|--------------|
+| **Pending** | Awaiting admin review | - | Auto-assign by location |
+| **In Progress** | Being worked on | assigned_to, estimated_resolution | Send notification |
+| **Resolved** | Issue fixed | resolution_notes | Request feedback |
+| **Closed** | Completed and verified | - | Archive after 30 days |
+| **Cancelled** | Withdrawn/duplicate | cancellation_reason | No further actions |
+
+### Priority Management
+
+**Priority Levels:**
+
+| Priority | SLA | Description | Examples |
+|----------|-----|-------------|----------|
+| **Critical** | 2 hours | Safety hazards, complete facility failure | Power outage, gas leak, flood |
+| **High** | 24 hours | Severe disruption to learning | AC failure during summer, no internet |
+| **Medium** | 3 days | Noticeable but manageable | Flickering lights, slow WiFi |
+| **Low** | 7 days | Minor inconvenience | Cosmetic issues, non-urgent repairs |
+
+**Endpoints:**
+```
+PATCH /api/admin/tickets/{id}/priority/      # Update priority
+POST  /api/admin/tickets/{id}/escalate/      # Escalate priority
+```
+
+**Auto-Escalation Rules:**
+- Pending > 24 hours → Low to Medium
+- Pending > 48 hours → Medium to High
+- In Progress > SLA deadline → Escalate one level
+- Student reopens resolved ticket → Escalate to High
+
+### Related Files
+
+```
+backend/apps/tickets/
+├── models.py              # Status/Priority enums
+├── views.py              # Status update endpoints
+├── signals.py            # Auto-escalation logic
+└── tasks.py              # Celery tasks for SLA monitoring
+```
+
+## Location & Category Management
+
+### Description
+Centralized management of campus locations and issue categories for consistent ticket classification.
+
+### Location Management
+
+**Location Hierarchy:**
+```
+Campus
+└── Building
+    ├── Floor
+    │   └── Room
+    └── Common Area (Hallway, Restroom, etc.)
+```
+
+**Endpoints:**
+```
+GET    /api/admin/locations/                 # List all locations
+POST   /api/admin/locations/                 # Create location
+PUT    /api/admin/locations/{id}/            # Update location
+DELETE /api/admin/locations/{id}/            # Remove location
+GET    /api/admin/locations/{id}/tickets/    # Tickets by location
+```
+
+### Category Management
+
+**Endpoints:**
+```
+GET    /api/admin/categories/               # List categories
+POST   /api/admin/categories/               # Create category
+PUT    /api/admin/categories/{id}/          # Update category
+DELETE /api/admin/categories/{id}/          # Remove category
+```
+
+**Default Categories:**
+1. **HVAC** - Temperature, AC, ventilation
+2. **Lighting** - Bulbs, switches, fixtures
+3. **Internet** - WiFi, network, connectivity
+4. **Restroom** - Plumbing, cleanliness, fixtures
+5. **Equipment** - Projectors, computers, furniture
+6. **Electrical** - Outlets, wiring, power
+7. **Structural** - Doors, windows, walls, ceilings
+8. **Safety** - Fire alarms, security, emergency exits
+9. **Cleanliness** - Waste, cleaning, pest control
+10. **Other** - Miscellaneous issues
+
+**Category-Based Metrics:**
+```
+GET /api/admin/analytics/by-category/
+```
+
+### Related Files
+
+```
+backend/apps/admin/
+├── models.py             # Location and Category models
+├── views.py              # Management endpoints
+├── serializers.py        # Location/Category serializers
+└── analytics.py          # Analytics utilities
+```
+
+## Reports & Metrics
+
+### Description
+Comprehensive analytics dashboard providing insights into facility management performance, trends, and areas needing attention.
+
+### Report Types
+**1. Performance Report**
+```
+GET /api/admin/reports/performance/?start_date=2025-01-01&end_date=2025-01-31
+```
+
+- Total tickets by status
+- Average resolution time
+- SLA compliance rate
+- Team performance
+- Peak hours analysis
+
+**2. Location Report**
+```
+GET /api/admin/reports/by-location/
+```
+
+- Tickets per building/floor
+- Problem areas (high ticket concentration)
+- Recurring issues by location
+- Resolution time by location
+
+**3. Category Report**
+```
+GET /api/admin/reports/by-category/
+```
+
+- Tickets per category
+- Category-specific resolution times
+- Seasonal trends
+- Equipment requiring replacement
+
+**4. Student Satisfaction Report**
+```
+GET /api/admin/reports/satisfaction/
+```
+
+- Overall satisfaction scores
+- Satisfaction by category
+- Feedback analysis
+- Areas of concern
+
+**5. Trend Analysis**
+```
+GET /api/admin/reports/trends/
+```
+
+- Daily/weekly/monthly ticket volume
+- Resolution time trends
+- Category trends over time
+- Predictive maintenance insights
+
+**Chart Endpoints:**
+```
+GET /api/admin/charts/tickets-over-time/      # Line chart
+GET /api/admin/charts/tickets-by-status/      # Pie chart
+GET /api/admin/charts/tickets-by-category/    # Bar chart
+GET /api/admin/charts/resolution-time/        # Line chart
+GET /api/admin/charts/satisfaction-trend/     # Line chart
+GET /api/admin/charts/location-heatmap/       # Heatmap data
+```
+
+### Export Functionality
+
+**Endpoints:**
+```
+GET /api/admin/reports/export/csv/            # CSV export
+GET /api/admin/reports/export/excel/          # Excel export
+GET /api/admin/reports/export/pdf/            # PDF report
+```
+
+**Export Options:**
+- Date range selection
+- Filter by status/priority/category
+- Include/exclude resolved tickets
+- Detailed or summary view
+- Chart/graph inclusion (PDF only)
+
+### Related Files
+
+```
+backend/apps/admin/
+├── reports.py            # Report generation logic
+├── analytics.py          # Analytics calculations
+├── charts.py             # Chart data preparation
+├── exports.py            # Export utilities
+└── tasks.py              # Scheduled report generation
+```
+
+### Scheduled Reports
+
+**Auto-Generated Reports:**
+- Daily summary (sent at 8 AM)
+- Weekly performance report (sent Monday 9 AM)
+- Monthly comprehensive report (sent 1st of month)
+
+## Audit & History
+
+### Description
+Complete audit trail of all administrative actions for accountability, compliance, and troubleshooting.
+
+### Technical Implementation
+
+**Endpoints:**
+```
+GET /api/admin/audit/                        # All audit logs
+GET /api/admin/audit/tickets/{id}/           # Ticket-specific logs
+GET /api/admin/audit/users/{id}/             # User-specific logs
+GET /api/admin/audit/export/                 # Export logs
+```
+
+**Tracked Actions:**
+- Ticket creation/updates/deletion
+- Status changes
+- Priority changes
+- Assignments/reassignments
+- Comment additions
+- File uploads/deletions
+- Configuration changes
+- User management actions
+- Login/logout events
+- Failed login attempts
+
+### Related Files
+
+```
+backend/apps/admin/
+├── models.py             # AuditLog model
+├── middleware.py         # Audit logging middleware
+├── signals.py            # Auto-logging signals
+└── views.py              # Audit log endpoints
+```
+
+---
+
+## Testing Guidelines
+
+### Admin Feature Tests
+
+All admin features should include:
+
+**Unit Tests:**
+- Permission validation
+- Business logic
+- Data validation
+- Edge cases
+
+**Integration Tests:**
+- Complete admin workflows
+- Report generation
+- Bulk operations
+- Export functionality
+
+**Performance Tests:**
+- Dashboard load time (<2 seconds)
+- Report generation (<5 seconds)
+- Search response time (<1 second)
+- Export large datasets
+
+---
+
+## API Documentation
+
+### Complete Admin API Reference
+
+**Base URL:** `/api/admin/`
+
+**Authentication:** JWT Bearer Token required for all endpoints
+
+**Rate Limiting:** 
+- 1000 requests per hour per admin user
+- 100 requests per minute for export endpoints
+
+### Dashboard APIs
+
+```
+GET    /dashboard/                    # Dashboard summary
+GET    /dashboard/stats/              # Statistics
+GET    /dashboard/activity/           # Recent activity
+GET    /dashboard/critical/           # Critical issues
+```
+
+### Ticket Management APIs
+
+```
+GET    /tickets/                      # List all tickets
+GET    /tickets/{id}/                 # Get ticket details
+PUT    /tickets/{id}/                 # Update ticket
+PATCH  /tickets/{id}/                 # Partial update
+DELETE /tickets/{id}/                 # Archive ticket
+POST   /tickets/{id}/notes/           # Add internal note
+POST   /tickets/merge/                # Merge tickets
+POST   /tickets/bulk-update/          # Bulk update
+```
+
+### Status & Priority APIs
+
+```
+PATCH  /tickets/{id}/status/          # Update status
+PATCH  /tickets/{id}/priority/        # Update priority
+POST   /tickets/{id}/resolve/         # Mark resolved
+POST   /tickets/{id}/close/           # Close ticket
+POST   /tickets/{id}/reopen/          # Reopen ticket
+POST   /tickets/{id}/escalate/        # Escalate priority
+```
+
+### Search & Filter APIs
+
+```
+GET    /tickets/search/               # Full-text search
+GET    /tickets/filter/               # Apply filters
+POST   /tickets/saved-filters/        # Save filter preset
+GET    /tickets/export/               # Export to CSV
+```
+
+### Location & Category APIs
+
+```
+GET    /locations/                    # List locations
+POST   /locations/                    # Create location
+PUT    /locations/{id}/               # Update location
+DELETE /locations/{id}/               # Remove location
+GET    /categories/                   # List categories
+POST   /categories/                   # Create category
+```
+
+### Reports & Analytics APIs
+
+```
+GET    /reports/performance/          # Performance report
+GET    /reports/by-location/          # Location report
+GET    /reports/by-category/          # Category report
+GET    /reports/satisfaction/         # Satisfaction report
+GET    /reports/trends/               # Trend analysis
+GET    /reports/export/csv/           # Export CSV
+GET    /reports/export/excel/         # Export Excel
+GET    /reports/export/pdf/           # Export PDF
+```
+
+### Audit APIs
+
+```
+GET    /audit/                        # All audit logs
+GET    /audit/tickets/{id}/           # Ticket-specific logs
+GET    /audit/users/{id}/             # User-specific logs
+GET    /audit/export/                 # Export audit logs
+```
+
+---
+
+### Production Checklist
+
+- [ ] Enable HTTPS only
+- [ ] Set up IP whitelisting for admin
+- [ ] Configure MFA for super admins
+- [ ] Set appropriate session timeouts
+- [ ] Enable rate limiting
+- [ ] Configure backup systems
+- [ ] Set up monitoring and alerts
+- [ ] Test disaster recovery procedures
 
 ---
 
