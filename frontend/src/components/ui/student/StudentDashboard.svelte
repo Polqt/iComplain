@@ -1,29 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-
-  interface Report {
-    id: string;
-    title: string;
-    description: string;
-    status: "not-started" | "in-research" | "on-track" | "complete";
-    priority: "low" | "medium" | "high";
-    assignees: string[];
-    date: string;
-    comments: number;
-    links: number;
-    attachments: string;
-  }
-
-  interface Column {
-    id: string;
-    title: string;
-    color: string;
-    dotColor: string;
-    reports: Report[];
-  }
-
-  type ViewMode = "grid" | "list";
+  import type { Column, ViewMode } from "../../../types/reports.ts";
 
   let viewMode: ViewMode = "grid";
 
@@ -54,7 +32,6 @@
             "Air conditioning not working properly, temperature control issues...",
           status: "not-started",
           priority: "low",
-          assignees: ["JD", "AS"],
           date: "25 Mar 2023",
           comments: 5,
           links: 2,
@@ -66,7 +43,6 @@
           description: "Water dripping continuously from the main sink...",
           status: "in-research",
           priority: "medium",
-          assignees: ["MJ"],
           date: "28 Mar 2023",
           comments: 12,
           links: 1,
@@ -87,7 +63,6 @@
             "Lights in 3F hallway flickering intermittently during evening hours...",
           status: "in-research",
           priority: "high",
-          assignees: ["AS", "JD"],
           date: "30 Mar 2023",
           comments: 8,
           links: 1,
@@ -100,7 +75,6 @@
             "Projection screen won't retract properly in lecture hall...",
           status: "on-track",
           priority: "low",
-          assignees: ["MJ"],
           date: "02 Apr 2023",
           comments: 3,
           links: 0,
@@ -121,7 +95,6 @@
             "Main entrance lock mechanism was jammed and needed repair...",
           status: "complete",
           priority: "high",
-          assignees: ["AS"],
           date: "07 Apr 2023",
           comments: 6,
           links: 0,
@@ -134,7 +107,6 @@
             "Classroom 205 needed new dry-erase markers for teaching...",
           status: "not-started",
           priority: "low",
-          assignees: ["JD", "MJ"],
           date: "10 Apr 2023",
           comments: 4,
           links: 2,
@@ -193,11 +165,6 @@
                   {column.reports.length}
                 </div>
               </div>
-              <div class="flex items-center gap-1">
-                <button class="btn btn-ghost btn-xs btn-circle">
-                  <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-                </button>
-              </div>
             </div>
 
             <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1">
@@ -213,13 +180,6 @@
                       >
                         {statusConfig[report.status].label}
                       </div>
-                      <button class="btn btn-ghost btn-xs btn-circle">
-                        <Icon
-                          icon="mdi:dots-horizontal"
-                          width="14"
-                          height="14"
-                        />
-                      </button>
                     </div>
 
                     <h3
@@ -231,25 +191,6 @@
                     <p class="text-sm text-base-content/60 mb-3 line-clamp-2">
                       {report.description}
                     </p>
-
-                    <div class="flex items-center justify-between mb-3">
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs text-base-content/50"
-                          >Assignees:</span
-                        >
-                        <div class="avatar-group -space-x-3">
-                          {#each report.assignees as assignee}
-                            <div class="avatar placeholder">
-                              <div
-                                class="bg-primary text-primary-content w-6 rounded-full"
-                              >
-                                <span class="text-xs">{assignee}</span>
-                              </div>
-                            </div>
-                          {/each}
-                        </div>
-                      </div>
-                    </div>
 
                     <div class="flex items-center justify-between mb-3">
                       <div
@@ -324,18 +265,6 @@
                     </p>
                   </div>
 
-                  <div class="avatar-group -space-x-3">
-                    {#each report.assignees as assignee}
-                      <div class="avatar placeholder">
-                        <div
-                          class="bg-primary text-primary-content w-6 rounded-full"
-                        >
-                          <span class="text-xs">{assignee}</span>
-                        </div>
-                      </div>
-                    {/each}
-                  </div>
-
                   <div
                     class="flex items-center gap-1 text-xs text-base-content/60 whitespace-nowrap"
                   >
@@ -366,10 +295,6 @@
                       <span>{report.attachments}</span>
                     </div>
                   </div>
-
-                  <button class="btn btn-ghost btn-xs btn-circle">
-                    <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-                  </button>
                 </div>
               </div>
             </div>
