@@ -4,7 +4,6 @@ export type Report = {
     description: string;
     status: "not-started" | "in-research" | "on-track" | "complete";
     priority: "low" | "medium" | "high";
-    assignees: string[];
     date: string;
     comments: number;
     links: number;
