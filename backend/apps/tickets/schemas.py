@@ -2,15 +2,11 @@ from pydantic import BaseModel
 from datetime import datetime
 from ninja import Schema
 
-class Config: 
-    from_attributes = True
-
 class UserSchema(BaseModel):
     id: int
     email: str
     class Config:
         from_attributes = True
-
 
 class CategorySchema(BaseModel):
     id: int
@@ -103,3 +99,4 @@ class TicketFeedbackCreateSchema(Schema):
 class TicketFeedbackUpdateSchema(Schema):
     rating: int | None = None
     comments: str | None = None
+    

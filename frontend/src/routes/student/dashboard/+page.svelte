@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-
+  
   interface Report {
     id: string;
     title: string;
