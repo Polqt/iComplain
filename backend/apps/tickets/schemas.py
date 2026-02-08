@@ -1,20 +1,42 @@
+from pydantic import BaseModel
 from datetime import datetime
 from ninja import Schema
-from pydantic import model_validator
+
+class UserSchema(BaseModel):
+    id: int
+    email: str
+    class Config:
+        from_attributes = True
+
+class CategorySchema(BaseModel):
+    id: int
+    name: str
+    class Config:
+        from_attributes = True
 
 
-class TicketSchema(Schema):
+class TicketPrioritySchema(BaseModel):
+    id: int
+    name: str
+    class Config:
+        from_attributes = True
+
+
+class TicketSchema(BaseModel):
     id: int
     title: str
     description: str
-    student: int
-    category: int
-    priority: int # Franz fix this extract the input from foreign key. So if I input 1, then it will target the id of the priority 1 which is low.
+    student: UserSchema
+    category: CategorySchema
+    priority: TicketPrioritySchema
     building: str
     room_name: str
     status: str
     created_at: datetime
     updated_at: datetime
+    ticket_number: str
+    class Config:
+        from_attributes = True
 
 
 class TicketCreateSchema(Schema):
@@ -77,3 +99,4 @@ class TicketFeedbackCreateSchema(Schema):
 class TicketFeedbackUpdateSchema(Schema):
     rating: int | None = None
     comments: str | None = None
+    

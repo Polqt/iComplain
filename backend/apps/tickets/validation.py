@@ -6,3 +6,5 @@ def validate_file(file):
         raise ValueError("Unsupported file type.")
     if file.size > MAX_FILE_SIZE:
         raise ValueError("File size exceeds the maximum limit.")
+    
+    

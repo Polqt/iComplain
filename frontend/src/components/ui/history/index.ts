@@ -11,7 +11,7 @@ export {
   statusConfig,
   priorityConfig,
   filterAndSortHistory,
-} from "../../../utils/history.js";
+} from "../../../utils/historyConfig.js";
 
 export { default as HistoryFilters } from "./HistoryFilters.svelte";
 export { default as HistoryCard } from "./HistoryCard.svelte";

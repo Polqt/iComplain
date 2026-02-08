@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import type { HistoryItem, HistoryFilterType } from "../../../types/history.js";
-  import { historyConfig } from "../../../utils/history.js";
+  import { historyConfig } from "../../../utils/historyConfig.js";
   import HistoryCard from "./HistoryCard.svelte";
   import HistoryEmptyState from "./HistoryEmptyState.svelte";
 

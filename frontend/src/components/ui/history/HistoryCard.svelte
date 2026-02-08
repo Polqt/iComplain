@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import type { HistoryItem } from "../../../types/history.js";
-  import { historyConfig, statusConfig, priorityConfig } from "../../../utils/history.js";
+  import { historyConfig, statusConfig, priorityConfig } from "../../../utils/historyConfig.js";
 
   export let item: HistoryItem;
   /** Base URL for "View Ticket" link, e.g. "/student/tickets". Item.ticketId is appended. */
