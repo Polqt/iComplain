@@ -2,11 +2,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
 
-from ninja import Router
+from ninja import File, Router, UploadedFile
 from ninja.security import SessionAuth
 
+from .validation import validate_file
+
 from .schemas import TicketCommentCreateSchema, TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
-from .models import Category, Ticket, TicketComment, TicketPriority, TicketFeedback
+from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback
 
 router = Router(auth=SessionAuth())
 
@@ -26,7 +28,7 @@ def ticket_detail(request, id: int):
     
 
 @router.post("/", response=TicketSchema)
-def create_ticket(request, ticket: TicketCreateSchema):
+def create_ticket(request, ticket: TicketCreateSchema, attachment: UploadedFile = File(None)):
     category = Category.objects.get(id=ticket.category)
     priority = TicketPriority.objects.get(id=ticket.priority)
     ticket_obj = Ticket.objects.create(
@@ -39,7 +41,17 @@ def create_ticket(request, ticket: TicketCreateSchema):
         room_name=ticket.room_name,
         status='pending'
     )
-    return ticket_obj
+    
+    if attachment:
+        validate_file(attachment)
+        TicketAttachment.objects.create(
+            ticket=ticket,
+            uploaded_by=request.user,
+            file_path=attachment,
+            file_type=attachment.content_type,
+        )
+    
+    return TicketSchema.from_orm(ticket_obj)
 
 @router.put("/{id}", response=TicketSchema)
 def update_ticket(request, id: int, payload: TicketUpdateSchema):
@@ -103,7 +115,7 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema):
     )
     
     comment.save()
-    return 201, comment
+    return TicketCommentSchema.from_orm(comment)
 
 
 @router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
@@ -119,7 +131,8 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
         comment.message = payload.message
     
     comment.save()
-    return 200, comment
+    
+    return TicketCommentSchema.from_orm(comment)
 
 
 @router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
