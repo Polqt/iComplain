@@ -131,7 +131,9 @@
             </div>
           </div>
         </nav>
-        <div class="p-4">Page Content</div>
+        <main class="flex-1 p-2 sm:p-4 w-full">
+          <slot />
+        </main>
       </div>
 
       <div class="drawer-side">
