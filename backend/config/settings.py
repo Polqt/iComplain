@@ -120,6 +120,5 @@ STATIC_URL = 'static/'
 CSRF_EXEMPT_API_PREFIXES = [
     '/api/users/register',  # Public signup
     '/api/users/login',     # Public login
-    '/api/users/logout',    # Logout
     '/api/webhooks/',       # Third-party webhooks using token signatures
 ]

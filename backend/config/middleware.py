@@ -16,10 +16,10 @@ def _has_non_cookie_auth(request) -> bool:
     auth_header = request.META.get("HTTP_AUTHORIZATION", "")
     api_key_header = request.META.get("HTTP_X_API_KEY", "")
 
-    if auth_header:
+    if auth_header and auth_header.startswith(("Bearer ", "Token ")):
         return True
 
-    if api_key_header:
+    if api_key_header and len(api_key_header) >= 16:
         return True
 
     return False
