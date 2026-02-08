@@ -10,7 +10,6 @@
   } from "../../../utils/validations.ts";
   import {
     getRememberEmail,
-    handleAuthError,
     handleRememberMe,
   } from "../../../utils/auth-helpers.ts";
 
@@ -50,15 +49,47 @@
     generalError = "";
 
     try {
+      const res = await fetch(`${API_BASE}/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      let data: { success?: boolean; user?: { id: number; email: string }; message?: string };
+      try {
+        data = await res.json();
+      } catch {
+        generalError = "Invalid response from server. Please try again.";
+        return;
+      }
+      if (!res.ok) {
+        generalError = data?.message || `Request failed (${res.status}). Please try again.`;
+        return;
+      }
+      if (!data.success || !data.user) {
+        generalError = data.message || "Sign-in failed. Please try again.";
+        return;
+      }
       handleRememberMe(rememberMe, email);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      goto("/dashboard");
+      authStore.login({
+        id: String(data.user.id),
+        email: data.user.email,
+        role: "student",
+      });
+      goto("/student/dashboard");
     } catch (error) {
-      generalError = handleAuthError(error);
+      generalError = error instanceof Error ? error.message : "Sign-in failed. Please try again.";
     } finally {
       isLoading = false;
     }
+  }
+
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    if (typeof err === "object" && err !== null && "message" in err && typeof (err as { message: unknown }).message === "string") {
+      return (err as { message: string }).message;
+    }
+    return "Google sign-in failed. Please try again.";
   }
 
   async function handleGoogleCallback(response: { credential: string }): Promise<void> {
@@ -71,7 +102,17 @@
         credentials: "include",
         body: JSON.stringify({ id_token: response.credential }),
       });
-      const data = await res.json();
+      let data: { success?: boolean; user?: { id: number; email: string }; message?: string };
+      try {
+        data = await res.json();
+      } catch {
+        generalError = "Invalid response from server. Please try again.";
+        return;
+      }
+      if (!res.ok) {
+        generalError = data?.message || `Request failed (${res.status}). Please try again.`;
+        return;
+      }
       if (!data.success || !data.user) {
         generalError = data.message || "Google sign-in failed. Please try again.";
         return;
@@ -83,7 +124,7 @@
       });
       goto("/student/dashboard");
     } catch (err) {
-      generalError = err?.message || "Google sign-in failed. Please try again.";
+      generalError = getErrorMessage(err);
     } finally {
       isLoading = false;
     }
@@ -95,12 +136,33 @@
 
   onMount(() => {
     if (!GOOGLE_CLIENT_ID || !googleButtonEl) return;
+
+    let retryCount = 0;
+    const MAX_RETRIES = 50; // ~5 seconds at 100ms intervals
+
     const initGoogle = () => {
-      const g = (window as unknown as { google?: { accounts: { id: { initialize: (c: object) => void; renderButton: (el: HTMLElement, o: object) => void } } } }).google;
+      const g = (window as unknown as {
+        google?: {
+          accounts: {
+            id: {
+              initialize: (c: object) => void;
+              renderButton: (el: HTMLElement, o: object) => void;
+            };
+          };
+        };
+      }).google;
+
       if (!g?.accounts?.id) {
+        retryCount += 1;
+        if (retryCount > MAX_RETRIES) {
+          generalError =
+            "Google sign-in is unavailable. Please check your connection or disable any script blockers and try again.";
+          return;
+        }
         setTimeout(initGoogle, 100);
         return;
       }
+
       g.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: (res: { credential: string }) => handleGoogleCallback(res),
@@ -112,6 +174,7 @@
         width: 320,
       });
     };
+
     initGoogle();
   });
 </script>

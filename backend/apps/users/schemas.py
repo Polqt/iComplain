@@ -28,7 +28,7 @@ class GoogleLoginRequest(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
-    is_active: bool
+    is_active: bool = True
 
 class AuthResponse(BaseModel):
     success: bool

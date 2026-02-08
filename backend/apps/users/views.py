@@ -1,11 +1,16 @@
+import logging
+
 from django.conf import settings
 from ninja import Router
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import HttpRequest
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+from google.auth.exceptions import GoogleAuthError
 
 from .schemas import SignupRequest, LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 router = Router(tags=["User"])
@@ -39,7 +44,8 @@ def login_user(request: HttpRequest, data: LoginRequest):
             message="Invalid username or password.",
             user=None
         )
-    login(request, user)
+    backend = getattr(user, "backend", settings.AUTHENTICATION_BACKENDS[0])
+    login(request, user, backend=backend)
     return AuthResponse(
         success=True,
         message="Logged in successfully.",
@@ -71,10 +77,25 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
             google_requests.Request(),
             settings.GOOGLE_OAUTH2_CLIENT_ID,
         )
-    except ValueError:
+    except ValueError as e:
+        logger.warning("Google token verification failed (ValueError): %s", e)
         return AuthResponse(
             success=False,
             message="Invalid or expired Google token.",
+            user=None,
+        )
+    except GoogleAuthError as e:
+        logger.warning("Google token verification failed (GoogleAuthError): %s", e)
+        return AuthResponse(
+            success=False,
+            message="Google authentication failed. Please try again.",
+            user=None,
+        )
+    except Exception as e:
+        logger.exception("Google token verification failed: %s", e)
+        return AuthResponse(
+            success=False,
+            message="An error occurred during sign-in. Please try again.",
             user=None,
         )
     email = payload.get("email")
@@ -96,7 +117,8 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
         user = User(email=email)
         user.set_unusable_password()
         user.save()
-    login(request, user)
+    backend = getattr(user, "backend", settings.AUTHENTICATION_BACKENDS[0])
+    login(request, user, backend=backend)
     return AuthResponse(
         success=True,
         message="Logged in successfully.",
