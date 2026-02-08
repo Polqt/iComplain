@@ -110,6 +110,10 @@
   // });
 </script>
 
+<svelte:head>
+  <title>Student Notifications - iComplain</title>
+</svelte:head>
+
 <StudentLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
     <div class="shrink-0 mb-6">

@@ -3,9 +3,9 @@
 </script>
 
 <svelte:head>
-  <title>Student Profile - iComplain</title>
+  <title>Student Help - iComplain</title>
 </svelte:head>
 
 <StudentLayout>
-  <div class="flex"></div>
+    
 </StudentLayout>
