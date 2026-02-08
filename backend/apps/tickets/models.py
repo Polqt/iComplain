@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.forms import ValidationError
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
@@ -80,22 +81,14 @@ class Ticket(models.Model):
             models.Index(fields=['student', 'status']),
         ]
 
+
 #TABLE FOR TICKET COMMENTS
 class TicketComment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     message = models.TextField(max_length=2000)
     created_at = models.DateTimeField(default=timezone.now)
-    
-    
-# TABLE FOR TICKET ATTACHMENTS    
-class TicketAttachment(models.Model):
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    file_path = models.FileField(upload_to='ticket_attachments/')
-    file_type = models.CharField(max_length=50)
-    uploaded_at = models.DateTimeField(default=timezone.now)
-    
+
 
 #TABLE FOR TICKET STATUS HISTORY
 class TicketStatusHistory(models.Model):
@@ -104,6 +97,7 @@ class TicketStatusHistory(models.Model):
     new_status = models.CharField(max_length=20)
     changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     changed_at = models.DateTimeField(default=timezone.now)
+
 
 # TABLE FOR TICKET FEEDBACK
 class TicketFeedback(models.Model):
@@ -120,3 +114,19 @@ class TicketFeedback(models.Model):
 
     def __str__(self):
         return f"Feedback for {self.ticket.ticket_number} by {self.student}"
+
+
+# TABLE FOR TICKET ATTACHMENTS    
+class TicketAttachment(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments_tickets', null=True, blank=True)
+    comment = models.ForeignKey(TicketComment, on_delete=models.CASCADE, related_name='attachments_comments', null=True, blank=True)
+    feedback = models.ForeignKey(TicketFeedback, on_delete=models.CASCADE, related_name='attachments_feedback', null=True, blank=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    file_path = models.FileField(upload_to='ticket_attachments/')
+    file_type = models.CharField(max_length=50)
+    uploaded_at = models.DateTimeField(default=timezone.now)
+    
+    def clean(self):
+        fields = [self.ticket, self.comment, self.feedback]
+        if sum(f is not None for f in fields) != 1:
+            raise ValidationError("Exactly one of ticket, comment, or feedback must be set for an attachment.")
