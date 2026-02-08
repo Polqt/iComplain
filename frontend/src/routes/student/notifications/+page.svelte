@@ -4,7 +4,7 @@
     NotificationFilter,
     Notification,
   } from "../../../types/notifications.ts";
-  import { notificationConfig } from "../../../utils/notifications.ts";
+  import { notificationConfig } from "../../../utils/notificationConfig.ts";
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
 
 

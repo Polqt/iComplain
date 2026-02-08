@@ -23,4 +23,9 @@ export const notificationConfig = {
       bgColor: "bg-error/10",
       borderColor: "border-error/20",
     },
-  };
+    default: {
+    icon: "lucide:bell",
+    bgColor: "bg-base-300",
+    iconColor: "text-base-content",
+  },
+};
