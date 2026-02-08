@@ -73,6 +73,10 @@
           handleSelectResult(selected);
         }
         break;
+      case "Escape":
+        event.preventDefault();
+        closeModal();
+        break;
     }
   }
 
@@ -136,9 +140,8 @@
       role="button"
       tabindex="0"
       onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => e.stopPropagation()}
+      onkeydown={handleModalKeyDown}
     >
-      <!-- Search Input -->
       <div class="flex items-center gap-3 p-4 border-b border-base-content/10">
         <Icon
           icon="lucide:search"
@@ -211,7 +214,6 @@
                     </div>
                   {/if}
                 </div>
-                <!-- Meta -->
                 {#if result.meta}
                   <div class="shrink-0">
                     <span class="text-xs text-base-content/50">
