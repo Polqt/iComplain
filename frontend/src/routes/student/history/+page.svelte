@@ -7,7 +7,7 @@
     statusConfig, 
     priorityConfig,
     filterAndSortHistory 
-  } from "../../../utils/history.ts";
+  } from "../../../utils/historyConfig.ts";
 
   let activeFilter: HistoryFilterType = "all";
   let sortBy: HistorySortType = "newest";
