@@ -13,6 +13,7 @@ export type Priority = {
 export type Ticket = {
     id: number;
     title: string;
+    description: string;
     student: User;
     category: Category;
     priority: Priority;
