@@ -14,26 +14,22 @@ router = Router(auth=SessionAuth())
 @router.get("/", response=list[TicketSchema])
 def ticket_list(request):
     if request.user.is_staff:
-        all_tickets = Ticket.objects.select_related('category', 'priority', 'student').all()
+        return Ticket.objects.select_related('category', 'priority', 'student').all()
     else:
-        all_tickets = Ticket.objects.select_related('category', 'priority', 'student').filter(student=request.user)
+        return Ticket.objects.select_related('category', 'priority', 'student').filter(student=request.user)
     
-    return all_tickets
-    
-
 
 @router.get("/{id}", response=TicketSchema)
 def ticket_detail(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
-    return ticket
+    return TicketSchema.from_orm(ticket)
     
-
 
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema):
     category = Category.objects.get(id=ticket.category)
     priority = TicketPriority.objects.get(id=ticket.priority)
-    ticket = Ticket.objects.create(
+    ticket_obj = Ticket.objects.create(
         title=ticket.title,
         description=ticket.description,
         student=request.user,
@@ -43,7 +39,7 @@ def create_ticket(request, ticket: TicketCreateSchema):
         room_name=ticket.room_name,
         status='pending'
     )
-    return TicketSchema.from_orm(ticket)
+    return ticket_obj
 
 @router.put("/{id}", response=TicketSchema)
 def update_ticket(request, id: int, payload: TicketUpdateSchema):
@@ -74,7 +70,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema):
 
     ticket.updated_at = timezone.now()
     ticket.save()
-    return ticket
+    return TicketSchema.from_orm(ticket)
 
 @router.delete("/{id}", response={204: None})
 def delete_ticket(request, id: int):
