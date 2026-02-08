@@ -102,7 +102,7 @@ def delete_ticket(request, id: int):
 # Ticket Comments Views
 
 @router.post("/{id}/comments", response=TicketCommentSchema)
-def create_comment(request, id: int, payload: TicketCommentCreateSchema):
+def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachment: UploadedFile = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     if ticket.status == 'closed':
@@ -114,14 +114,23 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema):
         message=payload.message
     )
     
+    if attachment:
+        validate_file(attachment)
+        TicketAttachment.objects.create(
+            comment=comment,
+            uploaded_by=request.user,
+            file_path=attachment,
+            file_type=attachment.content_type,
+        )
+        
     comment.save()
     return TicketCommentSchema.from_orm(comment)
 
 
 @router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
-def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema):
+def edit_comment(request, id: int, ticket_id: int, payload: TicketCommentUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
-    comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
+    comment = get_object_or_404(TicketComment, id=ticket_id, ticket=ticket)
     
     
     if comment.user != request.user:
@@ -136,9 +145,9 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
 
 
 @router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
-def delete_comment(request, id: int, comment_id: int):
+def delete_comment(request, id: int, ticket_id: int):
     ticket = get_object_or_404(Ticket, id=id)
-    comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
+    comment = get_object_or_404(TicketComment, id=ticket_id, ticket=ticket)
     
     if comment.user != request.user:
         return {"detail": "You do not have permission to delete this comment."}, 403
@@ -158,7 +167,7 @@ def get_feedback(request, id: int):
     return feedback
 
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict})
-def create_feedback(request, ticket_id: int, payload: TicketFeedbackCreateSchema):
+def create_feedback(request, ticket_id: int, payload: TicketFeedbackCreateSchema, attachment: UploadedFile = File(None)):
     ticket = get_object_or_404(Ticket, id=ticket_id)
 
     # Only owner can submit feedback and only for resolved tickets
@@ -178,6 +187,15 @@ def create_feedback(request, ticket_id: int, payload: TicketFeedbackCreateSchema
         rating=payload.rating,
         comments=payload.comments
     )
+    
+    if attachment:
+        validate_file(attachment)
+        TicketAttachment.objects.create(
+            feedback=feedback,
+            uploaded_by=request.user,
+            file_path=attachment,
+            file_type=attachment.content_type,
+        )
 
     # Auto-close ticket upon feedback
     ticket.status = 'closed'
