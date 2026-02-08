@@ -12,6 +12,7 @@
   onMount(() => {
     authStore.checkAuth();
   });
+  
 </script>
 
 {#if isLoading}
