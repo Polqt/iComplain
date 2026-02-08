@@ -122,7 +122,7 @@
       </a>
     </li>
     <li>
-      <a href="/help" class="flex items-center gap-3 py-2.5">
+      <a href="/student/help" class="flex items-center gap-3 py-2.5">
         <Icon icon="mdi:help-circle-outline" width="18" height="18" />
         <span>Help Center</span>
       </a>

@@ -8,13 +8,13 @@
   import { goto } from "$app/navigation";
   import type { Notification } from "../../types/notifications.js";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
+  import type { User } from "../../types/user.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
 
-  // TODO: Replace with actual user data from API
-  let user = {
+  let user: User | null = {
     name: "Juan Dela Cruz",
     email: "juan.delacruz@usls.edu.ph",
     avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
@@ -143,12 +143,19 @@
       href: "/student/notifications",
     },
     { name: "History", icon: "lucide:clock", href: "/student/history" },
+    { name: "Help", icon: "lucide:help-circle", href: "/student/help" },
   ];
 
   const profileItem = {
     name: "Profile",
     icon: "lucide:user-circle",
     href: "/profile",
+  };
+
+  const settingItem = {
+    name: "Settings",
+    icon: "lucide:settings",
+    href: "/settings",
   };
 
   const notificationsConfig = {
@@ -278,6 +285,13 @@
           </li>
         {/each}
         <li class="mt-auto">
+          <a
+            href={settingItem.href}
+            class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition tooltip tooltip-right"
+            data-tip={settingItem.name}
+          >
+            <Icon icon={settingItem.icon} width="24" height="24" />
+          </a>
           <a
             href={profileItem.href}
             class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition tooltip tooltip-right"
