@@ -128,9 +128,9 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
 
 
 @router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
-def edit_comment(request, id: int, ticket_id: int, payload: TicketCommentUpdateSchema):
+def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
-    comment = get_object_or_404(TicketComment, id=ticket_id, ticket=ticket)
+    comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
     
     if comment.user != request.user:
@@ -145,9 +145,9 @@ def edit_comment(request, id: int, ticket_id: int, payload: TicketCommentUpdateS
 
 
 @router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
-def delete_comment(request, id: int, ticket_id: int):
+def delete_comment(request, id: int, comment_id: int):
     ticket = get_object_or_404(Ticket, id=id)
-    comment = get_object_or_404(TicketComment, id=ticket_id, ticket=ticket)
+    comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
     if comment.user != request.user:
         return {"detail": "You do not have permission to delete this comment."}, 403
