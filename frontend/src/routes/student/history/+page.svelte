@@ -1,78 +1,17 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
+  import type { HistoryItem, HistoryFilterType, HistorySortType } from "../../../types/history.ts";
+  import { 
+    actionConfig, 
+    statusConfig, 
+    priorityConfig,
+    filterAndSortHistory 
+  } from "../../../utils/history.ts";
 
-  interface HistoryItem {
-    id: string;
-    ticketId: string;
-    title: string;
-    action: "created" | "updated" | "resolved" | "closed" | "commented" | "reopened";
-    description: string;
-    timestamp: string;
-    date: string;
-    status: "pending" | "in-progress" | "resolved" | "closed";
-    priority: "low" | "medium" | "high";
-    category?: string;
-  }
-
-  type FilterType = "all" | "created" | "updated" | "resolved" | "closed";
-  type SortType = "newest" | "oldest";
-
-  let activeFilter: FilterType = "all";
-  let sortBy: SortType = "newest";
+  let activeFilter: HistoryFilterType = "all";
+  let sortBy: HistorySortType = "newest";
   let searchQuery: string = "";
-
-  const actionConfig = {
-    created: { 
-      label: "Created", 
-      icon: "mdi:plus-circle", 
-      color: "text-info",
-      bgColor: "bg-info/10"
-    },
-    updated: { 
-      label: "Updated", 
-      icon: "mdi:pencil", 
-      color: "text-warning",
-      bgColor: "bg-warning/10"
-    },
-    resolved: { 
-      label: "Resolved", 
-      icon: "mdi:check-circle", 
-      color: "text-success",
-      bgColor: "bg-success/10"
-    },
-    closed: { 
-      label: "Closed", 
-      icon: "mdi:close-circle", 
-      color: "text-error",
-      bgColor: "bg-error/10"
-    },
-    commented: { 
-      label: "Commented", 
-      icon: "mdi:message", 
-      color: "text-primary",
-      bgColor: "bg-primary/10"
-    },
-    reopened: { 
-      label: "Reopened", 
-      icon: "mdi:refresh", 
-      color: "text-secondary",
-      bgColor: "bg-secondary/10"
-    },
-  };
-
-  const statusConfig = {
-    pending: { label: "Pending", color: "badge-warning" },
-    "in-progress": { label: "In Progress", color: "badge-info" },
-    resolved: { label: "Resolved", color: "badge-success" },
-    closed: { label: "Closed", color: "badge-ghost" },
-  };
-
-  const priorityConfig = {
-    low: { label: "Low", color: "badge-info" },
-    medium: { label: "Medium", color: "badge-warning" },
-    high: { label: "High", color: "badge-error" },
-  };
 
   const historyItems: HistoryItem[] = [
     {
@@ -173,20 +112,12 @@
     },
   ];
 
-  $: filteredItems = historyItems
-    .filter((item) => {
-      const matchesFilter = activeFilter === "all" || item.action === activeFilter;
-      const matchesSearch = 
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.ticketId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesFilter && matchesSearch;
-    })
-    .sort((a, b) => {
-      return sortBy === "newest" 
-        ? parseInt(b.id) - parseInt(a.id)
-        : parseInt(a.id) - parseInt(b.id);
-    });
+  $: filteredItems = filterAndSortHistory(
+    historyItems,
+    activeFilter,
+    searchQuery,
+    sortBy
+  );
 
   function clearFilters() {
     activeFilter = "all";
@@ -197,13 +128,17 @@
 
 <StudentLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
+    <!-- Header Section -->
     <div class="shrink-0 mb-6">
       <h1 class="text-2xl font-black text-base-content mb-1">Ticket History</h1>
       <p class="text-sm text-base-content/60">
         View all your ticket activities and status changes.
       </p>
     </div>
+
+    <!-- Filters and Search Section -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 shrink-0">
+      <!-- Filter Tabs -->
       <div class="tabs tabs-boxed bg-base-200 p-1">
         <button
           class="tab {activeFilter === 'all' ? 'tab-active' : ''}"
@@ -237,7 +172,10 @@
           Closed
         </button>
       </div>
+
+      <!-- Sort and Search Controls -->
       <div class="flex items-center gap-3">
+        <!-- Search Input -->
         <div class="form-control">
           <div class="input-group">
             <input
@@ -257,27 +195,29 @@
           </div>
         </div>
 
+        <!-- Sort Dropdown -->
         <div class="dropdown dropdown-end">
-        <button tabindex={0} class="btn btn-sm btn-outline gap-2">
-          <Icon icon="mdi:sort" width="16" height="16" />
-          {sortBy === "newest" ? "Newest" : "Oldest"}
-        </button>
-        <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40 mt-2">
-          <li>
-            <button onclick={() => (sortBy = "newest")}>
-              <Icon icon="mdi:sort-descending" width="16" height="16" />
-              Newest First
-            </button>
-          </li>
-          <li>
-            <button onclick={() => (sortBy = "oldest")}>
-              <Icon icon="mdi:sort-ascending" width="16" height="16" />
-              Oldest First
-            </button>
-          </li>
-        </ul>
-      </div>
+          <button tabindex={0} class="btn btn-sm btn-outline gap-2">
+            <Icon icon="mdi:sort" width="16" height="16" />
+            {sortBy === "newest" ? "Newest" : "Oldest"}
+          </button>
+          <ul class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40 mt-2">
+            <li>
+              <button onclick={() => (sortBy = "newest")}>
+                <Icon icon="mdi:sort-descending" width="16" height="16" />
+                Newest First
+              </button>
+            </li>
+            <li>
+              <button onclick={() => (sortBy = "oldest")}>
+                <Icon icon="mdi:sort-ascending" width="16" height="16" />
+                Oldest First
+              </button>
+            </li>
+          </ul>
+        </div>
 
+        <!-- Clear Filters -->
         {#if activeFilter !== "all" || searchQuery || sortBy !== "newest"}
           <button class="btn btn-sm btn-ghost" onclick={clearFilters}>
             <Icon icon="mdi:filter-off" width="16" height="16" />
@@ -287,6 +227,7 @@
       </div>
     </div>
 
+    <!-- Results Count -->
     {#if filteredItems.length > 0}
       <div class="mb-4 shrink-0">
         <p class="text-sm text-base-content/60">
@@ -299,8 +240,10 @@
       </div>
     {/if}
 
+    <!-- History Timeline -->
     <div class="flex-1 overflow-y-auto pr-2">
       {#if filteredItems.length === 0}
+        <!-- Empty State -->
         <div class="flex flex-col items-center justify-center h-full text-center py-12">
           <Icon
             icon="mdi:history"
@@ -323,9 +266,11 @@
           {/if}
         </div>
       {:else}
+        <!-- Timeline Items -->
         <div class="space-y-4">
           {#each filteredItems as item, index}
             <div class="flex gap-4">
+              <!-- Timeline Line -->
               <div class="flex flex-col items-center">
                 <div
                   class="w-10 h-10 rounded-full {actionConfig[item.action].bgColor} flex items-center justify-center shrink-0"
@@ -341,11 +286,14 @@
                   <div class="w-0.5 h-full bg-base-content/10 mt-2"></div>
                 {/if}
               </div>
+
+              <!-- Content Card -->
               <div class="flex-1 pb-4">
                 <div
                   class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5"
                 >
                   <div class="card-body p-4">
+                    <!-- Header -->
                     <div class="flex items-start justify-between gap-3 mb-3">
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-2">
@@ -370,6 +318,7 @@
                       </button>
                     </div>
 
+                    <!-- Footer -->
                     <div class="flex items-center justify-between pt-3 border-t border-base-content/5">
                       <div class="flex items-center gap-3 text-xs text-base-content/60">
                         <div class="flex items-center gap-1">
@@ -398,6 +347,7 @@
                       </div>
                     </div>
 
+                    <!-- Action Button -->
                     <div class="mt-3">
                       <a
                         href="/student/tickets/{item.ticketId}"
