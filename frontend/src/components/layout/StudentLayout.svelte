@@ -50,7 +50,7 @@
       icon: "lucide:bell",
       href: "/student/notifications",
     },
-    { name: "History", icon: "lucide:clock", href: "/history" },
+    { name: "History", icon: "lucide:clock", href: "/student/history" },
   ];
 
   const profileItem = {
