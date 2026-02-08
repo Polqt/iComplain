@@ -45,7 +45,7 @@ def create_ticket(request, ticket: TicketCreateSchema, attachment: UploadedFile 
     if attachment:
         validate_file(attachment)
         TicketAttachment.objects.create(
-            ticket=ticket,
+        ticket=ticket_obj,
             uploaded_by=request.user,
             file_path=attachment,
             file_type=attachment.content_type,

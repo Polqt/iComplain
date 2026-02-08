@@ -126,6 +126,22 @@ class TicketAttachment(models.Model):
     file_type = models.CharField(max_length=50)
     uploaded_at = models.DateTimeField(default=timezone.now)
     
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(ticket__isnull=False, comment__isnull=True, feedback__isnull=True)
+                    | models.Q(ticket__isnull=True, comment__isnull=False, feedback__isnull=True)
+                    | models.Q(ticket__isnull=True, comment__isnull=True, feedback__isnull=False)
+                ),
+                name="exactly_one_parent",
+            ),
+        ]
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
     def clean(self):
         fields = [self.ticket, self.comment, self.feedback]
         if sum(f is not None for f in fields) != 1:
