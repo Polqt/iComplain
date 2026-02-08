@@ -34,6 +34,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'config.middleware.disable_csrf',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -113,3 +114,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# CSRF exemptions
+CSRF_EXEMPT_API_PREFIXES = [
+    '/api/users/register',  # Public signup
+    '/api/users/login',     # Public login
+    '/api/users/logout',    # Logout
+    '/api/webhooks/',       # Third-party webhooks using token signatures
+]
