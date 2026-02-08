@@ -66,15 +66,19 @@ class TicketAttachmentSchema(Schema):
     uploaded_at: datetime
 
 
-    
 # COMMENT SCHEMA
      
-class TicketCommentSchema(Schema):
+class TicketCommentSchema(BaseModel):
     id: int
-    ticket: int
-    user: int
+    ticket: TicketSchema
+    user: UserSchema
     message: str
     created_at: datetime
+    class Config:
+        from_attributes = True
+    class Config:
+        from_attributes = True
+
 
 class TicketCommentCreateSchema(Schema):
     message: str
@@ -86,8 +90,8 @@ class TicketCommentUpdateSchema(Schema):
 #Feedback Schema
 class TicketFeedbackSchema(Schema):
     id: int
-    ticket: int
-    student: int
+    ticket: TicketSchema
+    student: UserSchema
     rating: int
     comments: str | None = None
     created_at: datetime

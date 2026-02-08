@@ -1,15 +1,26 @@
-export interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  assignees: string[];
-  date: string;
-  comments: number;
-  links: number;
-  attachments: string;
+import type { User } from "./user.ts";
+
+export type Category = {
+    id: number;
+    name: string;
 }
 
-export type TicketStatus = "not-started" | "in-research" | "on-track" | "complete";
-export type TicketPriority = "low" | "medium" | "high";
+export type Priority = {
+    id: number;
+    name: string;
+}
+
+export type Ticket = {
+    id: number;
+    title: string;
+    description: string;
+    student: User;
+    category: Category;
+    priority: Priority;
+    building: string;
+    room_name: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    ticket_number: string;
+}

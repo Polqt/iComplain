@@ -165,11 +165,6 @@
                   {column.reports.length}
                 </div>
               </div>
-              <div class="flex items-center gap-1">
-                <button class="btn btn-ghost btn-xs btn-circle">
-                  <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-                </button>
-              </div>
             </div>
 
             <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1">
@@ -185,13 +180,6 @@
                       >
                         {statusConfig[report.status].label}
                       </div>
-                      <button class="btn btn-ghost btn-xs btn-circle">
-                        <Icon
-                          icon="mdi:dots-horizontal"
-                          width="14"
-                          height="14"
-                        />
-                      </button>
                     </div>
 
                     <h3
@@ -307,10 +295,6 @@
                       <span>{report.attachments}</span>
                     </div>
                   </div>
-
-                  <button class="btn btn-ghost btn-xs btn-circle">
-                    <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-                  </button>
                 </div>
               </div>
             </div>
