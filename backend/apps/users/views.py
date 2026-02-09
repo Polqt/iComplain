@@ -109,7 +109,7 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
     if not settings.ALLOWED_EMAIL_DOMAINS or domain not in settings.ALLOWED_EMAIL_DOMAINS:
         return AuthResponse(
             success=False,
-            message="Only school email addresses are allowed to sign in.",
+            message="Only usls email addresses are allowed to sign in.",
             user=None,
         )
     user = User.objects.filter(email=email).first()

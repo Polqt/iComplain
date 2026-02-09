@@ -141,7 +141,7 @@
     if (!GOOGLE_CLIENT_ID || !googleButtonEl || !googleWrapperEl) return;
 
     let retryCount = 0;
-    const MAX_RETRIES = 50; // ~5 seconds at 100ms intervals
+    const MAX_RETRIES = 50; 
 
     const initGoogle = () => {
       const g = (window as unknown as {
@@ -183,13 +183,7 @@
   });
 </script>
 
-<style>
-  .google-btn-wrapper :global(iframe) {
-    outline: none !important;
-  }
-</style>
-
-<div class="space-y-8 max-w-[400px]">
+<div class="space-y-8 max-w-100">
   {#if generalError}
     <div class="alert alert-error">
       <Icon icon="mdi:alert-circle" width="20" height="20" />
@@ -289,7 +283,7 @@
       <div class="flex-1 h-px bg-base-content/20"></div>
     </div>
     <div
-      class="google-btn-wrapper flex w-full transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+      class="flex w-full transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
       bind:this={googleWrapperEl}
     >
       <div
