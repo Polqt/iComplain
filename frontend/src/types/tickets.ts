@@ -47,3 +47,5 @@ export type Column = {
 }
 
 export type ViewMode = "grid" | "list";
+
+export type ModalMode = "create" | "edit" | "delete" | null;
