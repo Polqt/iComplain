@@ -1,0 +1,187 @@
+{
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "Admin Dashboard",
+      "icon": "mdi:view-dashboard-outline",
+      "content": "Your centralized hub for managing all facility tickets, monitoring performance metrics, and accessing critical issues. Learn how to navigate and utilize the admin dashboard effectively.",
+      "faqs": [
+        {
+          "question": "What information is displayed on the dashboard?",
+          "answer": "The dashboard shows real-time statistics including total tickets, resolved tickets, pending tickets, and average response time. You'll also see the ticket volume tracker, recent support activity, and the ticket status board organized by status (Pending, In Progress, Resolved, Closed)."
+        },
+        {
+          "question": "How do I access critical issues quickly?",
+          "answer": "Critical and high-priority tickets are highlighted with red and orange badges respectively on the dashboard. You can also filter tickets by priority level to view all urgent issues requiring immediate attention."
+        },
+        {
+          "question": "Can I customize my dashboard view?",
+          "answer": "Yes! You can toggle between Grid (Kanban board) and List views for the ticket status board. Use the view toggle buttons in the top-right corner of the ticket board section."
+        }
+      ]
+    },
+    {
+      "id": "ticket-management",
+      "title": "Ticket Management",
+      "icon": "mdi:ticket-outline",
+      "content": "Comprehensive tools for viewing, editing, and managing all facility tickets across the institution. Learn how to update tickets, add notes, and perform bulk actions.",
+      "faqs": [
+        {
+          "question": "How do I update a ticket's status or priority?",
+          "answer": "Click on any ticket card to open the detail view. You can update the status using the status dropdown and change priority by clicking the priority badge. All changes are automatically logged in the ticket's history."
+        },
+        {
+          "question": "What are internal notes and when should I use them?",
+          "answer": "Internal notes are comments visible only to admins. Use them for internal communication about a ticket, maintenance instructions, or tracking work progress without notifying the student."
+        },
+        {
+          "question": "Can I edit student-submitted tickets?",
+          "answer": "Yes, admins can edit any field of any ticket at any time. This includes title, description, location, and attachments. However, significant changes will trigger email notifications to the student."
+        },
+        {
+          "question": "How do I handle duplicate tickets?",
+          "answer": "Use the merge tickets feature to combine duplicate reports. This consolidates all comments, attachments, and history from both tickets. Mark one as the primary ticket and merge the duplicate into it."
+        }
+      ]
+    },
+    {
+      "id": "status-workflow",
+      "title": "Status & Workflow",
+      "icon": "mdi:state-machine",
+      "content": "Understand the ticket lifecycle and status transitions. Learn about SLA requirements, auto-escalation rules, and best practices for moving tickets through the workflow.",
+      "faqs": [
+        {
+          "question": "What is the ticket status workflow?",
+          "answer": "Tickets flow through: Pending → In Progress → Resolved → Closed. From any status, tickets can be moved to Cancelled. Pending tickets await admin review, In Progress means work has started, Resolved means the issue is fixed (awaiting student confirmation), and Closed means completed and verified."
+        },
+        {
+          "question": "What are the SLA requirements for each priority level?",
+          "answer": "Critical: 2 hours, High: 24 hours, Medium: 3 days, Low: 7 days. These are response time targets from when the ticket is created to when it's marked In Progress. The system will auto-escalate tickets that exceed these timeframes."
+        },
+        {
+          "question": "How does auto-escalation work?",
+          "answer": "Tickets automatically escalate if: Pending > 24 hours (Low→Medium), Pending > 48 hours (Medium→High), In Progress past SLA deadline (escalate one level), or if a student reopens a resolved ticket (escalate to High)."
+        },
+        {
+          "question": "When should I mark a ticket as Resolved vs Closed?",
+          "answer": "Mark as Resolved when the issue is fixed but awaiting student confirmation. This triggers a feedback request. Mark as Closed only after receiving student feedback or after 7 days if no feedback is provided. This ensures quality control."
+        }
+      ]
+    },
+    {
+      "id": "priority-management",
+      "title": "Priority Management",
+      "icon": "mdi:alert-octagon-outline",
+      "content": "Learn how to assess and assign appropriate priority levels to tickets based on severity, impact, and urgency. Understand when and how to escalate issues.",
+      "faqs": [
+        {
+          "question": "How do I determine the correct priority level?",
+          "answer": "Critical: Safety hazards, complete facility failure (power outage, gas leak, flood). High: Severe disruption to learning (AC failure during summer, no internet). Medium: Noticeable but manageable (flickering lights, slow WiFi). Low: Minor inconvenience (cosmetic issues, non-urgent repairs)."
+        },
+        {
+          "question": "Can I change a ticket's priority after it's been set?",
+          "answer": "Yes, admins can change priority at any time based on new information or changing circumstances. All priority changes are logged in the audit trail and may trigger notifications to maintenance teams."
+        },
+        {
+          "question": "What happens when I escalate a ticket?",
+          "answer": "Escalating increases the priority by one level and sends notifications to relevant personnel. It also adjusts the SLA deadline accordingly and may trigger additional alerts to management for Critical priority tickets."
+        }
+      ]
+    },
+    {
+      "id": "locations-categories",
+      "title": "Locations & Categories",
+      "icon": "mdi:map-marker-outline",
+      "content": "Manage campus locations and issue categories for consistent ticket classification. Add new locations, update categories, and analyze trends by location or category.",
+      "faqs": [
+        {
+          "question": "How is the location hierarchy organized?",
+          "answer": "Locations follow a hierarchy: Campus → Building → Floor → Room/Common Area. This structure helps with analytics and allows filtering tickets by specific buildings, floors, or rooms."
+        },
+        {
+          "question": "Can I add new locations or categories?",
+          "answer": "Yes, admins can add new locations and categories through the admin settings. When adding a location, specify its parent (e.g., which building it belongs to). New categories should have clear descriptions to guide students."
+        },
+        {
+          "question": "What are the default issue categories?",
+          "answer": "HVAC, Lighting, Internet, Restroom, Equipment, Electrical, Structural, Safety, Cleanliness, and Other. Each category helps track common issues and identify areas needing attention or budget allocation."
+        },
+        {
+          "question": "How can I see which locations have the most issues?",
+          "answer": "Use the Location Report in the Reports section. It shows tickets per building/floor, identifies problem areas with high ticket concentration, and highlights recurring issues by location."
+        }
+      ]
+    },
+    {
+      "id": "reports-analytics",
+      "title": "Reports & Analytics",
+      "icon": "mdi:chart-bar",
+      "content": "Generate comprehensive reports and access analytics dashboards for insights into facility management performance, trends, and areas needing attention.",
+      "faqs": [
+        {
+          "question": "What types of reports can I generate?",
+          "answer": "Performance Report (resolution times, SLA compliance), Location Report (tickets by building/area), Category Report (tickets by issue type), Student Satisfaction Report (feedback scores), and Trend Analysis (volume and patterns over time)."
+        },
+        {
+          "question": "How do I export reports?",
+          "answer": "Click the 'Export CSV' or 'Generate Report' button on the dashboard or reports page. Select your date range, filters, and export format (CSV, Excel, or PDF). Reports can include charts and graphs for presentations."
+        },
+        {
+          "question": "Are there any scheduled automatic reports?",
+          "answer": "Yes! Daily summaries are sent at 8 AM, weekly performance reports every Monday at 9 AM, and monthly comprehensive reports on the 1st of each month. These are automatically emailed to all admins."
+        },
+        {
+          "question": "How can I track team performance?",
+          "answer": "The Performance Report shows average resolution time by assignee, number of tickets resolved per team member, SLA compliance rates, and identifies top performers and areas needing support."
+        }
+      ]
+    },
+    {
+      "id": "bulk-operations",
+      "title": "Bulk Operations",
+      "icon": "mdi:checkbox-multiple-marked-outline",
+      "content": "Perform actions on multiple tickets simultaneously to save time and maintain consistency. Learn how to use bulk update, assign, and close features.",
+      "faqs": [
+        {
+          "question": "How do I select multiple tickets for bulk actions?",
+          "answer": "In list view, use the checkboxes on the left of each ticket. Select individual tickets or use 'Select All' to choose all visible tickets. Then choose your bulk action from the actions menu."
+        },
+        {
+          "question": "What bulk actions are available?",
+          "answer": "You can bulk update status, change priority, assign to team members, close multiple tickets, or add tags. This is useful for managing similar issues or when maintenance work affects multiple areas."
+        },
+        {
+          "question": "Will students be notified of bulk changes?",
+          "answer": "Yes, if the bulk action involves status changes or other significant updates, each affected student will receive an individual notification about their specific ticket."
+        }
+      ]
+    },
+    {
+      "id": "audit-history",
+      "title": "Audit & History",
+      "icon": "mdi:history",
+      "content": "Access complete audit trails of all administrative actions for accountability, compliance, and troubleshooting. Track who did what and when.",
+      "faqs": [
+        {
+          "question": "What actions are tracked in the audit log?",
+          "answer": "All ticket creation/updates/deletion, status changes, priority changes, assignments, comments, file uploads/deletions, configuration changes, user management actions, and login/logout events including failed attempts."
+        },
+        {
+          "question": "How long are audit logs retained?",
+          "answer": "Audit logs are retained indefinitely for compliance purposes. They can be exported for archival or filtered by date range, user, or action type for specific investigations."
+        },
+        {
+          "question": "Can I see the complete history of a specific ticket?",
+          "answer": "Yes, click on any ticket to view its timeline tab. This shows all status changes, comments, file uploads, admin actions, and student interactions in chronological order."
+        }
+      ]
+    }
+  ],
+  "contact": {
+    "email": "admin@usls.edu.ph",
+    "phone": "0344951032",
+    "phoneDisplay": "(+63) 966-455-5103",
+    "emergencyPhone": "0344951032",
+    "emergencyPhoneDisplay": "(+63) 966-455-5103"
+  }
+}

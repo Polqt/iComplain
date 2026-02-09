@@ -1,14 +1,16 @@
 <script lang="ts">
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
+  import HistoryFilters from "../../../components/ui/history/HistoryFilters.svelte";
+  import HistoryTimeline from "../../../components/ui/history/HistoryTimeline.svelte";
   import {
-    type HistoryItem,
     type HistoryFilterType,
+    type HistoryItem,
     type HistorySortType,
-    historyConfig,
+  } from "../../../types/history.ts";
+  import {
     filterAndSortHistory,
-    HistoryFilters,
-    HistoryTimeline,
-  } from "../../../components/ui/history";
+    historyConfig,
+  } from "../../../utils/historyConfig.ts";
 
   let activeFilter: HistoryFilterType = "all";
   let sortBy: HistorySortType = "newest";
@@ -44,7 +46,8 @@
       ticketId: "TKT-003",
       title: "Flickering Hallway Lights",
       action: "commented",
-      description: "Admin added a comment: 'Electrician scheduled for tomorrow'",
+      description:
+        "Admin added a comment: 'Electrician scheduled for tomorrow'",
       timestamp: "1 day ago",
       date: "07 Feb 2026",
       status: "in-progress",
@@ -93,7 +96,7 @@
     historyItems,
     activeFilter,
     searchQuery,
-    sortBy
+    sortBy,
   );
 
   function clearFilters() {
@@ -125,10 +128,14 @@
     {#if filteredItems.length > 0}
       <div class="mb-4 shrink-0">
         <p class="text-sm text-base-content/60">
-          Showing <span class="font-semibold text-primary">{filteredItems.length}</span>
+          Showing <span class="font-semibold text-primary"
+            >{filteredItems.length}</span
+          >
           {filteredItems.length === 1 ? "activity" : "activities"}
           {#if activeFilter !== "all"}
-            in <span class="font-semibold">{historyConfig[activeFilter].label}</span>
+            in <span class="font-semibold"
+              >{historyConfig[activeFilter].label}</span
+            >
           {/if}
         </p>
       </div>

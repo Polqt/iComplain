@@ -5,22 +5,47 @@ export type Category = {
     name: string;
 }
 
-export type Priority = {
+export type TicketStatus = "pending" | "in_progress" | "resolved" | "closed";
+
+export type TicketPriority = {
     id: number;
     name: string;
-}
+    level: number;
+    color_code: string;
+};
 
 export type Ticket = {
-    id: number;
+    id: string;
     title: string;
     description: string;
     student: User;
     category: Category;
-    priority: Priority;
+    priority: TicketPriority;
     building: string;
     room_name: string;
-    status: string;
+    status: TicketStatus;
     created_at: string;
     updated_at: string;
     ticket_number: string;
+    attachments: string;
+    comments: number;
 }
+
+export type TicketColumn = {
+    id: TicketStatus;
+    title: string;
+    color: string;
+    dotColor: string;
+    reports: Ticket[];
+}
+
+export type Column = {
+    id: TicketStatus;
+    title: string;
+    color: string;
+    dotColor: string;
+}
+
+export type ViewMode = "grid" | "list";
+
+export type ModalMode = "create" | "edit" | "delete" | null;

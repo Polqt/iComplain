@@ -1,25 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import AdminLayout from "../../layout/AdminLayout.svelte";
-
-  type Status = "resolved" | "pending" | "in_progress" | "closed";
-  type Priority = "low" | "medium" | "high";
-  type ViewMode = "grid" | "list";
+  import { priorityConfig, statusConfig } from "../../../utils/ticketConfig.ts";
+  import type { Status, Priority, ViewMode } from "../../../types/reports.ts";
 
   let viewMode: ViewMode = "grid";
-
-  const statusConfig = {
-    pending: { label: "Pending", color: "badge-warning" },
-    in_progress: { label: "In Progress", color: "badge-info" },
-    resolved: { label: "Resolved", color: "badge-success" },
-    closed: { label: "Closed", color: "badge-ghost" },
-  };
-
-  const priorityConfig = {
-    low: { label: "Low", color: "badge-info" },
-    medium: { label: "Medium", color: "badge-warning" },
-    high: { label: "High", color: "badge-error" },
-  };
 
   const metrics = [
     {
@@ -361,7 +346,7 @@
                 </div>
               </div>
 
-              <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1 max-h-[520px]">
+              <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1 max-h-130">
                 {#each column.reports as report}
                   <div class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0 cursor-pointer">
                     <div class="card-body p-4">
@@ -370,12 +355,11 @@
                           {statusConfig[report.status].label}
                         </div>
                         <div class="dropdown dropdown-end">
-                          <label tabindex="0" class="btn btn-ghost btn-xs btn-circle cursor-pointer">
+                          <label class="btn btn-ghost btn-xs btn-circle cursor-pointer">
                             <Icon icon="mdi:dots-horizontal" width="14" height="14" />
                           </label>
                           <ul
-                            tabindex="0"
-                            class="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow-lg border border-base-content/5"
+                            class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-lg border border-base-content/5"
                           >
                             <li>
                               <button type="button" class="gap-2">

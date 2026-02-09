@@ -1,6 +1,8 @@
 
 import helpContentData from '../data/help-content.json' with { type: 'json' };
+import adminHelpData from '../data/admin-content.json' with { type: 'json' };
 import type { HelpContent } from '../types/help.ts';
+import type { User } from '../types/user.ts';
 
 /**
  * Loads help content from JSON file
@@ -9,8 +11,11 @@ import type { HelpContent } from '../types/help.ts';
  * - Potential localization (multiple JSON files for different languages)
  * - CMS integration in the future
  */
-export function loadHelpContent(): HelpContent {
-  return helpContentData as HelpContent;
+export function loadHelpContent(user: User): HelpContent {
+  switch (user.role) {
+    case 'admin': return adminHelpData as HelpContent;
+    case 'student': return helpContentData as HelpContent;
+  }
 }
 
 /**
