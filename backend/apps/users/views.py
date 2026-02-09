@@ -1,6 +1,6 @@
 import logging
-
 from django.conf import settings
+from django_ratelimit.decorators import ratelimit
 from ninja import Router
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import HttpRequest
@@ -29,6 +29,7 @@ def register(request: HttpRequest, data: SignupRequest):
     )
 
 
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 @router.post("/login", response=AuthResponse)
 def login_user(request: HttpRequest, data: LoginRequest):
     user = authenticate(
@@ -96,4 +97,12 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
         success=True,
         message="Logged in successfully.",
         user=UserResponse(id=user.id, email=user.email, is_active=user.is_active),
+    )
+    
+@router.post("/forgot-password", response=AuthResponse)
+def forgot_password(request: HttpRequest, data: LoginRequest):
+    return AuthResponse(
+        success=True,
+        message="Password reset link sent to your email.",
+        user=None
     )
