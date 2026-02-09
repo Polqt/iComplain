@@ -5,6 +5,7 @@
 
   export let notifications: Notification[] = [];
   export let unreadCount: number = 0;
+  export let viewAllHref: string = "/student/notifications";
 
   export let notificationsConfig: Record<
     string,
@@ -148,7 +149,7 @@
     {#if notifications.length > 0}
       <div class="border-t border-base-content/10">
         <a
-          href="/student/notifications"
+          href={viewAllHref}
           class="block text-center py-3 text-sm font-medium text-primary hover:bg-base-200 transition-colors"
           onclick={handleViewAll}
         >

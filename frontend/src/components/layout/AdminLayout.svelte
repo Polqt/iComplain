@@ -1,156 +1,293 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
-  import { formattedDate } from "../../utils/date.ts";
+  import SearchModal from "../ui/SearchModal.svelte";
+  import SearchBar from "../ui/SearchBar.svelte";
+  import NotificationBell from "../ui/NotificationBell.svelte";
+  import Profile from "../ui/Profile.svelte";
+  import { goto } from "$app/navigation";
+  import type { Notification } from "../../types/notifications.js";
+  import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
+  import type { User } from "../../types/user.ts";
 
   let showModal: boolean = false;
+  let theme: string = "lofi";
+  let isMobile: boolean = false;
 
-  function handleKeyDown(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-      event.preventDefault();
-      showModal = true;
-    }
+  let user: User | null = {
+    name: "Admin User",
+    email: "admin@usls.edu.ph",
+    avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
+    role: "Admin",
+  };
+
+  let notifications: Notification[] = [];
+  let unreadCount: number = 0;
+
+  function openModal() {
+    showModal = true;
   }
 
   function closeModal() {
     showModal = false;
   }
 
+  function setTheme(newTheme: string) {
+    theme = newTheme;
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", newTheme);
+  }
+
+  function checkMobile() {
+    isMobile = window.innerWidth < 768;
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("authToken");
+    sessionStorage.clear();
+
+    goto("/signin");
+  }
+
+  function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
+    const { id } = event.detail;
+
+    notifications = notifications.map((n) =>
+      n.id === id ? { ...n, read: true } : n,
+    );
+    unreadCount = notifications.filter((n) => !n.read).length;
+  }
+
+  function handleNotificationClick(
+    event: CustomEvent<{ notification: Notification }>,
+  ) {
+    const { notification } = event.detail;
+    if (notification.actionUrl) {
+      goto(notification.actionUrl);
+    }
+  }
+
+  function handleViewAllNotifications() {
+    goto("/admin/notifications");
+  }
+
   onMount(() => {
-    window.addEventListener("keydown", handleKeyDown);
+    const savedTheme = localStorage.getItem("theme") || "lofi";
+    setTheme(savedTheme);
+    window.addEventListener("resize", checkMobile);
+    checkMobile();
+
+    notifications = [
+      {
+        id: "1",
+        type: "success",
+        title: "Ticket Resolved",
+        message: "Ticket #4021 was marked as resolved.",
+        timestamp: "10 minutes ago",
+        read: false,
+        actionUrl: "/admin/dashboard#history",
+      },
+      {
+        id: "2",
+        type: "info",
+        title: "New Assignment",
+        message: "Ticket #3987 assigned to Maintenance Team.",
+        timestamp: "2 hours ago",
+        read: false,
+        actionUrl: "/admin/dashboard#tickets",
+      },
+      {
+        id: "3",
+        type: "warning",
+        title: "SLA Risk",
+        message: "Ticket #3940 nearing SLA deadline.",
+        timestamp: "1 day ago",
+        read: true,
+        actionUrl: "/admin/dashboard#tickets",
+      },
+    ];
+
+    unreadCount = notifications.filter((n) => !n.read).length;
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
   });
 
-  const navigation = [
+  const items = [
+    { name: "Dashboard", icon: "lucide:home", href: "/admin/dashboard" },
+    { name: "Tickets", icon: "lucide:ticket", href: "/admin/tickets" },
     {
-      name: "Dashboard",
-      icon: "mdi:view-dashboard-outline",
-      href: "/dashboard",
+      name: "Notifications",
+      icon: "lucide:bell",
+      href: "/admin/notifications",
     },
-    { name: "Reports", icon: "mdi:file-document-outline", href: "/reports" },
-    { name: "Settings", icon: "mdi:cog-outline", href: "/settings" },
+    { name: "History", icon: "lucide:clock", href: "/admin/history" },
+    { name: "Help", icon: "lucide:help-circle", href: "/admin/help" },
   ];
+
+  const profileItem = {
+    name: "Profile",
+    icon: "lucide:user-circle",
+    href: "/admin/profile",
+  };
+
+  const settingItem = {
+    name: "Settings",
+    icon: "lucide:settings",
+    href: "/admin/settings",
+  };
+
+  const notificationsConfig = {
+    success: {
+      icon: "lucide:check-circle",
+      bgColor: "bg-success",
+      iconColor: "text-success",
+    },
+    info: {
+      icon: "lucide:info",
+      bgColor: "bg-info",
+      iconColor: "text-info",
+    },
+    warning: {
+      icon: "lucide:alert-circle",
+      bgColor: "bg-warning",
+      iconColor: "text-warning",
+    },
+    error: {
+      icon: "lucide:x-circle",
+      bgColor: "bg-error",
+      iconColor: "text-error",
+    },
+  };
 </script>
 
-<div class="min-h-screen flex flex-col w-full bg-gray-50">
-  <aside>
-    <div class="drawer lg:drawer-open">
-      <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
-      <div class="drawer-content">
-        <nav class="navbar w-full border-b border-gray-400">
-          <label for="my-drawer-3" class="btn btn-square btn-ghost lg:hidden">
-            <Icon icon="lucide:sidebar-open" width="24" height="24" />
-          </label>
-          {#if showModal}
-            <div
-              class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            >
-              <div
-                class="bg-base-100 rounded-lg shadow-lg p-8 max-w-md w-full relative"
-              >
-                <button
-                  class="absolute top-2 right-2 btn btn-sm btn-ghost"
-                  on:click={closeModal}
-                  aria-label="Close"
-                >
-                  <Icon icon="lucide:x" width="20" height="20" />
-                </button>
-                <h2 class="text-xl font-bold mb-4">Search</h2>
-                <input
-                  type="search"
-                  class="input w-full"
-                  placeholder="Type to search..."
-                />
-              </div>
-            </div>
-          {/if}
-          <div class="px-4 flex justify-between w-full">
-            <div
-              class="flex flex-row justify-between items-center w-full gap-4"
-            >
-              <div class="flex-1">
-                <label
-                  class="flex items-center gap-2 bg-white rounded-lg shadow px-4 py-2 w-full"
-                >
-                  <Icon
-                    icon="lucide:search"
-                    width="24"
-                    height="24"
-                    class="text-base-content/50"
-                  />
-                  <input
-                    type="search"
-                    required
-                    placeholder="Start searching here..."
-                    class="flex-1 bg-transparent outline-none border-none focus:ring-0"
-                  />
-                  <kbd class="kbd">⌘ K</kbd>
-                </label>
-              </div>
-
-              <div
-                class="flex items-center gap-2 bg-white rounded-lg shadow px-3 py-2"
-              >
-                <button
-                  aria-label="moon"
-                  type="button"
-                  class="btn btn-ghost btn-sm rounded-full"
-                >
-                  <Icon icon="lucide:moon" width="20" height="20" />
-                </button>
-                <button
-                  aria-label="sun"
-                  type="button"
-                  class="btn btn-ghost btn-sm rounded-full"
-                >
-                  <Icon icon="lucide:sun" width="20" height="20" />
-                </button>
-              </div>
-
-              <div
-                class="flex items-center gap-3 bg-white rounded-lg shadow px-4 py-2 min-w-fit"
-              >
-                <Icon
-                  icon="solar:calendar-line-duotone"
-                  width="20"
-                  height="20"
-                />
-                <span class="text-base font-medium">{formattedDate}</span>
-                <span class="mx-1 text-gray-300">|</span>
-                <Icon icon="lucide:bell" width="20" height="20" />
-                <div class="avatar">
-                  <div class="w-8 h-8 ml-2 rounded-full overflow-hidden">
-                    <img
-                      src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp"
-                      alt="User"
-                      width="32"
-                      height="32"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-        <main class="flex-1 p-2 sm:p-4 w-full">
-          <slot />
-        </main>
-      </div>
-
-      <div class="drawer-side">
+<div class="min-h-screen w-full bg-base-300 dark:bg-base-300">
+  <div class="drawer lg:drawer-open">
+    <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-content flex flex-col w-full">
+      <nav class="navbar w-full px-2 sm:px-4 py-2">
         <label
           for="my-drawer-3"
-          aria-label="close sidebar"
-          class="drawer-overlay"
-        ></label>
-        <ul
-          class="menu bg-gray-50 min-h-full w-20 p-4 border-r border-gray-400 flex items-center justify-center-safe"
+          class="btn btn-square btn-ghost lg:hidden shrink-0"
         >
-          <!-- Sidebar content here -->
-          {#each navigation as item}
-            <li></li>
-          {/each}
-        </ul>
-      </div>
+          <Icon icon="lucide:menu" width="24" height="24" />
+        </label>
+
+        <SearchModal isOpen={showModal} on:close={closeModal} />
+
+        <div
+          class="flex-1 flex items-center justify-between gap-2 sm:gap-4 overflow-visible"
+        >
+          <SearchBar {isMobile} on:openModal={openModal} />
+
+          <div
+            class="flex items-center gap-1 sm:gap-2 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-3 py-2 shrink-0"
+          >
+            <button
+              aria-label="Light Theme"
+              type="button"
+              class="btn btn-ghost btn-xs sm:btn-sm rounded-full"
+              on:click={() => setTheme("lofi")}
+              disabled={theme === "lofi"}
+            >
+              <Icon icon="lucide:sun" width="20" height="20" />
+            </button>
+            <span class="text-gray-300 hidden sm:inline">|</span>
+            <button
+              aria-label="Dark Theme"
+              type="button"
+              class="btn btn-ghost btn-xs sm:btn-sm rounded-full hidden sm:flex"
+              on:click={() => setTheme("night")}
+              disabled={theme === "night"}
+            >
+              <Icon
+                icon="lucide:moon"
+                width="18"
+                height="18"
+                class="sm:w-5 sm:h-5"
+              />
+            </button>
+          </div>
+
+          <div
+            class="flex items-center gap-1 sm:gap-3 bg-base-100 dark:bg-base-100 rounded-lg shadow px-2 sm:px-4 py-2 shrink-0"
+          >
+            <Icon
+              icon="solar:calendar-line-duotone"
+              width="18"
+              height="18"
+              class="hidden xs:block sm:w-5 sm:h-5"
+            />
+            <span class="text-xs sm:text-base font-medium whitespace-nowrap">
+              {#if isMobile}
+                {mobileFormattedDate}
+              {:else}
+                {formattedDate}
+              {/if}
+            </span>
+            <span class="mx-1 text-gray-300 hidden sm:inline">|</span>
+            <NotificationBell
+              {notifications}
+              {unreadCount}
+              {notificationsConfig}
+              viewAllHref="/admin/notifications"
+              on:markAsRead={handleMarkAsRead}
+              on:notificationClick={handleNotificationClick}
+              on:viewAll={handleViewAllNotifications}
+            />
+
+            <Profile
+              {user}
+              profileHref="/admin/profile"
+              settingsHref="/admin/settings"
+              helpHref="/admin/help"
+              on:logout={handleLogout}
+            />
+          </div>
+        </div>
+      </nav>
+      <main class="flex-1 p-2 sm:p-4 w-full">
+        <slot />
+      </main>
     </div>
-  </aside>
+
+    <div
+      class="drawer-side z-40 overflow-visible lg:p-2 lg:mx-2 lg:overflow-visible lg:sticky lg:top-0 lg:h-screen sm:p-0 sm:mx-0"
+    >
+      <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"
+      ></label>
+      <ul
+        class="menu min-h-full bg-base-100 dark:bg-base-100 shadow-lg w-16 lg:rounded-lg sm:rounded-md flex flex-col items-center gap-2 py-4 overflow-visible"
+      >
+        {#each items as item}
+          <li>
+            <a
+              href={item.href}
+              class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-base-200 transition tooltip tooltip-right"
+              data-tip={item.name}
+            >
+              <Icon icon={item.icon} width="24" height="24" />
+            </a>
+          </li>
+        {/each}
+        <li class="mt-auto">
+          <a
+            href={settingItem.href}
+            class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-base-200 transition tooltip tooltip-right"
+            data-tip={settingItem.name}
+          >
+            <Icon icon={settingItem.icon} width="24" height="24" />
+          </a>
+          <a
+            href={profileItem.href}
+            class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-base-200 transition tooltip tooltip-right"
+            data-tip={profileItem.name}
+          >
+            <Icon icon={profileItem.icon} width="24" height="24" />
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
 </div>

@@ -10,4 +10,14 @@
   html {
     font-family: 'Montserrat', sans-serif;
   }
+
+  .select {
+    color: hsl(var(--bc) / 1);
+    background-color: hsl(var(--b1) / 1);
+  }
+
+  .select option {
+    color: hsl(var(--bc) / 1);
+    background-color: hsl(var(--b1) / 1);
+  }
 }
