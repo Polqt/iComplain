@@ -12,6 +12,7 @@
     statusConfig,
     priorityConfig,
     getPriorityKey,
+    columnConfigs,
   } from "../../../utils/ticketConfig.ts";
   import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
   import TicketCreateModal from "../../../components/ui/tickets/TicketCreateModal.svelte";
@@ -94,33 +95,6 @@
     goto(`/student/tickets/${reportId}`);
   }
 
-  // Use TicketStatus as id for columns
-  const columnConfigs: Column[] = [
-    {
-      id: "pending",
-      title: "Pending",
-      color: "text-yellow-300",
-      dotColor: "bg-yellow-300",
-    },
-    {
-      id: "in_progress",
-      title: "In Progress",
-      color: "text-info",
-      dotColor: "bg-info",
-    },
-    {
-      id: "resolved",
-      title: "Resolved",
-      color: "text-green-300",
-      dotColor: "bg-green-300",
-    },
-    {
-      id: "closed",
-      title: "Closed",
-      color: "text-gray-300",
-      dotColor: "bg-gray-300",
-    },
-  ];
 
   let mockTickets: Ticket[] = [
     {

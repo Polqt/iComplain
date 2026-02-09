@@ -18,7 +18,7 @@
     name: "Juan Dela Cruz",
     email: "juan.delacruz@usls.edu.ph",
     avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
-    role: "Student",
+    role: "student",
   };
 
   let notifications: Notification[] = [];
