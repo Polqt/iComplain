@@ -43,7 +43,6 @@ class TicketCreateSchema(Schema):
     title: str
     description: str
     category: int
-    priority: int
     building: str
     room_name: str
 

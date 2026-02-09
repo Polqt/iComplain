@@ -1,6 +1,8 @@
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
+
 
 from ninja import File, Router, UploadedFile
 from ninja.security import SessionAuth
@@ -11,6 +13,15 @@ from .schemas import TicketCommentCreateSchema, TicketCommentSchema, TicketComme
 from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback
 
 router = Router(auth=SessionAuth())
+
+@router.get("/expensive-data", response=dict)
+def expensive_data(request):
+    cache_key = "expensive_data"
+    data = cache.get(cache_key)
+    if not data:
+        data = ...
+        cache.set(cache_key, data, timeout=300)
+    return data
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
@@ -30,7 +41,7 @@ def ticket_detail(request, id: int):
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema, attachment: UploadedFile = File(None)):
     category = Category.objects.get(id=ticket.category)
-    priority = TicketPriority.objects.get(id=ticket.priority)
+    priority = TicketPriority.objects.get(name="Medium")
     ticket_obj = Ticket.objects.create(
         title=ticket.title,
         description=ticket.description,
@@ -72,7 +83,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema):
     if payload.category is not None:
         ticket.category = Category.objects.get(id=payload.category)
     if payload.priority is not None:
-        ticket.priority = TicketPriority.objects.get(id=payload.priority)
+        ticket.priority = TicketPriority.objects.get(name=payload.priority)
     if payload.building is not None:
         ticket.building = payload.building
     if payload.room_name is not None:
