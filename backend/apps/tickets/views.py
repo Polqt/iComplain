@@ -1,6 +1,8 @@
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
+
 
 from ninja import File, Router, UploadedFile
 from ninja.security import SessionAuth
@@ -11,6 +13,15 @@ from .schemas import TicketCommentCreateSchema, TicketCommentSchema, TicketComme
 from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback
 
 router = Router(auth=SessionAuth())
+
+@router.get("/expensive-data", response=dict)
+def expensive_data(request):
+    cache_key = "expensive_data"
+    data = cache.get(cache_key)
+    if not data:
+        data = ...
+        cache.set(cache_key, data, timeout=300)
+    return data
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
