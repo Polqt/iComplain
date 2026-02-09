@@ -4,9 +4,7 @@ from django.conf import settings
 from ninja import Router
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import HttpRequest
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
-from google.auth.exceptions import GoogleAuthError
+from .utils import verify_google_token, is_allowed_domain, get_or_create_google_user
 
 from .schemas import SignupRequest, LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
 
@@ -71,31 +69,11 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
             message="Google sign-in is not configured.",
             user=None,
         )
-    try:
-        payload = id_token.verify_oauth2_token(
-            data.id_token,
-            google_requests.Request(),
-            settings.GOOGLE_OAUTH2_CLIENT_ID,
-        )
-    except ValueError as e:
-        logger.warning("Google token verification failed (ValueError): %s", e)
+    payload = verify_google_token(data.id_token)
+    if not payload:
         return AuthResponse(
             success=False,
             message="Invalid or expired Google token.",
-            user=None,
-        )
-    except GoogleAuthError as e:
-        logger.warning("Google token verification failed (GoogleAuthError): %s", e)
-        return AuthResponse(
-            success=False,
-            message="Google authentication failed. Please try again.",
-            user=None,
-        )
-    except Exception as e:
-        logger.exception("Google token verification failed: %s", e)
-        return AuthResponse(
-            success=False,
-            message="An error occurred during sign-in. Please try again.",
             user=None,
         )
     email = payload.get("email")
@@ -105,18 +83,13 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
             message="Email not provided by Google.",
             user=None,
         )
-    domain = email.split("@")[-1] if "@" in email else ""
-    if not settings.ALLOWED_EMAIL_DOMAINS or domain not in settings.ALLOWED_EMAIL_DOMAINS:
+    if not is_allowed_domain(email):
         return AuthResponse(
             success=False,
-            message="Only usls email addresses are allowed to sign in.",
+            message="Only usls account are allowed to sign in.",
             user=None,
         )
-    user = User.objects.filter(email=email).first()
-    if user is None:
-        user = User(email=email)
-        user.set_unusable_password()
-        user.save()
+    user = get_or_create_google_user(User, email)
     backend = getattr(user, "backend", settings.AUTHENTICATION_BACKENDS[0])
     login(request, user, backend=backend)
     return AuthResponse(
