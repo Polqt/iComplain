@@ -13,6 +13,9 @@
     avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
     role: "Student",
   };
+  export let profileHref: string = "/student/profile";
+  export let settingsHref: string = "/student/settings";
+  export let helpHref: string = "/student/help";
 
   // Events
   const dispatch = createEventDispatcher<{
@@ -103,7 +106,7 @@
 
     <li>
       <a
-        href="/student/profile"
+        href={profileHref}
         class="flex items-center gap-3 py-2.5"
         onclick={handleProfileClick}
       >
@@ -113,7 +116,7 @@
     </li>
     <li>
       <a
-        href="/student/settings"
+        href={settingsHref}
         class="flex items-center gap-3 py-2.5"
         onclick={handleSettingsClick}
       >
@@ -122,7 +125,7 @@
       </a>
     </li>
     <li>
-      <a href="/student/help" class="flex items-center gap-3 py-2.5">
+      <a href={helpHref} class="flex items-center gap-3 py-2.5">
         <Icon icon="mdi:help-circle-outline" width="18" height="18" />
         <span>Help Center</span>
       </a>
