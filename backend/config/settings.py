@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'ninja',
     'apps.users',
     'apps.tickets',
     'apps.notifications',
@@ -176,6 +177,8 @@ CSRF_EXEMPT_API_PREFIXES = [
     '/api/users/register',  # Public signup
     '/api/users/login',     # Public login
     '/api/webhooks/',       # Third-party webhooks using token signatures
+    '/api/tickets/',
+    '/api/notifications/',
 ]
 
 

@@ -36,7 +36,7 @@ def disable_csrf(get_response: Callable):
         if (
             request.method in UNSAFE_METHODS
             and _is_exempt_api_path(request.path)
-            and _has_non_cookie_auth(request)
+            # and _has_non_cookie_auth(request)
         ):
             setattr(request, "_dont_enforce_csrf_checks", True)
 
