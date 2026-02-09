@@ -2,24 +2,19 @@
   import Icon from "@iconify/svelte";
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
   import { goto } from "$app/navigation";
+  import type {
+    Column,
+    ModalMode,
+    Ticket,
+    ViewMode,
+  } from "../../../types/tickets.ts";
   import {
-    type Ticket,
     statusConfig,
     priorityConfig,
-    TicketCreateModal,
-    TicketDeleteModal,
-  } from "../../../components/ui/tickets";
-
-  interface Column {
-    id: string;
-    title: string;
-    color: string;
-    dotColor: string;
-    reports: Ticket[];
-  }
-
-  type ViewMode = "grid" | "list";
-  type ModalMode = "create" | "edit" | "delete" | null;
+    getPriorityKey,
+  } from "../../../utils/ticketConfig.ts";
+  import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
+  import TicketCreateModal from "../../../components/ui/tickets/TicketCreateModal.svelte";
 
   let viewMode: ViewMode = "grid";
   let modalMode: ModalMode = null;
@@ -34,15 +29,8 @@
         title: "",
         description: "",
         status: "pending",
-        priority: "low",
-        assignees: [],
-        date: new Date().toLocaleDateString("en-US", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
+        priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
         comments: 0,
-        links: 0,
         attachments: "0/3",
       };
     } else if (mode === "edit" && report) {
@@ -58,28 +46,38 @@
 
   function handleSubmit(data: Partial<Ticket>) {
     if (modalMode === "create" && data) {
+      // Fill all required Ticket fields with defaults if missing
       const newTicket: Ticket = {
         id: `TKT-${String(Date.now()).slice(-6)}`,
         title: data.title ?? "",
         description: data.description ?? "",
         status: data.status ?? "pending",
-        priority: data.priority ?? "low",
-        assignees: data.assignees ?? [],
-        date:
-          data.date ??
-          new Date().toLocaleDateString("en-US", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
-        comments: data.comments ?? 0,
-        links: data.links ?? 0,
+        priority: data.priority ?? {
+          id: 1,
+          name: "Low",
+          level: 1,
+          color_code: "#6b7280",
+        },
+        student: data.student ?? {
+          name: "Student",
+          email: "student@example.com",
+          avatar: "",
+          role: "student",
+        },
+        category: data.category ?? { id: 1, name: "General" },
+        building: data.building ?? "Building A",
+        room_name: data.room_name ?? "Room 101",
+        created_at: data.created_at ?? new Date().toISOString(),
+        updated_at: data.updated_at ?? new Date().toISOString(),
+        ticket_number:
+          data.ticket_number ?? `TKT-${String(Date.now()).slice(-6)}`,
         attachments: data.attachments ?? "0/3",
+        comments: data.comments ?? 0,
       };
       mockTickets = [...mockTickets, newTicket];
     } else if (modalMode === "edit" && selectedReport && data) {
       mockTickets = mockTickets.map((t) =>
-        t.id === selectedReport!.id ? ({ ...t, ...data } as Ticket) : t
+        t.id === selectedReport!.id ? ({ ...t, ...data } as Ticket) : t,
       );
     }
     closeModal();
@@ -96,18 +94,32 @@
     goto(`/student/tickets/${reportId}`);
   }
 
-  const statusToColumnId: Record<string, string> = {
-    pending: "pending",
-    in_progress: "in-progress",
-    resolved: "resolved",
-    closed: "closed",
-  };
-
-  const columnConfigs = [
-    { id: "pending", title: "Pending", color: "text-yellow-300", dotColor: "bg-yellow-300" },
-    { id: "in-progress", title: "In Progress", color: "text-info", dotColor: "bg-info" },
-    { id: "resolved", title: "Resolved", color: "text-green-300", dotColor: "bg-green-300" },
-    { id: "closed", title: "Closed", color: "text-gray-300", dotColor: "bg-gray-300" },
+  // Use TicketStatus as id for columns
+  const columnConfigs: Column[] = [
+    {
+      id: "pending",
+      title: "Pending",
+      color: "text-yellow-300",
+      dotColor: "bg-yellow-300",
+    },
+    {
+      id: "in_progress",
+      title: "In Progress",
+      color: "text-info",
+      dotColor: "bg-info",
+    },
+    {
+      id: "resolved",
+      title: "Resolved",
+      color: "text-green-300",
+      dotColor: "bg-green-300",
+    },
+    {
+      id: "closed",
+      title: "Closed",
+      color: "text-gray-300",
+      dotColor: "bg-gray-300",
+    },
   ];
 
   let mockTickets: Ticket[] = [
@@ -116,25 +128,43 @@
       title: "Broken AC Unit in Room 301",
       description:
         "Air conditioning not working properly, temperature control issues...",
-      status: "not-started",
-      priority: "low",
-      assignees: ["JD", "AS"],
-      date: "25 Mar 2023",
+      status: "pending",
+      priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
       comments: 5,
-      links: 2,
       attachments: "3/3",
+      student: {
+        name: "Student",
+        email: "student@example.com",
+        avatar: "",
+        role: "student",
+      },
+      category: { id: 1, name: "General" },
+      building: "Building A",
+      room_name: "Room 301",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ticket_number: "TKT-001",
     },
     {
       id: "TKT-002",
       title: "Leaking Faucet in Restroom",
       description: "Water dripping continuously from the main sink...",
       status: "in_progress",
-      priority: "medium",
-      assignees: ["MJ"],
-      date: "28 Mar 2023",
+      priority: { id: 2, name: "Medium", level: 2, color_code: "#6b7280" },
       comments: 12,
-      links: 1,
       attachments: "2/3",
+      student: {
+        name: "Student",
+        email: "student@example.com",
+        avatar: "",
+        role: "student",
+      },
+      category: { id: 1, name: "General" },
+      building: "Building B",
+      room_name: "Restroom",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ticket_number: "TKT-002",
     },
     {
       id: "TKT-003",
@@ -142,12 +172,21 @@
       description:
         "Lights in 3F hallway flickering intermittently during evening hours...",
       status: "in_progress",
-      priority: "high",
-      assignees: ["AS", "JD"],
-      date: "30 Mar 2023",
+      priority: { id: 3, name: "High", level: 3, color_code: "#6b7280" },
       comments: 8,
-      links: 1,
       attachments: "2/3",
+      student: {
+        name: "Student",
+        email: "student@example.com",
+        avatar: "",
+        role: "student",
+      },
+      category: { id: 1, name: "General" },
+      building: "Building C",
+      room_name: "Hallway",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ticket_number: "TKT-003",
     },
     {
       id: "TKT-004",
@@ -155,12 +194,21 @@
       description:
         "Projection screen won't retract properly in lecture hall...",
       status: "in_progress",
-      priority: "low",
-      assignees: ["MJ"],
-      date: "02 Apr 2023",
+      priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
       comments: 3,
-      links: 0,
       attachments: "2/3",
+      student: {
+        name: "Student",
+        email: "student@example.com",
+        avatar: "",
+        role: "student",
+      },
+      category: { id: 1, name: "General" },
+      building: "Building D",
+      room_name: "Lecture Hall",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ticket_number: "TKT-004",
     },
     {
       id: "TKT-005",
@@ -168,71 +216,87 @@
       description:
         "Main entrance lock mechanism was jammed and needed repair...",
       status: "resolved",
-      priority: "high",
-      assignees: ["AS"],
-      date: "07 Apr 2023",
+      priority: { id: 3, name: "High", level: 3, color_code: "#6b7280" },
       comments: 6,
-      links: 0,
       attachments: "1/3",
+      student: {
+        name: "Student",
+        email: "student@example.com",
+        avatar: "",
+        role: "student",
+      },
+      category: { id: 1, name: "General" },
+      building: "Building E",
+      room_name: "Entrance",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ticket_number: "TKT-005",
     },
     {
       id: "TKT-006",
       title: "Missing Whiteboard Markers",
-      description:
-        "Classroom 205 needed new dry-erase markers for teaching...",
-      status: "not-started",
-      priority: "low",
-      assignees: ["JD", "MJ"],
-      date: "10 Apr 2023",
+      description: "Classroom 205 needed new dry-erase markers for teaching...",
+      status: "pending",
+      priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
       comments: 4,
-      links: 2,
       attachments: "0/3",
+      student: {
+        name: "Student",
+        email: "student@example.com",
+        avatar: "",
+        role: "student",
+      },
+      category: { id: 1, name: "General" },
+      building: "Building F",
+      room_name: "Classroom 205",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ticket_number: "TKT-006",
     },
   ];
 
   $: columns = columnConfigs.map((config) => ({
     ...config,
-    reports:
-      config.id === "closed"
-        ? []
-        : mockTickets.filter((t) => statusToColumnId[t.status] === config.id),
-  })) as Column[];
+    reports: mockTickets.filter((t) => t.status === config.id),
+  }));
 </script>
 
 <StudentLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
     <div class="flex items-center justify-between mb-6 shrink-0">
-  <h1 class="text-2xl font-black text-base-content">My Tickets</h1>
+      <h1 class="text-2xl font-black text-base-content">My Tickets</h1>
 
-  <div class="flex items-center gap-3">
-    <!-- Create Ticket Button -->
-    <button class="btn btn-primary btn-sm gap-2" onclick={() => openModal("create")}>
-      <Icon icon="mdi:plus" width="18" height="18" />
-      Create Ticket
-    </button>
+      <div class="flex items-center gap-3">
+        <button
+          class="btn btn-primary btn-sm gap-2"
+          onclick={() => openModal("create")}
+        >
+          <Icon icon="mdi:plus" width="18" height="18" />
+          Create Ticket
+        </button>
 
-    <div class="flex items-center gap-2 bg-base-200 p-1 rounded-lg">
-      <button
-        class="btn btn-sm"
-        class:btn-primary={viewMode === 'list'}
-        class:btn-ghost={viewMode !== 'list'}
-        onclick={() => (viewMode = "list")}
-      >
-        <Icon icon="mdi:format-list-bulleted" width="18" height="18" />
-        List
-      </button>
-      <button
-        class="btn btn-sm"
-        class:btn-primary={viewMode === 'grid'}
-        class:btn-ghost={viewMode !== 'grid'}
-        onclick={() => (viewMode = "grid")}
-      >
-        <Icon icon="mdi:view-grid-outline" width="18" height="18" />
-        Board
-      </button>
+        <div class="flex items-center gap-2 bg-base-200 p-1 rounded-lg">
+          <button
+            class="btn btn-sm"
+            class:btn-primary={viewMode === "list"}
+            class:btn-ghost={viewMode !== "list"}
+            onclick={() => (viewMode = "list")}
+          >
+            <Icon icon="mdi:format-list-bulleted" width="18" height="18" />
+            List
+          </button>
+          <button
+            class="btn btn-sm"
+            class:btn-primary={viewMode === "grid"}
+            class:btn-ghost={viewMode !== "grid"}
+            onclick={() => (viewMode = "grid")}
+          >
+            <Icon icon="mdi:view-grid-outline" width="18" height="18" />
+            Board
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     {#if viewMode === "grid"}
       <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
@@ -252,137 +316,139 @@
                   {column.reports.length}
                 </div>
               </div>
+
               <div class="flex items-center gap-1">
                 <button class="btn btn-ghost btn-xs btn-circle">
                   <Icon icon="mdi:dots-horizontal" width="16" height="16" />
                 </button>
               </div>
             </div>
-
             <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1">
               {#each column.reports as report}
-                <div
-                  class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0 cursor-pointer"
-                  onclick={() => navigateToTicket(report.id)}
-                >
-                  <div class="card-body p-4">
-                    <div class="flex items-center justify-between mb-3">
-                      <div
-                        class="badge badge-sm {statusConfig[report.status].color}"
-                      >
-                        {statusConfig[report.status].label}
+                <div class="relative">
+                  <button
+                    type="button"
+                    aria-label={`Open ticket ${report.title}`}
+                    class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0 cursor-pointer text-left w-full"
+                    style="padding-right:2.5rem;"
+                    onclick={() => navigateToTicket(report.id)}
+                    onkeydown={(e) => {
+                      if (
+                        e.key === "Enter" ||
+                        e.key === " " ||
+                        e.code === "Space"
+                      ) {
+                        e.preventDefault();
+                        navigateToTicket(report.id);
+                      }
+                    }}
+                  >
+                    <div class="card-body p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <div
+                          class="badge badge-sm {statusConfig[report.status]
+                            .color}"
+                        >
+                          {statusConfig[report.status].label}
+                        </div>
                       </div>
-                      <div
-                        class="dropdown dropdown-end"
-                        onclick={(e) => e.stopPropagation()}
+                      <!-- end card action row -->
+                      <h3
+                        class="font-semibold text-base text-base-content mb-2 line-clamp-2"
                       >
-                        <label tabindex="0" class="btn btn-ghost btn-xs btn-circle cursor-pointer">
+                        {report.title}
+                      </h3>
+
+                      <p class="text-sm text-base-content/60 mb-3 line-clamp-2">
+                        {report.description}
+                      </p>
+
+                      <div class="flex items-center justify-between mb-3">
+                        <div
+                          class="badge badge-sm {priorityConfig[
+                            getPriorityKey(report.priority)
+                          ].color}"
+                        >
+                          {priorityConfig[getPriorityKey(report.priority)]
+                            .label}
+                        </div>
+                      </div>
+
+                      <div
+                        class="flex items-center gap-4 text-xs text-base-content/50 pt-3 border-t border-base-content/5"
+                      >
+                        <div class="flex items-center gap-1">
                           <Icon
-                            icon="mdi:dots-horizontal"
+                            icon="mdi:message-outline"
                             width="14"
                             height="14"
                           />
-                        </label>
-                        <ul
-                          tabindex="0"
-                          class="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow-lg border border-base-content/5"
-                        >
-                          <li>
-                            <button
-                              type="button"
-                              class="gap-2"
-                              onclick={(e) => {
-                                e.stopPropagation();
-                                openModal("edit", report);
-                              }}
-                            >
-                              <Icon icon="mdi:pencil-outline" width="16" height="16" />
-                              Edit
-                            </button>
-                          </li>
-                          <li>
-                            <button
-                              type="button"
-                              class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
-                              onclick={(e) => {
-                                e.stopPropagation();
-                                openModal("delete", report);
-                              }}
-                            >
-                              <Icon icon="mdi:delete-outline" width="16" height="16" />
-                              Delete
-                            </button>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    <h3
-                      class="font-semibold text-base text-base-content mb-2 line-clamp-2"
-                    >
-                      {report.title}
-                    </h3>
-
-                    <p class="text-sm text-base-content/60 mb-3 line-clamp-2">
-                      {report.description}
-                    </p>
-
-                    <div class="flex items-center justify-between mb-3">
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs text-base-content/50"
-                          >Assignees:</span
-                        >
-                        <div class="avatar-group -space-x-3">
-                          {#each report.assignees as assignee}
-                            <div class="avatar placeholder">
-                              <div
-                                class="bg-primary text-primary-content w-6 rounded-full"
-                              >
-                                <span class="text-xs">{assignee}</span>
-                              </div>
-                            </div>
-                          {/each}
+                          <span>{report.comments}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <Icon icon="mdi:paperclip" width="14" height="14" />
+                          <span>{report.attachments}</span>
                         </div>
                       </div>
                     </div>
-
-                    <div class="flex items-center justify-between mb-3">
-                      <div
-                        class="flex items-center gap-1 text-xs text-base-content/60"
+                  </button>
+                  <div class="absolute top-4 right-4 z-10">
+                    <div class="dropdown dropdown-end">
+                      <button
+                        type="button"
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                        class="btn btn-ghost btn-xs btn-circle cursor-pointer"
+                        onclick={(e) => e.stopPropagation()}
                       >
                         <Icon
-                          icon="mdi:calendar-outline"
+                          icon="mdi:dots-horizontal"
                           width="14"
                           height="14"
                         />
-                        <span>{report.date}</span>
-                      </div>
-                      <div
-                        class="badge badge-sm {priorityConfig[report.priority].color}"
+                      </button>
+                      <ul
+                        tabindex="-1"
+                        role="menu"
+                        class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-lg border border-base-content/5"
                       >
-                        {priorityConfig[report.priority].label}
-                      </div>
-                    </div>
-
-                    <div
-                      class="flex items-center gap-4 text-xs text-base-content/50 pt-3 border-t border-base-content/5"
-                    >
-                      <div class="flex items-center gap-1">
-                        <Icon
-                          icon="mdi:message-outline"
-                          width="14"
-                          height="14"
-                        />
-                        <span>{report.comments}</span>
-                      </div>
-                      <div class="flex items-center gap-1">
-                        <Icon icon="mdi:link-variant" width="14" height="14" />
-                        <span>{report.links}</span>
-                      </div>
-                      <div class="flex items-center gap-1">
-                        <Icon icon="mdi:paperclip" width="14" height="14" />
-                        <span>{report.attachments}</span>
-                      </div>
+                        <li>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            class="gap-2"
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              openModal("edit", report);
+                            }}
+                          >
+                            <Icon
+                              icon="mdi:pencil-outline"
+                              width="16"
+                              height="16"
+                            />
+                            Edit
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              openModal("delete", report);
+                            }}
+                          >
+                            <Icon
+                              icon="mdi:delete-outline"
+                              width="16"
+                              height="16"
+                            />
+                            Delete
+                          </button>
+                        </li>
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -396,13 +462,29 @@
         {#each columns as column}
           {#each column.reports as report}
             <div
-              class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 cursor-pointer"
-              onclick={() => navigateToTicket(report.id)}
+              class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 text-left w-full relative"
             >
-              <div class="card-body p-4">
+              <button
+                type="button"
+                class="card-body p-4 text-left w-full cursor-pointer"
+                aria-label={`Open ticket ${report.title}`}
+                onclick={() => navigateToTicket(report.id)}
+                onkeydown={(e) => {
+                  if (
+                    e.key === "Enter" ||
+                    e.key === " " ||
+                    e.code === "Space"
+                  ) {
+                    e.preventDefault();
+                    navigateToTicket(report.id);
+                  }
+                }}
+              >
                 <div class="flex items-center gap-4">
                   <div
-                    class="badge badge-sm whitespace-nowrap {statusConfig[report.status].color}"
+                    class="badge badge-sm whitespace-nowrap {statusConfig[
+                      report.status
+                    ].color}"
                   >
                     {statusConfig[report.status].label}
                   </div>
@@ -418,29 +500,12 @@
                     </p>
                   </div>
 
-                  <div class="avatar-group -space-x-3">
-                    {#each report.assignees as assignee}
-                      <div class="avatar placeholder">
-                        <div
-                          class="bg-primary text-primary-content w-6 rounded-full"
-                        >
-                          <span class="text-xs">{assignee}</span>
-                        </div>
-                      </div>
-                    {/each}
-                  </div>
-
                   <div
-                    class="flex items-center gap-1 text-xs text-base-content/60 whitespace-nowrap"
+                    class="badge badge-sm {priorityConfig[
+                      getPriorityKey(report.priority)
+                    ].color}"
                   >
-                    <Icon icon="mdi:calendar-outline" width="14" height="14" />
-                    <span>{report.date}</span>
-                  </div>
-
-                  <div
-                    class="badge badge-sm {priorityConfig[report.priority].color}"
-                  >
-                    {priorityConfig[report.priority].label}
+                    {priorityConfig[getPriorityKey(report.priority)].label}
                   </div>
 
                   <div
@@ -451,57 +516,62 @@
                       <span>{report.comments}</span>
                     </div>
                     <div class="flex items-center gap-1">
-                      <Icon icon="mdi:link-variant" width="14" height="14" />
-                      <span>{report.links}</span>
-                    </div>
-                    <div class="flex items-center gap-1">
                       <Icon icon="mdi:paperclip" width="14" height="14" />
                       <span>{report.attachments}</span>
                     </div>
                   </div>
+                </div>
+              </button>
 
-                  <div
-                    class="dropdown dropdown-end"
+              <div class="absolute top-4 right-4 z-10">
+                <div class="dropdown dropdown-end">
+                  <button
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded="false"
+                    class="btn btn-ghost btn-xs btn-circle cursor-pointer"
                     onclick={(e) => e.stopPropagation()}
                   >
-                    <label
-                      tabindex="0"
-                      class="btn btn-ghost btn-xs btn-circle cursor-pointer"
-                    >
-                      <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-                    </label>
-                    <ul
-                      tabindex="0"
-                      class="dropdown-content menu bg-base-100 rounded-box z-[1] w-40 p-2 shadow-lg border border-base-content/5"
-                    >
-                      <li>
-                        <button
-                          type="button"
-                          class="gap-2"
-                          onclick={(e) => {
-                            e.stopPropagation();
-                            openModal("edit", report);
-                          }}
-                        >
-                          <Icon icon="mdi:pencil-outline" width="16" height="16" />
-                          Edit
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          type="button"
-                          class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
-                          onclick={(e) => {
-                            e.stopPropagation();
-                            openModal("delete", report);
-                          }}
-                        >
-                          <Icon icon="mdi:delete-outline" width="16" height="16" />
-                          Delete
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
+                    <Icon icon="mdi:dots-horizontal" width="16" height="16" />
+                  </button>
+                  <ul
+                    class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-lg border border-base-content/5"
+                  >
+                    <li>
+                      <button
+                        type="button"
+                        class="gap-2"
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          openModal("edit", report);
+                        }}
+                      >
+                        <Icon
+                          icon="mdi:pencil-outline"
+                          width="16"
+                          height="16"
+                        />
+                        Edit
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          openModal("delete", report);
+                        }}
+                      >
+                        <Icon
+                          icon="mdi:delete-outline"
+                          width="16"
+                          height="16"
+                        />
+                        Delete
+                      </button>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -511,11 +581,10 @@
     {/if}
   </div>
 
-  <!-- Modals (from ui/tickets) -->
   <TicketCreateModal
     open={modalMode === "create" || modalMode === "edit"}
     mode={modalMode === "create" ? "create" : "edit"}
-    formData={formData}
+    {formData}
     onclose={closeModal}
     onsubmit={handleSubmit}
   />

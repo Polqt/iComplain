@@ -1,24 +1,21 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-  import type { Column, ViewMode } from "../../../types/reports.ts";
+  import type {
+    TicketColumn,
+    ViewMode,
+    Ticket,
+    TicketPriority,
+  } from "../../../types/tickets.ts";
+  import {
+    priorityConfig,
+    getPriorityKey,
+    statusConfig,
+  } from "../../../utils/ticketConfig.ts";
 
   let viewMode: ViewMode = "grid";
 
-  const statusConfig = {
-    "not-started": { label: "Not Started", color: "badge-primary" },
-    "in-research": { label: "In Research", color: "badge-warning" },
-    "on-track": { label: "On Track", color: "badge-secondary" },
-    complete: { label: "Complete", color: "badge-success" },
-  };
-
-  const priorityConfig = {
-    low: { label: "Low", color: "badge-info" },
-    medium: { label: "Medium", color: "badge-warning" },
-    high: { label: "High", color: "badge-error" },
-  };
-
-  const columns: Column[] = [
+  const columns: TicketColumn[] = [
     {
       id: "pending",
       title: "Pending",
@@ -26,60 +23,100 @@
       dotColor: "bg-yellow-300",
       reports: [
         {
-          id: "1",
+          id: "TKT-001",
           title: "Broken AC Unit in Room 301",
           description:
             "Air conditioning not working properly, temperature control issues...",
-          status: "not-started",
-          priority: "low",
-          date: "25 Mar 2023",
-          comments: 5,
-          links: 2,
+          student: { name: "Alice", avatar: "", email: "alice@example.com" },
+          category: { id: 1, name: "Facilities" },
+          priority: {
+            id: 1,
+            name: "Low",
+            level: 1,
+            color_code: "#6b7280",
+          } as TicketPriority,
+          building: "Main",
+          room_name: "Room 301",
+          status: "pending",
+          created_at: "2023-03-25T09:00:00Z",
+          updated_at: "2023-03-25T09:00:00Z",
+          ticket_number: "TKT-001",
           attachments: "3/3",
-        },
+          comments: 5,
+        } as Ticket,
         {
-          id: "2",
+          id: "TKT-002",
           title: "Leaking Faucet in Restroom",
           description: "Water dripping continuously from the main sink...",
-          status: "in-research",
-          priority: "medium",
-          date: "28 Mar 2023",
-          comments: 12,
-          links: 1,
+          student: { name: "Bob", avatar: "", email: "bob@example.com" },
+          category: { id: 2, name: "Plumbing" },
+          priority: {
+            id: 2,
+            name: "Medium",
+            level: 2,
+            color_code: "#f59e0b",
+          } as TicketPriority,
+          building: "South",
+          room_name: "Restroom A",
+          status: "in_progress",
+          created_at: "2023-03-28T10:30:00Z",
+          updated_at: "2023-03-28T11:00:00Z",
+          ticket_number: "TKT-002",
           attachments: "2/3",
-        },
+          comments: 12,
+        } as Ticket,
       ],
     },
     {
-      id: "in-progress",
+      id: "in_progress",
       title: "In Progress",
       color: "text-info",
       dotColor: "bg-info",
       reports: [
         {
-          id: "3",
+          id: "TKT-003",
           title: "Flickering Hallway Lights",
           description:
             "Lights in 3F hallway flickering intermittently during evening hours...",
-          status: "in-research",
-          priority: "high",
-          date: "30 Mar 2023",
-          comments: 8,
-          links: 1,
+          student: { name: "Carol", avatar: "", email: "carol@example.com" },
+          category: { id: 3, name: "Electrical" },
+          priority: {
+            id: 3,
+            name: "High",
+            level: 3,
+            color_code: "#dc2626",
+          } as TicketPriority,
+          building: "North",
+          room_name: "Hallway 3F",
+          status: "in_progress",
+          created_at: "2023-03-30T19:00:00Z",
+          updated_at: "2023-03-30T19:10:00Z",
+          ticket_number: "TKT-003",
           attachments: "2/3",
-        },
+          comments: 8,
+        } as Ticket,
         {
-          id: "4",
+          id: "TKT-004",
           title: "Broken Projector Screen",
           description:
             "Projection screen won't retract properly in lecture hall...",
-          status: "on-track",
-          priority: "low",
-          date: "02 Apr 2023",
-          comments: 3,
-          links: 0,
+          student: { name: "Dan", avatar: "", email: "dan@example.com" },
+          category: { id: 4, name: "AV" },
+          priority: {
+            id: 1,
+            name: "Low",
+            level: 1,
+            color_code: "#6b7280",
+          } as TicketPriority,
+          building: "Main",
+          room_name: "Lecture Hall A",
+          status: "in_progress",
+          created_at: "2023-04-02T14:20:00Z",
+          updated_at: "2023-04-02T14:45:00Z",
+          ticket_number: "TKT-004",
           attachments: "2/3",
-        },
+          comments: 3,
+        } as Ticket,
       ],
     },
     {
@@ -87,39 +124,14 @@
       title: "Resolved",
       color: "text-green-300",
       dotColor: "bg-green-300",
-      reports: [
-        {
-          id: "5",
-          title: "Door Lock Malfunction",
-          description:
-            "Main entrance lock mechanism was jammed and needed repair...",
-          status: "complete",
-          priority: "high",
-          date: "07 Apr 2023",
-          comments: 6,
-          links: 0,
-          attachments: "1/3",
-        },
-        {
-          id: "6",
-          title: "Missing Whiteboard Markers",
-          description:
-            "Classroom 205 needed new dry-erase markers for teaching...",
-          status: "not-started",
-          priority: "low",
-          date: "10 Apr 2023",
-          comments: 4,
-          links: 2,
-          attachments: "0/3",
-        },
-      ],
+      reports: [],
     },
     {
       id: "closed",
       title: "Closed",
       color: "text-gray-300",
       dotColor: "bg-gray-300",
-      reports: [],
+      reports: []
     },
   ];
 </script>
@@ -194,20 +206,11 @@
 
                     <div class="flex items-center justify-between mb-3">
                       <div
-                        class="flex items-center gap-1 text-xs text-base-content/60"
+                        class="badge {priorityConfig[
+                          getPriorityKey(report.priority)
+                        ].color} badge-sm"
                       >
-                        <Icon
-                          icon="mdi:calendar-outline"
-                          width="14"
-                          height="14"
-                        />
-                        <span>{report.date}</span>
-                      </div>
-                      <div
-                        class="badge {priorityConfig[report.priority]
-                          .color} badge-sm"
-                      >
-                        {priorityConfig[report.priority].label}
+                        {priorityConfig[getPriorityKey(report.priority)].label}
                       </div>
                     </div>
 
@@ -221,10 +224,6 @@
                           height="14"
                         />
                         <span>{report.comments}</span>
-                      </div>
-                      <div class="flex items-center gap-1">
-                        <Icon icon="mdi:link-variant" width="14" height="14" />
-                        <span>{report.links}</span>
                       </div>
                       <div class="flex items-center gap-1">
                         <Icon icon="mdi:paperclip" width="14" height="14" />
@@ -266,17 +265,11 @@
                   </div>
 
                   <div
-                    class="flex items-center gap-1 text-xs text-base-content/60 whitespace-nowrap"
+                    class="badge {priorityConfig[
+                      getPriorityKey(report.priority)
+                    ].color} badge-sm"
                   >
-                    <Icon icon="mdi:calendar-outline" width="14" height="14" />
-                    <span>{report.date}</span>
-                  </div>
-
-                  <div
-                    class="badge {priorityConfig[report.priority]
-                      .color} badge-sm"
-                  >
-                    {priorityConfig[report.priority].label}
+                    {priorityConfig[getPriorityKey(report.priority)].label}
                   </div>
 
                   <div
@@ -285,10 +278,6 @@
                     <div class="flex items-center gap-1">
                       <Icon icon="mdi:message-outline" width="14" height="14" />
                       <span>{report.comments}</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <Icon icon="mdi:link-variant" width="14" height="14" />
-                      <span>{report.links}</span>
                     </div>
                     <div class="flex items-center gap-1">
                       <Icon icon="mdi:paperclip" width="14" height="14" />
