@@ -41,7 +41,7 @@ def ticket_detail(request, id: int):
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema, attachment: UploadedFile = File(None)):
     category = Category.objects.get(id=ticket.category)
-    priority = TicketPriority.objects.get(id=ticket.priority)
+    priority = TicketPriority.objects.get(name="Medium")
     ticket_obj = Ticket.objects.create(
         title=ticket.title,
         description=ticket.description,
@@ -83,7 +83,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema):
     if payload.category is not None:
         ticket.category = Category.objects.get(id=payload.category)
     if payload.priority is not None:
-        ticket.priority = TicketPriority.objects.get(id=payload.priority)
+        ticket.priority = TicketPriority.objects.get(name=payload.priority)
     if payload.building is not None:
         ticket.building = payload.building
     if payload.room_name is not None:

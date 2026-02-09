@@ -1,6 +1,6 @@
 import logging
-from django.conf import settings
 from django_ratelimit.decorators import ratelimit
+from django.conf import settings
 from ninja import Router
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import HttpRequest
