@@ -68,9 +68,15 @@ export const columnConfigs: Column[] = [
   ];
 
 /**
- * @param tickets - Array of tickets to be sorted
- * @param columns - Column to sort by (e.g., "createdAt", "priority", "status")
- * @returns Array of tickets sorted by the specified column
+ * Groups tickets into columns based on their status.
+ *
+ * Each column's `id` is treated as a status value, and the returned
+ * `TicketColumn` objects will contain only the tickets whose `status`
+ * matches that column `id`.
+ *
+ * @param tickets - Array of tickets to be grouped by status.
+ * @param columns - Column configurations; each column's `id` should map to a ticket status.
+ * @returns Array of ticket columns with `reports` filtered to tickets matching the column status.
  */
 export function groupTicketsByStatus(
   tickets: Ticket[],
