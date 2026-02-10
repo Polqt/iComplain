@@ -1,9 +1,18 @@
 export type UserRole = 'student' | 'admin';
 
+// Backend/auth user shape
 export type User = {
     id: number;
     email: string;
     is_active: boolean;
+    role: UserRole;
+}
+
+// UI profile user shape (for header/profile dropdown etc.)
+export type ProfileUser = {
+    name: string;
+    email: string;
+    avatar: string;
     role: UserRole;
 }
 
@@ -25,4 +34,4 @@ export type AuthState = {
     isAuthenticated: boolean;
     isLoading: boolean;
     role: UserRole | null;
-}   
+};
