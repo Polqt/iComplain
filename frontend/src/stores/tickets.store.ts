@@ -141,7 +141,7 @@ function createTicketsStore(): TicketsStore {
             update((state) => ({
                 ...state,
                 tickets: state.tickets.map((t: Ticket) =>
-                    t.id === id ? ({ ...t, ...updates } as Ticket) : t,
+                    t.id === id ? ({ ...t, ...updates, updated_at: new Date().toISOString() } as Ticket) : t,
                 ),
             }));
         },
