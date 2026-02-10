@@ -134,15 +134,15 @@
     {
       name: "Home",
       icon: "lucide:home",
-      href: "/student/dashboard",
+      href: "/dashboard",
     },
-    { name: "Tickets", icon: "lucide:ticket", href: "/student/tickets" },
+    { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
     {
       name: "Notifications",
       icon: "lucide:bell",
-      href: "/student/notifications",
+      href: "/notifications",
     },
-    { name: "History", icon: "lucide:clock", href: "/student/history" },
+    { name: "History", icon: "lucide:clock", href: "/history" },
     { name: "Help", icon: "lucide:help-circle", href: "/help" },
   ];
 

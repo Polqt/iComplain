@@ -89,30 +89,6 @@
       ]
     },
     {
-      "id": "locations-categories",
-      "title": "Locations & Categories",
-      "icon": "mdi:map-marker-outline",
-      "content": "Manage campus locations and issue categories for consistent ticket classification. Add new locations, update categories, and analyze trends by location or category.",
-      "faqs": [
-        {
-          "question": "How is the location hierarchy organized?",
-          "answer": "Locations follow a hierarchy: Campus → Building → Floor → Room/Common Area. This structure helps with analytics and allows filtering tickets by specific buildings, floors, or rooms."
-        },
-        {
-          "question": "Can I add new locations or categories?",
-          "answer": "Yes, admins can add new locations and categories through the admin settings. When adding a location, specify its parent (e.g., which building it belongs to). New categories should have clear descriptions to guide students."
-        },
-        {
-          "question": "What are the default issue categories?",
-          "answer": "HVAC, Lighting, Internet, Restroom, Equipment, Electrical, Structural, Safety, Cleanliness, and Other. Each category helps track common issues and identify areas needing attention or budget allocation."
-        },
-        {
-          "question": "How can I see which locations have the most issues?",
-          "answer": "Use the Location Report in the Reports section. It shows tickets per building/floor, identifies problem areas with high ticket concentration, and highlights recurring issues by location."
-        }
-      ]
-    },
-    {
       "id": "reports-analytics",
       "title": "Reports & Analytics",
       "icon": "mdi:chart-bar",

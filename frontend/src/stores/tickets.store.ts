@@ -134,7 +134,7 @@ function createTicketsStore(): TicketsStore {
         addTicket(ticket: Ticket) {
             update((state) => ({
                 ...state,
-                tickets: [...state.tickets, ticket],
+                tickets: [...state.tickets, ticket]
             }));
         },
         updateTicket(id: string, updates: Partial<Ticket>) {
