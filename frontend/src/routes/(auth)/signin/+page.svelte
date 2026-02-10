@@ -50,36 +50,12 @@
     generalError = "";
 
     try {
-      const res = await fetch(`${API_BASE}/user/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      let data: { success?: boolean; user?: { id: number; email: string }; message?: string };
-      try {
-        data = await res.json();
-      } catch {
-        generalError = "Invalid response from server. Please try again.";
-        return;
-      }
-      if (!res.ok) {
-        generalError = data?.message || `Request failed (${res.status}). Please try again.`;
-        return;
-      }
-      if (!data.success || !data.user) {
-        generalError = data.message || "Sign-in failed. Please try again.";
-        return;
-      }
+      await authStore.loginWithEmailPassword(email, password);
       handleRememberMe(rememberMe, email);
-      authStore.login({
-        id: String(data.user.id),
-        email: data.user.email,
-        role: "student",
-      });
-      goto("/student/dashboard");
+      goto("/dashboard");
     } catch (error) {
-      generalError = error instanceof Error ? error.message : "Sign-in failed. Please try again.";
+      generalError =
+        error instanceof Error ? error.message : "Sign-in failed. Please try again.";
     } finally {
       isLoading = false;
     }
@@ -97,33 +73,8 @@
     generalError = "";
     isLoading = true;
     try {
-      const res = await fetch(`${API_BASE}/user/google-login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ id_token: response.credential }),
-      });
-      let data: { success?: boolean; user?: { id: number; email: string }; message?: string };
-      try {
-        data = await res.json();
-      } catch {
-        generalError = "Invalid response from server. Please try again.";
-        return;
-      }
-      if (!res.ok) {
-        generalError = data?.message || `Request failed (${res.status}). Please try again.`;
-        return;
-      }
-      if (!data.success || !data.user) {
-        generalError = data.message || "Google sign-in failed. Please try again.";
-        return;
-      }
-      authStore.login({
-        id: String(data.user.id),
-        email: data.user.email,
-        role: "student",
-      });
-      goto("/student/dashboard");
+      await authStore.loginWithGoogle(response.credential);
+      goto("/dashboard");
     } catch (err) {
       generalError = getErrorMessage(err);
     } finally {
