@@ -4,7 +4,8 @@
   import type { HelpSection } from "../../../types/help.ts";
   import { loadHelpContent } from "../../../utils/helpConfig.ts";
 
-  const helpData = loadHelpContent({ role: "admin", name: "", avatar: "", email: "" });
+  // Admin view always uses the admin help content.
+  const helpData = loadHelpContent("admin");
 
   let activeTab: string = helpData.sections[0]?.id || "getting-started";
   let searchQuery: string = "";

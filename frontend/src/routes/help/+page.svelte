@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import AdminDashboard from "../../components/ui/admin/AdminDashboard.svelte";
-  import StudentDashboard from "../../components/ui/student/StudentDashboard.svelte";
   import { authStore } from "../../stores/auth.store.ts";
+  import AdminHelp from "../../components/ui/admin/AdminHelp.svelte";
+  import StudentHelp from "../../components/ui/student/StudentHelp.svelte";
 
   let isLoading: boolean = true;
   let role: string | null = null;
@@ -12,7 +12,6 @@
   onMount(() => {
     authStore.checkAuth();
   });
-  
 </script>
 
 {#if isLoading}
@@ -20,7 +19,14 @@
     <span class="loading loading-spinner loading-lg"></span>
   </div>
 {:else if role === "admin"}
-  <AdminDashboard />
+  <AdminHelp />
 {:else if role === "student"}
-  <StudentDashboard />
+  <StudentHelp />
+{:else}
+  <div class="flex flex-col items-center justify-center min-h-[40vh] gap-3">
+    <p class="text-base-content/70">
+      You need to be signed in to view the help center.
+    </p>
+    <a href="/signin" class="btn btn-primary btn-sm">Go to Sign In</a>
+  </div>
 {/if}
