@@ -68,7 +68,7 @@
   }
 
   function handleViewAllNotifications() {
-    goto("/admin/notifications");
+    goto("/notifications");
   }
 
   onMount(() => {
@@ -115,27 +115,27 @@
   });
 
   const items = [
-    { name: "Dashboard", icon: "lucide:home", href: "/admin/dashboard" },
-    { name: "Tickets", icon: "lucide:ticket", href: "/admin/tickets" },
+    { name: "Dashboard", icon: "lucide:home", href: "/dashboard" },
+    { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
     {
       name: "Notifications",
       icon: "lucide:bell",
-      href: "/admin/notifications",
+      href: "/notifications",
     },
-    { name: "History", icon: "lucide:clock", href: "/admin/history" },
+    { name: "History", icon: "lucide:clock", href: "/history" },
     { name: "Help", icon: "lucide:help-circle", href: "/help" },
   ];
 
   const profileItem = {
     name: "Profile",
     icon: "lucide:user-circle",
-    href: "/admin/profile",
+    href: "/profile",
   };
 
   const settingItem = {
     name: "Settings",
     icon: "lucide:settings",
-    href: "/admin/settings",
+    href: "/settings",
   };
 
   const notificationsConfig = {
