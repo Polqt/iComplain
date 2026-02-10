@@ -1,11 +1,5 @@
 import { writable, type Readable } from "svelte/store";
-import type { Ticket, TicketPriority } from "../types/tickets.ts";
-
-type TicketsState = {
-    tickets: Ticket[];
-    isLoading: boolean;
-    error: string | null;
-};
+import type { Ticket, TicketPriority, TicketsState } from "../types/tickets.ts";
 
 interface TicketsStore extends Readable<TicketsState> {
     setTickets: (tickets: Ticket[]) => void;
