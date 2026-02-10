@@ -5,13 +5,18 @@ from ninja import Router
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import HttpRequest
 from .utils import verify_google_token, is_allowed_domain, get_or_create_google_user
-
 from .schemas import SignupRequest, LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
 
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
 router = Router(tags=["User"])
+
+
+def get_user_role(user: User) -> str:
+    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+        return "admin"
+    return "student"
 
 @router.post("/register", response=AuthResponse)
 def register(request: HttpRequest, data: SignupRequest):
@@ -25,7 +30,12 @@ def register(request: HttpRequest, data: SignupRequest):
     return AuthResponse(
         success=True,
         message="Student account created successfully.",
-        user=UserResponse(id=user.id, email=user.email)
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            is_active=user.is_active,
+            role=get_user_role(user),
+        ),
     )
 
 
@@ -48,7 +58,12 @@ def login_user(request: HttpRequest, data: LoginRequest):
     return AuthResponse(
         success=True,
         message="Logged in successfully.",
-        user=UserResponse(id=user.id, email=user.email, is_active=user.is_active)
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            is_active=user.is_active,
+            role=get_user_role(user),
+        ),
     )
 
 
@@ -96,9 +111,38 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
     return AuthResponse(
         success=True,
         message="Logged in successfully.",
-        user=UserResponse(id=user.id, email=user.email, is_active=user.is_active),
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            is_active=user.is_active,
+            role=get_user_role(user),
+        ),
     )
-    
+
+
+@router.get("/profile", response=AuthResponse)
+def get_current_user(request: HttpRequest):
+ 
+    user = request.user
+    if not user.is_authenticated:
+        return AuthResponse(
+            success=False,
+            message="Not authenticated.",
+            user=None,
+        )
+
+    return AuthResponse(
+        success=True,
+        message="Authenticated.",
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            is_active=user.is_active,
+            role=get_user_role(user),
+        ),
+    )
+
+
 @router.post("/forgot-password", response=AuthResponse)
 def forgot_password(request: HttpRequest, data: LoginRequest):
     return AuthResponse(

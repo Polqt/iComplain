@@ -1,26 +1,24 @@
 import { goto } from "$app/navigation";
 import { writable, type Readable } from "svelte/store";
+import type { AuthState, User, UserRole } from "../types/user.ts";
 
-type UserRole = 'student' | 'admin';
-
-type User = {
-    id: string;
-    email: string;
-    role: UserRole;
-    [key: string]: any;
-}
-
-type AuthState = {
-    user: User | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    role: UserRole | null;
-}
+import {
+    login as apiLogin,
+    googleLogin as apiGoogleLogin,
+    getCurrentUser as apiGetCurrentUser,
+    logout as apiLogout,
+} from "../lib/api/user.ts";
 
 interface AuthStore extends Readable<AuthState> {
-    login: (userData: User) => void;
-    logout: () => void;
+
+    loginWithEmailPassword: (email: string, password: string) => Promise<void>;
+
+    loginWithGoogle: (idToken: string) => Promise<void>;
+
+    logout: () => Promise<void>;
+
     checkAuth: () => Promise<boolean>;
+
     updateUser: (updates: Partial<User>) => void;
 }
 
@@ -30,93 +28,88 @@ function createAuthStore(): AuthStore {
         isAuthenticated: false,
         isLoading: true,
         role: null,
-    })
-    
+    });
+
+    const setAuthenticatedUser = (user: User) => {
+        set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            role: user.role ?? null,
+        });
+    };
+
+    const clearAuthState = () => {
+        set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            role: null,
+        });
+    };
+
     return {
         subscribe,
 
-        /**
-         * Set user data upon login.
-         */
-        login: (userData: User) => {
-            set({
-                user: userData,
-                isAuthenticated: true,
-                isLoading: false,
-                role: userData.role,
-            })
+        async loginWithEmailPassword(email: string, password: string): Promise<void> {
+            try {
+                const user = await apiLogin(email, password);
+                setAuthenticatedUser(user);
+            } catch (error) {
+                clearAuthState();
+                throw error;
+            }
         },
 
-        /**
-         * Clear user data upon logout.
-         */
-        logout: async () => {
-            set({
-                user: null,
-                isAuthenticated: false,
-                isLoading: false,
-                role: null,
-            })
+        async loginWithGoogle(idToken: string): Promise<void> {
+            try {
+                const user = await apiGoogleLogin(idToken);
+                setAuthenticatedUser(user);
+            } catch (error) {
+                clearAuthState();
+                throw error;
+            }
+        },
 
-            // Clear user session from local storage
-            if (typeof window !== 'undefined') {
-                sessionStorage.clear();
-                localStorage.removeItem('rememberMe');
+        async logout(): Promise<void> {
+            try {
+                await apiLogout();
+            } catch {
             }
 
-            goto('/signin');
+            clearAuthState();
+
+            if (typeof window !== "undefined") {
+                sessionStorage.clear();
+                localStorage.removeItem("rememberMe");
+            }
+
+            goto("/signin");
         },
 
-        /**
-         * Check if user is authenticated (e.g., on app load).
-         */
-        checkAuth: async (): Promise<boolean> => {
+        async checkAuth(): Promise<boolean> {
             try {
-                // TODO: Implement actual auth check logic (e.g., API call)
-                const response = await fetch('', {
-                    credentials: 'include',
-                })
-
-                if (response.ok) {
-                    const userData: User = await response.json();
-                    set({
-                        user: userData,
-                        isAuthenticated: true,
-                        isLoading: false,
-                        role: userData.role,
-                    });
+                const user = await apiGetCurrentUser();
+                if (user) {
+                    setAuthenticatedUser(user);
                     return true;
-                } else {
-                    set({
-                        user: null,
-                        isAuthenticated: false,
-                        isLoading: false,
-                        role: null,
-                    })
-                    return false;
                 }
-            } catch (error) {
-                set({
-                    user: null,
-                    isAuthenticated: false,
-                    isLoading: false,
-                    role: null,
-                })
+
+                clearAuthState();
+                return false;
+            } catch {
+                clearAuthState();
                 return false;
             }
         },
 
-        /**
-         * Update user data in the store.
-         */
         updateUser: (updates: Partial<User>) => {
-            update(state => ({
+            update((state) => ({
                 ...state,
-                user: state.user ? { ...state.user, ...updates } : null
+                user: state.user ? { ...state.user, ...updates } : null,
             }));
-        }
-    }
+        },
+    };
 }
 
 export const authStore = createAuthStore();
-
