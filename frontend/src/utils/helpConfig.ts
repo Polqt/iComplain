@@ -2,19 +2,18 @@
 import helpContentData from '../data/help-content.json' with { type: 'json' };
 import adminHelpData from '../data/admin-content.json' with { type: 'json' };
 import type { HelpContent } from '../types/help.ts';
-import type { User } from '../types/user.ts';
 
 /**
- * Loads help content from JSON file
- * This approach allows for:
- * - Easy content updates without code changes
- * - Potential localization (multiple JSON files for different languages)
- * - CMS integration in the future
+ * Loads help content from JSON file based on role.
+ * This keeps the API simple and avoids needing a full User object.
  */
-export function loadHelpContent(user: User): HelpContent {
-  switch (user.role) {
-    case 'admin': return adminHelpData as HelpContent;
-    case 'student': return helpContentData as HelpContent;
+export function loadHelpContent(role: 'admin' | 'student'): HelpContent {
+  switch (role) {
+    case 'admin':
+      return adminHelpData as HelpContent;
+    case 'student':
+    default:
+      return helpContentData as HelpContent;
   }
 }
 

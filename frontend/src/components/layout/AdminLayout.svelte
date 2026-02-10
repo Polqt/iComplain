@@ -8,17 +8,17 @@
   import { goto } from "$app/navigation";
   import type { Notification } from "../../types/notifications.js";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
-  import type { User } from "../../types/user.ts";
+  import type { ProfileUser } from "../../types/user.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
 
-  let user: User | null = {
+  let user: ProfileUser | null = {
     name: "Admin User",
     email: "admin@usls.edu.ph",
     avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
-    role: "Admin",
+    role: "admin",
   };
 
   let notifications: Notification[] = [];
@@ -123,7 +123,7 @@
       href: "/admin/notifications",
     },
     { name: "History", icon: "lucide:clock", href: "/admin/history" },
-    { name: "Help", icon: "lucide:help-circle", href: "/admin/help" },
+    { name: "Help", icon: "lucide:help-circle", href: "/help" },
   ];
 
   const profileItem = {
@@ -241,7 +241,7 @@
               {user}
               profileHref="/admin/profile"
               settingsHref="/admin/settings"
-              helpHref="/admin/help"
+              helpHref="/help"
               on:logout={handleLogout}
             />
           </div>

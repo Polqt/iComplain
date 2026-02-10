@@ -46,6 +46,12 @@ export type Column = {
     dotColor: string;
 }
 
+export type TicketsState = {
+    tickets: Ticket[];
+    isLoading: boolean;
+    error: string | null;
+};
+
 export type ViewMode = "grid" | "list";
 
 export type ModalMode = "create" | "edit" | "delete" | null;

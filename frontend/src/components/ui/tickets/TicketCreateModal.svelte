@@ -59,6 +59,34 @@
           ></textarea>
         </div>
 
+        <div class="form-control">
+          <label for="building" class="label">
+            <span class="label-text font-semibold">Building</span>
+          </label>
+          <input
+            id="building"
+            type="text"
+            bind:value={formData.building}
+            placeholder="Enter building name"
+            class="input input-bordered w-full"
+            required
+          />
+        </div>
+        <div class="form-control">
+          <label for="room_name" class="label">
+            <span class="label-text font-semibold">Room Name</span>
+          </label>
+          <input
+            id="room_name"
+            type="text"
+            bind:value={formData.room_name}
+            placeholder="Enter room name"
+            class="input input-bordered w-full"
+            required
+          />
+        </div>
+
+
         <!-- Priority and Status: editable only for admin (canEditPriorityStatus), else view-only in edit or hidden in create -->
         {#if canEditPriorityStatus}
           <div class="grid grid-cols-2 gap-4">

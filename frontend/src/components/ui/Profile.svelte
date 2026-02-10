@@ -1,17 +1,13 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { createEventDispatcher } from "svelte";
+  import type { ProfileUser } from "../../types/user.ts";
 
-  export let user: {
-    name: string;
-    email: string;
-    avatar: string;
-    role?: string;
-  } = {
+  export let user: ProfileUser = {
     name: "Student User",
     email: "student@usls.edu.ph",
     avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
-    role: "Student",
+    role: "student",
   };
   export let profileHref: string = "/student/profile";
   export let settingsHref: string = "/student/settings";

@@ -6,7 +6,8 @@
     loadHelpContent,
   } from "../../../utils/helpConfig.ts";
 
-  const helpData = loadHelpContent();
+  // Student view always uses the student help content.
+  const helpData = loadHelpContent("student");
 
   let activeTab: string = helpData.sections[0]?.id || "getting-started";
   let openAccordions: Set<string> = new Set();
