@@ -31,9 +31,9 @@
       comments: 5,
       attachments: "3/3",
       student: {
-        name: "Student",
+        id: 1,
         email: "student@example.com",
-        avatar: "",
+        is_active: true, // TODO: replace with actual user data (avatar: "",)
         role: "student",
       },
       category: { id: 1, name: "General" },
@@ -52,9 +52,9 @@
       comments: 12,
       attachments: "2/3",
       student: {
-        name: "Student",
+        id: 2,
         email: "student@example.com",
-        avatar: "",
+        is_active: true, // TODO: replace with actual user data (avatar: "",)
         role: "student",
       },
       category: { id: 1, name: "General" },
@@ -74,9 +74,9 @@
       comments: 8,
       attachments: "2/3",
       student: {
-        name: "Student",
+        id: 3,
         email: "student@example.com",
-        avatar: "",
+        is_active: true, // TODO: replace with actual user data (avatar: "",)
         role: "student",
       },
       category: { id: 1, name: "General" },
@@ -96,9 +96,9 @@
       comments: 3,
       attachments: "2/3",
       student: {
-        name: "Student",
+        id: 4,
         email: "student@example.com",
-        avatar: "",
+        is_active: true, // TODO: replace with actual user data (avatar: "",)
         role: "student",
       },
       category: { id: 1, name: "General" },
@@ -118,9 +118,9 @@
       comments: 6,
       attachments: "1/3",
       student: {
-        name: "Student",
+        id: 5,
         email: "student@example.com",
-        avatar: "",
+        is_active: true, // TODO: replace with actual user data (avatar: "",)
         role: "student",
       },
       category: { id: 1, name: "General" },
@@ -139,9 +139,9 @@
       comments: 4,
       attachments: "0/3",
       student: {
-        name: "Student",
+        id: 6,
         email: "student@example.com",
-        avatar: "",
+        is_active: true, // TODO: replace with actual user data (avatar: "",)       
         role: "student",
       },
       category: { id: 1, name: "General" },
@@ -242,15 +242,26 @@
 
             <div class="divider my-3 sm:my-4"></div>
 
-            <div>
-              <h3 class="text-sm font-semibold text-base-content/60 mb-2">
-                Description
-              </h3>
-              <p
-                class="text-sm sm:text-base text-base-content/80 wrap-break-word"
-              >
-                {ticket.description}
-              </p>
+            <div class="space-y-4">
+              <div>
+                <h3 class="text-sm font-semibold text-base-content/60 mb-2">
+                  Description
+                </h3>
+                <p
+                  class="text-sm sm:text-base text-base-content/80 wrap-break-word"
+                >
+                  {ticket.description}
+                </p>
+              </div>
+
+              <div>
+                <h3 class="text-sm font-semibold text-base-content/60 mb-2">
+                  Location
+                </h3>
+                <p class="text-sm sm:text-base text-base-content/80">
+                  {ticket.building} • {ticket.room_name}
+                </p>
+              </div>
             </div>
           </div>
 
