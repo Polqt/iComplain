@@ -9,9 +9,9 @@
     avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
     role: "student",
   };
-  export let profileHref: string = "/student/profile";
-  export let settingsHref: string = "/student/settings";
-  export let helpHref: string = "/student/help";
+  export let profileHref: string = "/profile";
+  export let settingsHref: string = "/settings";
+  export let helpHref: string = "/help";
 
   // Events
   const dispatch = createEventDispatcher<{

@@ -76,7 +76,7 @@
   }
 
   function handleViewAllNotifications() {
-    goto("/student/notifications");
+    goto("/notifications");
   }
 
   onMount(() => {
