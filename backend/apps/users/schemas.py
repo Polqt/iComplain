@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -28,10 +28,14 @@ class GoogleLoginRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     email: EmailStr
     is_active: bool = True
     role: Literal["student", "admin"]
+    name: str | None = None
+    avatar: str | None = None
 
 class AuthResponse(BaseModel):
     success: bool

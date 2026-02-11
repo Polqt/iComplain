@@ -18,10 +18,27 @@ def is_allowed_domain(email: str) -> bool:
     domain = email.split('@')[-1] if "@" in email else ""
     return settings.ALLOWED_EMAIL_DOMAINS and domain in settings.ALLOWED_EMAIL_DOMAINS
 
-def get_or_create_google_user(User, email):
+
+def derive_name_from_email(email: str) -> str:
+
+    local_part = (email or "").split("@")[0]
+    if not local_part:
+        return ""
+    # Normalize common separators
+    for sep in ["_", "-", "."]:
+        local_part = local_part.replace(sep, " ")
+    parts = [p for p in local_part.split(" ") if p]
+    return " ".join(p.capitalize() for p in parts)
+
+
+def get_or_create_google_user(User, email: str, name: str | None = None, avatar_url: str | None = None):
     user = User.objects.filter(email=email).first()
     if user is None:
         user = User(email=email)
         user.set_unusable_password()
-        user.save()
+    if name and not getattr(user, "full_name", ""):
+        user.full_name = name
+    if avatar_url and not getattr(user, "avatar_url", ""):
+        user.avatar_url = avatar_url
+    user.save()
     return user

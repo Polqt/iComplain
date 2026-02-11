@@ -4,7 +4,12 @@ from django.conf import settings
 from ninja import Router
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import HttpRequest
-from .utils import verify_google_token, is_allowed_domain, get_or_create_google_user
+from .utils import (
+    verify_google_token,
+    is_allowed_domain,
+    get_or_create_google_user,
+    derive_name_from_email,
+)
 from .schemas import SignupRequest, LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
 
 logger = logging.getLogger(__name__)
@@ -12,30 +17,21 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 router = Router(tags=["User"])
 
-
-def get_user_role(user: User) -> str:
-    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
-        return "admin"
-    return "student"
-
 @router.post("/register", response=AuthResponse)
 def register(request: HttpRequest, data: SignupRequest):
     if User.objects.filter(email=data.email).exists():
         return AuthResponse(success=False, message="Email already registered.", user=None)
 
+    derived_name = derive_name_from_email(str(data.email))
     user = User.objects.create_user(
         email=data.email,
-        password=data.password
+        password=data.password,
+        full_name=derived_name,
     )
     return AuthResponse(
         success=True,
         message="Student account created successfully.",
-        user=UserResponse(
-            id=user.id,
-            email=user.email,
-            is_active=user.is_active,
-            role=get_user_role(user),
-        ),
+        user=UserResponse.model_validate(user, from_attributes=True),
     )
 
 
@@ -53,17 +49,18 @@ def login_user(request: HttpRequest, data: LoginRequest):
             message="Invalid username or password.",
             user=None
         )
+
+    # Ensure we have a display name stored (best-effort derived from email)
+    if not getattr(user, "full_name", ""):
+        user.full_name = derive_name_from_email(getattr(user, "email", "") or "")
+        user.save(update_fields=["full_name"])
+
     backend = getattr(user, "backend", settings.AUTHENTICATION_BACKENDS[0])
     login(request, user, backend=backend)
     return AuthResponse(
         success=True,
         message="Logged in successfully.",
-        user=UserResponse(
-            id=user.id,
-            email=user.email,
-            is_active=user.is_active,
-            role=get_user_role(user),
-        ),
+        user=UserResponse.model_validate(user, from_attributes=True),
     )
 
 
@@ -105,18 +102,23 @@ def google_login(request: HttpRequest, data: GoogleLoginRequest):
             message="Only usls account are allowed to sign in.",
             user=None,
         )
-    user = get_or_create_google_user(User, email)
+
+    # Google token commonly provides "name" and "picture"
+    name = payload.get("name") if isinstance(payload, dict) else None
+    avatar_url = payload.get("picture") if isinstance(payload, dict) else None
+    user = get_or_create_google_user(User, email, name=name, avatar_url=avatar_url)
+
+    # Fallback if Google didn't provide a name
+    if not getattr(user, "full_name", ""):
+        user.full_name = derive_name_from_email(email)
+        user.save(update_fields=["full_name"])
+
     backend = getattr(user, "backend", settings.AUTHENTICATION_BACKENDS[0])
     login(request, user, backend=backend)
     return AuthResponse(
         success=True,
         message="Logged in successfully.",
-        user=UserResponse(
-            id=user.id,
-            email=user.email,
-            is_active=user.is_active,
-            role=get_user_role(user),
-        ),
+        user=UserResponse.model_validate(user, from_attributes=True),
     )
 
 
@@ -131,15 +133,15 @@ def get_current_user(request: HttpRequest):
             user=None,
         )
 
+    # Ensure we have a display name stored (best-effort derived from email)
+    if not getattr(user, "full_name", ""):
+        user.full_name = derive_name_from_email(getattr(user, "email", "") or "")
+        user.save(update_fields=["full_name"])
+
     return AuthResponse(
         success=True,
         message="Authenticated.",
-        user=UserResponse(
-            id=user.id,
-            email=user.email,
-            is_active=user.is_active,
-            role=get_user_role(user),
-        ),
+        user=UserResponse.model_validate(user, from_attributes=True),
     )
 
 

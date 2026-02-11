@@ -9,17 +9,42 @@
   import type { Notification } from "../../types/notifications.js";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
   import type { ProfileUser } from "../../types/user.ts";
+  import type { User } from "../../types/user.ts";
+  import { authStore } from "../../stores/auth.store.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
 
-  let user: ProfileUser | null = {
-    name: "Juan Dela Cruz",
-    email: "juan.delacruz@usls.edu.ph",
-    avatar: "https://img.daisyui.com/images/profile/demo/yellingcat@192.webp",
-    role: "student",
-  };
+  let authUser: User | null = null;
+  let authLoading: boolean = true;
+
+  $: ({ user: authUser, isLoading: authLoading } = $authStore);
+
+  function deriveNameFromEmail(email: string): string {
+    const local = (email || "").split("@")[0] || "";
+    if (!local) return "";
+    return local
+      .replace(/[._-]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((p) => p[0]?.toUpperCase() + p.slice(1))
+      .join(" ");
+  }
+
+  $: user = (authUser
+    ? {
+        name: authUser.name || deriveNameFromEmail(authUser.email) || "Student",
+        email: authUser.email,
+        avatar: authUser.avatar || "",
+        role: authUser.role,
+      }
+    : {
+        name: authLoading ? "Loading..." : "Guest",
+        email: "",
+        avatar: "",
+        role: "student",
+      }) satisfies ProfileUser;
 
   let notifications: Notification[] = [];
   let unreadCount: number = 0;
@@ -42,11 +67,8 @@
     isMobile = window.innerWidth < 768;
   }
 
-  function handleLogout() {
-    localStorage.removeItem("authToken");
-    sessionStorage.clear();
-
-    goto("/signin");
+  async function handleLogout() {
+    await authStore.logout();
   }
 
   function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
