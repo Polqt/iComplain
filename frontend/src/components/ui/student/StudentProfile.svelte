@@ -7,5 +7,5 @@
 </svelte:head>
 
 <StudentLayout>
-  <div class="flex"></div>
+  <div class="flex">Hi</div>
 </StudentLayout>
