@@ -1,127 +1,27 @@
-import { writable, type Readable } from "svelte/store";
-import type { Ticket, TicketPriority, TicketsState } from "../types/tickets.ts";
+import { get, writable, type Readable } from "svelte/store";
+import type { Ticket, TicketCreatePayload, TicketPriority, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
+import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket } from "../lib/api/ticket.ts";
 
 interface TicketsStore extends Readable<TicketsState> {
     setTickets: (tickets: Ticket[]) => void;
-    addTicket: (ticket: Ticket) => void;
-    updateTicket: (id: string, updates: Partial<Ticket>) => void;
-    removeTicket: (id: string) => void;
+    setLoading: (isLoading: boolean) => void;
+    setError: (error: string | null) => void;
+
+    loadTickets: () => Promise<void>;
+    loadTicketById: (id: number) => Promise<Ticket | null>;
+    createTicket: (ticketData: TicketCreatePayload, attachment?: File) => Promise<Ticket | null>;
+    updateTicket: (id: number, updates: TicketUpdatePayload) => Promise<Ticket | null>;
+    deleteTicket: (id: number) => Promise<boolean>;
+
+    addTicketToStore: (ticket: Ticket) => void;
+    updateTicketInStore: (id: number, updates: Partial<Ticket>) => void;
+    removeTicketFromStore: (id: number) => void;
 }
 
-// Temporary mock tickets – shared across student views.
-const initialTickets: Ticket[] = [
-    {
-        id: "TKT-001",
-        title: "Broken AC Unit in Room 301",
-        description:
-            "Air conditioning not working properly, temperature control issues...",
-        student: {
-            id: 1,
-            email: "student@example.com",
-            is_active: true,
-            role: "student",
-        },
-        category: { id: 1, name: "Facilities" },
-        priority: {
-            id: 1,
-            name: "Low",
-            level: 1,
-            color_code: "#6b7280",
-        } as TicketPriority,
-        building: "Main",
-        room_name: "Room 301",
-        status: "pending",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        ticket_number: "TKT-001",
-        attachments: "3/3",
-        comments: 5,
-    } as Ticket,
-    {
-        id: "TKT-002",
-        title: "Leaking Faucet in Restroom",
-        description: "Water dripping continuously from the main sink...",
-        student: {
-            id: 2,
-            email: "student@example.com",
-            is_active: true,
-            role: "student",
-        },
-        category: { id: 2, name: "Plumbing" },
-        priority: {
-            id: 2,
-            name: "Medium",
-            level: 2,
-            color_code: "#f59e0b",
-        } as TicketPriority,
-        building: "South",
-        room_name: "Restroom A",
-        status: "in_progress",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        ticket_number: "TKT-002",
-        attachments: "2/3",
-        comments: 12,
-    } as Ticket,
-    {
-        id: "TKT-003",
-        title: "Flickering Hallway Lights",
-        description:
-            "Lights in 3F hallway flickering intermittently during evening hours...",
-        student: {
-            id: 3,
-            email: "student@example.com",
-            is_active: true,
-            role: "student",
-        },
-        category: { id: 3, name: "Electrical" },
-        priority: {
-            id: 3,
-            name: "High",
-            level: 3,
-            color_code: "#dc2626",
-        } as TicketPriority,
-        building: "North",
-        room_name: "Hallway 3F",
-        status: "in_progress",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        ticket_number: "TKT-003",
-        attachments: "2/3",
-        comments: 8,
-    } as Ticket,
-    {
-        id: "TKT-004",
-        title: "Broken Projector Screen",
-        description:
-            "Projection screen won't retract properly in lecture hall...",
-        student: {
-            id: 4,
-            email: "student@example.com",
-            is_active: true,
-            role: "student",
-        },
-        category: { id: 4, name: "AV" },
-        priority: {
-            id: 1,
-            name: "Low",
-            level: 1,
-            color_code: "#6b7280",
-        } as TicketPriority,
-        building: "Main",
-        room_name: "Lecture Hall A",
-        status: "in_progress",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        ticket_number: "TKT-004",
-        attachments: "2/3",
-        comments: 3,
-    } as Ticket,
-];
 
 function createTicketsStore(): TicketsStore {
     const { subscribe, update, set } = writable<TicketsState>({
-        tickets: initialTickets,
+        tickets: [],
         isLoading: false,
         error: null,
     });
@@ -131,27 +31,173 @@ function createTicketsStore(): TicketsStore {
         setTickets(tickets: Ticket[]) {
             set({ tickets, isLoading: false, error: null });
         },
-        addTicket(ticket: Ticket) {
-            update((state) => ({
-                ...state,
-                tickets: [...state.tickets, ticket]
-            }));
+
+        setLoading(isLoading: boolean) {
+            update((state) => ({ ...state, isLoading }));
         },
-        updateTicket(id: string, updates: Partial<Ticket>) {
-            update((state) => ({
-                ...state,
-                tickets: state.tickets.map((t: Ticket) =>
-                    t.id === id ? ({ ...t, ...updates, updated_at: new Date().toISOString() } as Ticket) : t,
-                ),
-            }));
+
+        setError(error: string | null) {
+            update((State) => ({ ...State, error, isLoading: false }));
         },
-        removeTicket(id: string) {
-            update((state) => ({
-                ...state,
-                tickets: state.tickets.filter((t: Ticket) => t.id !== id),
-            }));
+
+        async loadTickets(): Promise<void> {
+            update((state) => ({ ...state, isLoading: true, error: null }));
+
+            try {
+                const tickets = await fetchTickets();
+                set({ tickets, isLoading: false, error: null });
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({
+                    ...s,
+                    isLoading: false,
+                    error: `Failed to load tickets: ${errorMessage}`,
+                }))
+            }
         },
+
+        async loadTicketById(id: number): Promise<Ticket | null> {
+            update(s => ({ ...s, isLoading: true, error: null }));
+            
+            try {
+                const ticket = await fetchTicketById(id);
+
+                update(s => ({
+                    ...s,
+                    tickets: s.tickets.map(t => t.id === id ? ticket : t),
+                    isLoading: false,
+                    error: null,
+                }))
+
+                return ticket;
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({
+                    ...s,
+                    isLoading: false,
+                    error: `Failed to load tickets: ${errorMessage}`,
+                }))
+                return null;
+            }
+        },
+
+        async createTicket(ticketData: TicketCreatePayload, attachment?: File): Promise<Ticket | null> {
+            update(s => ({ ...s, isLoading: true, error: null }));
+
+            try {
+                const newTicket = await apiCreateTicket(ticketData, attachment);
+
+                if (newTicket) {
+                    update(s => ({
+                        ...s,
+                        tickets: [newTicket, ...s.tickets],
+                        isLoading: false,
+                        error: null,
+                    }))
+                }
+
+                return newTicket
+                
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({
+                    ...s,
+                    isLoading: false,
+                    error: `Failed to load tickets: ${errorMessage}`,
+                }))
+                return null;
+            }
+        },
+
+        async updateTicket(id: number, updates: TicketUpdatePayload): Promise<Ticket | null> {
+            update(s => ({ ...s, isLoading: true, error: null }));
+
+            try {
+                const updatedTicket = await apiUpdateTicket(id, updates);
+
+                if (updatedTicket) {
+                    update(s => ({
+                        ...s,
+                        tickets: s.tickets.map(t => t.id === id ? updatedTicket : t),
+                        isLoading: false,
+                        error: null,
+                    }))
+                }
+
+                return updatedTicket;
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({
+                    ...s,
+                    isLoading: false,
+                    error: `Failed to load tickets: ${errorMessage}`,
+                }))
+                return null;
+            }
+        },
+
+        async deleteTicket(id: number): Promise<boolean> {
+            update(s => ({ ...s, isLoading: true, error: null }));
+
+            try {
+                await apiDeleteTicket(id);
+
+                update(s => ({
+                    ...s,
+                    tickets: s.tickets.filter(t => t.id !== id),
+                    isLoading: false,
+                    error: null,
+                }))
+
+                return true;
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : `Failed to delete ticket ${id}`;
+                console.error(`Error deleting ticket ${id}:`, error);
+                update((state) => ({
+                    ...state,
+                    isLoading: false,
+                    error: errorMessage,
+                }));
+                return false;
+            }
+        },
+
+        addTicketToStore(ticket: Ticket) {
+            update(s => ({ ...s, tickets: [ticket, ...s.tickets] }));
+        },
+
+        updateTicketInStore(id: number, updates: Partial<Ticket>) {
+            update(s => ({ ...s, tickets: s.tickets.map(t => t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t) }));
+        },
+
+        removeTicketFromStore(id: number) {
+            update(s => ({ ...s, tickets: s.tickets.filter(t => t.id !== id) }));
+        }
     };
 }
 
 export const ticketsStore = createTicketsStore();
+
+export function getTicketsByStatus(status: string) {
+    const store = get(ticketsStore);
+    return store.tickets.filter(t => t.status === status);
+}
+
+export function getPendingTicketsCount() {
+    const store = get(ticketsStore);
+    return store.tickets.filter(t => t.status === 'pending').length;
+}
+
+export function searchTickets(query: string) {
+    const store = get(ticketsStore);
+    const lowerQuery= query.toLowerCase();
+    return store.tickets.filter(
+        t => 
+            t.title.toLowerCase().includes(lowerQuery) ||
+            t.description.toLowerCase().includes(lowerQuery) ||
+            t.ticket_number.toLowerCase().includes(lowerQuery) ||
+            t.building.toLowerCase().includes(lowerQuery) ||
+            t.room_name.toLowerCase().includes(lowerQuery)
+    )
+}
+

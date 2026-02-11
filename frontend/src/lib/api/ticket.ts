@@ -1,35 +1,116 @@
 import { PUBLIC_API_URL } from '$env/static/public';
-import type { Ticket } from '../../types/tickets.ts';
+import type { RawTicketResponse, Ticket, TicketCreatePayload, TicketUpdatePayload } from '../../types/tickets.ts';
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
 
-async function handleRes(res: Response) {
+async function handleRes<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message || res.statusText);
     }
-    return res.json();
+    return res.json() as Promise<T>;
 }
 
 // Fetch all tickets
-export async function fetchTickets(): Promise<void> { // Change return type to Promise<Ticket[]>
+export async function fetchTickets(): Promise<Ticket[]> {
+    try {
+        const res = await fetch(`${BASE}/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        })
 
+        return await handleRes<Ticket[]>(res);
+    } catch (error) {
+        console.error('Error fetching tickets:', error);
+        throw error;
+    }
 }
 
 // Fetch ticket by ID
-export async function fetchTicketById(id: number): Promise<void> { // Change return type to Promise<Ticket[]>
-    const res = await fetch(`${BASE}/${id}`);
+export async function fetchTicketById(id: number): Promise<Ticket> { 
+    try {
+        const res = await fetch(`${BASE}/${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        return await handleRes<Ticket>(res);
+    } catch (error) {
+        console.error(`Error fetching ticket with ID ${id}:`, error);
+        throw error;
+    }
 
 }
 
-export async function createTicket(ticketData: Partial<Ticket>): Promise<void> { // Change return type to Promise<Ticket[]>
-    // TODO: Implement ticket creation logic
+export async function createTicket(ticketData: TicketCreatePayload, attachment?: File): Promise<Ticket> { 
+    try {
+        const formData = new FormData();
+        formData.append('title', ticketData.title || '');
+        formData.append('description', ticketData.description || '');
+        formData.append('category', ticketData.category?.toString() || '');
+        formData.append('building', ticketData.building || '');
+        formData.append('room_name', ticketData.room_name || '');
+
+        if (attachment) {
+            formData.append('attachment', attachment);
+        }
+
+        const res = await fetch(`${BASE}/`, {
+            method: 'POST',
+            headers: {
+            
+            },
+            body: formData,
+            credentials: 'include',
+        })
+
+    return await handleRes<Ticket>(res);
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        throw error;
+    }
 }
 
-export async function updateTicket(id: number, ticketData: Partial<Ticket>): Promise<void> { // Change return type to Promise<Ticket[]>
-    
+export async function updateTicket(id: number, ticketData: TicketUpdatePayload): Promise<Ticket> { 
+    try {
+        const res = await fetch(`${BASE}/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ...ticketData }),
+            credentials: 'include',
+        })
 
+        return await handleRes<Ticket>(res);
+    } catch (error) {
+        console.error(`Error updating ticket with ID ${id}:`, error);
+        throw error;
+    }
 }
 
 export async function deleteTicket(id: number): Promise<void> {
+    try {
+        const res = await fetch(`${BASE}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        })
+
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.message || `Failed to delete ticket with ID ${id}.`);
+        }
+    } catch (error) {
+        console.error('Error deleting ticket:', error);
+        throw error;
+    }
 }

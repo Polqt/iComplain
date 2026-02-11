@@ -24,7 +24,7 @@ def derive_name_from_email(email: str) -> str:
     local_part = (email or "").split("@")[0]
     if not local_part:
         return ""
-    # Normalize common separators
+
     for sep in ["_", "-", "."]:
         local_part = local_part.replace(sep, " ")
     parts = [p for p in local_part.split(" ") if p]
