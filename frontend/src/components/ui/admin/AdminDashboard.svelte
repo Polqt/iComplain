@@ -1,8 +1,9 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import AdminLayout from "../../layout/AdminLayout.svelte";
-  import { priorityConfig, statusConfig } from "../../../utils/ticketConfig.ts";
-  import type { Status, Priority, ViewMode } from "../../../types/reports.ts";
+  import { priorityConfig, statusConfig, getPriorityKey } from "../../../utils/ticketConfig.ts";
+  import type { TicketStatus, ViewMode } from "../../../types/tickets.ts";
+  import type { PriorityKey } from "../../../utils/ticketConfig.ts";
 
   let viewMode: ViewMode = "grid";
 
@@ -51,7 +52,7 @@
     {
       id: "#4021",
       title: "Login Issue",
-      status: "resolved" as Status,
+      status: "resolved" as TicketStatus,
       description: "Reset credentials and confirmed access restored.",
       tags: ["Urgent", "Technical"],
       assignee: "N. Flores",
@@ -60,7 +61,7 @@
     {
       id: "#3987",
       title: "Billing Error",
-      status: "pending" as Status,
+      status: "pending" as TicketStatus,
       description: "Awaiting invoice verification from finance.",
       tags: ["Finance", "Follow-up"],
       assignee: "R. Santos",
@@ -69,7 +70,7 @@
     {
       id: "#3964",
       title: "Access Request",
-      status: "in_progress" as Status,
+      status: "in_progress" as TicketStatus,
       description: "New faculty access request pending approval.",
       tags: ["Account", "New"],
       assignee: "M. Tan",
@@ -77,7 +78,7 @@
     },
   ];
 
-  const statusBadge = (status: Status) => statusConfig[status].color;
+  const statusBadge = (status: TicketStatus) => statusConfig[status].color;
 
   const columnConfigs = [
     { id: "pending", title: "Pending", color: "text-warning", dotColor: "bg-warning" },
@@ -91,8 +92,8 @@
       id: "TC-0004",
       title: "System Login Failure",
       description: "Cannot access the portal after password reset.",
-      status: "pending" as Status,
-      priority: "high" as Priority,
+      status: "pending" as TicketStatus,
+      priority: "high" as PriorityKey,
       assignees: ["AV", "KD"],
       date: "Feb 08, 2026",
       comments: 3,
@@ -103,8 +104,8 @@
       id: "TC-0001",
       title: "Request for Additional Storage",
       description: "Need more storage for project submission files.",
-      status: "in_progress" as Status,
-      priority: "medium" as Priority,
+      status: "in_progress" as TicketStatus,
+      priority: "medium" as PriorityKey,
       assignees: ["RS"],
       date: "Feb 07, 2026",
       comments: 2,
@@ -115,8 +116,8 @@
       id: "TC-0003",
       title: "Unable to Access Report",
       description: "Reports page returns a blank screen on load.",
-      status: "in_progress" as Status,
-      priority: "medium" as Priority,
+      status: "in_progress" as TicketStatus,
+      priority: "medium" as PriorityKey,
       assignees: ["NT"],
       date: "Feb 07, 2026",
       comments: 4,
@@ -127,8 +128,8 @@
       id: "TC-0008",
       title: "Unexpected App Crash",
       description: "Mobile app crashes after login on Android.",
-      status: "resolved" as Status,
-      priority: "high" as Priority,
+      status: "resolved" as TicketStatus,
+      priority: "high" as PriorityKey,
       assignees: ["JD", "AS"],
       date: "Feb 06, 2026",
       comments: 1,
@@ -139,8 +140,8 @@
       id: "TC-0007",
       title: "File Upload Error",
       description: "Submission fails with file size validation.",
-      status: "pending" as Status,
-      priority: "low" as Priority,
+      status: "pending" as TicketStatus,
+      priority: "low" as PriorityKey,
       assignees: ["MJ"],
       date: "Feb 06, 2026",
       comments: 2,
@@ -151,8 +152,8 @@
       id: "TC-0010",
       title: "Email Notifications Delay",
       description: "Notifications arrive late outside business hours.",
-      status: "closed" as Status,
-      priority: "low" as Priority,
+      status: "closed" as TicketStatus,
+      priority: "low" as PriorityKey,
       assignees: ["AV"],
       date: "Jan 31, 2026",
       comments: 0,
@@ -405,8 +406,8 @@
                           <Icon icon="mdi:calendar-outline" width="14" height="14" />
                           <span>{report.date}</span>
                         </div>
-                        <div class="badge badge-sm {priorityConfig[report.priority].color}">
-                          {priorityConfig[report.priority].label}
+                        <div class="badge badge-sm {priorityConfig[getPriorityKey(report.priority)].color}">
+                          {priorityConfig[getPriorityKey(report.priority)].label}
                         </div>
                       </div>
 
@@ -466,8 +467,8 @@
                       <span>{report.date}</span>
                     </div>
 
-                    <div class="badge badge-sm {priorityConfig[report.priority].color}">
-                      {priorityConfig[report.priority].label}
+                    <div class="badge badge-sm {priorityConfig[getPriorityKey(report.priority)].color}">
+                      {priorityConfig[getPriorityKey(report.priority)].label}
                     </div>
 
                     <div class="flex items-center gap-3 text-xs text-base-content/50">

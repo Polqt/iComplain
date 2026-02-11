@@ -6,6 +6,8 @@ export type User = {
     email: string;
     is_active: boolean;
     role: UserRole;
+    name?: string | null;
+    avatar?: string | null;
 }
 
 // UI profile user shape (for header/profile dropdown etc.)
@@ -21,6 +23,8 @@ export type RawUser = {
     email: string;
     is_active?: boolean;
     role?: UserRole;
+    name?: string | null;
+    avatar?: string | null;
 };
 
 export type RawAuthResponse = {

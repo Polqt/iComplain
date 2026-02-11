@@ -19,6 +19,8 @@ function mapUser(raw: RawUser): User {
         email: raw.email,
         is_active: raw.is_active ?? true,
         role,
+        name: raw.name ?? null,
+        avatar: raw.avatar ?? null,
     };
 }
 

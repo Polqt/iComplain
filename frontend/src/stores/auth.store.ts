@@ -88,6 +88,9 @@ function createAuthStore(): AuthStore {
         },
 
         async checkAuth(): Promise<boolean> {
+            // Start/loading state but DO NOT wipe session on transient failures
+            update((state) => ({ ...state, isLoading: true }));
+
             try {
                 const user = await apiGetCurrentUser();
                 if (user) {
@@ -98,7 +101,11 @@ function createAuthStore(): AuthStore {
                 clearAuthState();
                 return false;
             } catch {
-                clearAuthState();
+                // Network/5xx/etc: preserve existing auth state
+                update((state) => ({
+                    ...state,
+                    isLoading: false,
+                }));
                 return false;
             }
         },

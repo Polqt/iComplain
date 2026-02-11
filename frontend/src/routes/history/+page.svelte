@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { authStore } from "../../stores/auth.store.ts";
   import StudentHistory from "../../components/ui/student/StudentHistory.svelte";
   import AdminHistory from "../../components/ui/admin/AdminHistory.svelte";
@@ -8,10 +7,6 @@
   let role: string | null = null;
 
   $: ({ isLoading, isAuthenticated, role } = $authStore);
-
-  onMount(() => {
-    authStore.checkAuth();
-  });
 </script>
 
 {#if isLoading}

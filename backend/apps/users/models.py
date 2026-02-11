@@ -20,24 +20,41 @@ class CustomUserManager(BaseUserManager): #custom user model since intended to u
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         
-        if extra_fields.get('is_staff') is not True: #debugging checks
+        if extra_fields.get('is_staff') is not True: 
             raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True: #debugging checks
+        if extra_fields.get('is_superuser') is not True: 
             raise ValueError('Superuser must have is_superuser=True.')
         
         user = self.create_user(email=email, password=password, **extra_fields)
         return user
     
-class CustomUser(AbstractBaseUser, PermissionsMixin): #custom user model; AbstractBaseUser for password hashing and removes username; PermissionsMixin adds groups and permission fields
-    email = models.EmailField(unique=True) #unique email field
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
+
+    full_name = models.CharField(max_length=150, blank=True, default="")
+    avatar_url = models.URLField(blank=True, default="")
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email' #username is understood as email
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+    @property
+    def role(self) -> str:
+        # Keep role logic centralized for API serialization.
+        # "admin" covers staff and superusers.
+        return "admin" if (self.is_staff or getattr(self, "is_superuser", False)) else "student"
+
+    @property
+    def name(self) -> str | None:
+        return self.full_name or None
+
+    @property
+    def avatar(self) -> str | None:
+        return self.avatar_url or None
 
     def __str__(self):
         return self.email

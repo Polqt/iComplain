@@ -69,7 +69,7 @@
   </button>
 
   <ul
-    class="dropdown-content menu bg-base-100 rounded-box z-100 w-64 p-2 shadow-xl border border-base-content/10 mt-3"
+    class="dropdown-content menu bg-base-100 rounded-box z-100 w-72 sm:w-80 max-w-[calc(100vw-1rem)] p-2 shadow-xl border border-base-content/10 mt-3"
   >
     <li class="menu-title px-4 py-3 border-b border-base-content/10">
       <div class="flex items-center gap-3">
@@ -87,7 +87,7 @@
           </div>
         </div>
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-sm text-base-content truncate">
+          <p class="font-semibold text-sm text-base-content leading-snug break-words whitespace-normal">
             {user.name}
           </p>
           <p class="text-xs text-base-content/60 truncate">
