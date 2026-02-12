@@ -12,6 +12,8 @@
   } from "../../../utils/ticketConfig.js";
   import { onMount } from "svelte";
   import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
+  import { goto } from "$app/navigation";
+  import { redirect } from "@sveltejs/kit";
 
   export let open = false;
   export let mode: "create" | "edit" = "create";
@@ -59,6 +61,7 @@
       ? formData
       : (({ priority, status, ...rest }) => rest)(formData);
     onsubmit(data, selectedFile);
+    redirect(303, "/tickets");
   }
 
   function handleFileChange(event: Event) {

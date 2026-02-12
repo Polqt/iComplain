@@ -24,7 +24,6 @@
   let modalMode: ModalMode = null;
   let selectedReport: Ticket | null = null;
   let formData: Partial<Ticket> = {};
-  let attachmentFile: File | null = null;
 
   // Reactive statement to update local variables when the store changes
   $: ({ tickets, isLoading, error } = $ticketsStore);
@@ -42,7 +41,6 @@
   function openModal(mode: ModalMode, report: Ticket | null = null) {
     modalMode = mode;
     selectedReport = report;
-    attachmentFile = null;
     formData = mode === "edit" && report ? { ...report } : {};
   }
 
@@ -50,31 +48,38 @@
     modalMode = null;
     selectedReport = null;
     formData = {};
-    attachmentFile = null;
     ticketsStore.setError(null);
   }
 
-  async function handleSubmit(data: Partial<Ticket>) {
+  async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
     if (modalMode === "create") {
+      const categoryId =
+        typeof data.category === "number"
+          ? data.category
+          : (data.category?.id ?? 1);
+
       const payload: TicketCreatePayload = {
         title: data.title!,
         description: data.description!,
-        category: data.category?.id ?? 1,
+        category: categoryId,
         building: data.building!,
         room_name: data.room_name!,
       };
 
       const created = await ticketsStore.createTicket(
         payload,
-        attachmentFile ?? undefined,
+        file ?? undefined,
       );
     } else if (modalMode === "edit" && selectedReport) {
+      const categoryId =
+        typeof data.category === "number" ? data.category : data.category?.id;
+
       const payload: TicketUpdatePayload = {
         title: data.title!,
         description: data.description!,
         building: data.building!,
         room_name: data.room_name!,
-        category: data.category?.id!,
+        category: categoryId!,
       };
 
       const updated = await ticketsStore.updateTicket(
