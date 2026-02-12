@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { derived } from "svelte/store";
+  import { writable } from "svelte/store";
   import type {
     Ticket,
     Category,
@@ -10,7 +10,10 @@
     priorityConfig,
     getPriorityKey,
   } from "../../../utils/ticketConfig.js";
-  import { ticketsStore } from "../../../stores/tickets.store.ts";
+  import { onMount } from "svelte";
+  import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
+  import { goto } from "$app/navigation";
+  import { redirect } from "@sveltejs/kit";
 
   export let open = false;
   export let mode: "create" | "edit" = "create";
@@ -19,39 +22,51 @@
   export let formData: Partial<Ticket> = {};
   export let isLoading = false;
   export let onclose: () => void = () => {};
-  export let onsubmit: (data: Partial<Ticket>) => void = () => {};
+  export let onsubmit: (
+    data: Partial<Ticket>,
+    file?: File | null,
+  ) => void = () => {};
 
-  export const categories = derived(ticketsStore, ($store): Category[] => {
-    const uniqueCategories = new Map<number, Category>();
+  let selectedFile: File | null = null;
 
-    $store.tickets.forEach((ticket) => {
-      if (ticket.category && !uniqueCategories.has(ticket.category.id)) {
-        uniqueCategories.set(ticket.category.id, ticket.category);
-      }
-    });
+  export const categoriesStore = writable<Category[]>([]);
+  export const prioritiesStore = writable<TicketPriority[]>([]);
 
-    return Array.from(uniqueCategories.values());
+  export async function loadCategories() {
+    try {
+      const cats = await fetchCategories();
+      categoriesStore.set(cats);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  export async function loadPriorities() {
+    try {
+      const prios = await fetchPriorities();
+      prioritiesStore.set(prios);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  onMount(() => {
+    loadCategories();
+    loadPriorities();
   });
-
-  export const priorities = derived(
-    ticketsStore,
-    ($store): TicketPriority[] => {
-      const uniquePriorities = new Map<number, TicketPriority>();
-      $store.tickets.forEach((ticket) => {
-        if (ticket.priority && !uniquePriorities.has(ticket.priority.id)) {
-          uniquePriorities.set(ticket.priority.id, ticket.priority);
-        }
-      });
-      return Array.from(uniquePriorities.values());
-    },
-  );
 
   function handleSubmit(event: Event) {
     event.preventDefault();
     const data = canEditPriorityStatus
       ? formData
       : (({ priority, status, ...rest }) => rest)(formData);
-    onsubmit(data);
+    onsubmit(data, selectedFile);
+    redirect(303, "/tickets");
+  }
+
+  function handleFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    selectedFile = input.files?.[0] ?? null;
   }
 </script>
 
@@ -99,7 +114,7 @@
             class="select select-bordered w-full"
             disabled={isLoading}
           >
-            {#each $categories as c}
+            {#each $categoriesStore as c}
               <option value={c.id}>{c.name}</option>
             {/each}
           </select>
@@ -116,7 +131,7 @@
               class="select select-bordered w-full"
               disabled={isLoading}
             >
-              {#each $priorities as p}
+              {#each $prioritiesStore as p}
                 <option value={p.id}>{p.name}</option>
               {/each}
             </select>
@@ -157,6 +172,24 @@
             class="input input-bordered w-full"
             required
           />
+        </div>
+
+        <div class="form-control">
+          <label for="attachment" class="label">
+            <span class="label-text font-semibold">Attachment (optional)</span>
+          </label>
+          <input
+            id="attachment"
+            type="file"
+            onchange={handleFileChange}
+            class="file-input file-input-bordered w-full"
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
+          {#if selectedFile}
+            <p class="mt-1 text-sm text-success">
+              Selected: {selectedFile.name}
+            </p>
+          {/if}
         </div>
 
         {#if canEditPriorityStatus}
