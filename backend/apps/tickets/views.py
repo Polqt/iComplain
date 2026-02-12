@@ -119,6 +119,11 @@ def delete_ticket(request, id: int):
     return 204, None
 
 # Ticket Comments Views
+@router.get("/{id}/comments", response=List[TicketCommentSchema])
+def get_comments(request, id: int):
+    ticket = get_object_or_404(Ticket, id=id)
+    comments = TicketComment.objects.select_related('user').filter(ticket=ticket).order_by('created_at')
+    return [TicketCommentSchema.from_orm(comment) for comment in comments]
 
 @router.post("/{id}/comments", response=TicketCommentSchema)
 def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachment: UploadedFile = File(None)):
