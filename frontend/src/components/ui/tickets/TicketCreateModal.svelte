@@ -1,14 +1,16 @@
 <script lang="ts">
+  import { derived } from "svelte/store";
   import type {
     Ticket,
     Category,
     TicketPriority,
-  } from "../../../types/tickets.js";
+  } from "../../../types/tickets.ts";
   import {
     statusConfig,
     priorityConfig,
     getPriorityKey,
   } from "../../../utils/ticketConfig.js";
+  import { ticketsStore } from "../../../stores/tickets.store.ts";
 
   export let open = false;
   export let mode: "create" | "edit" = "create";
@@ -19,24 +21,30 @@
   export let onclose: () => void = () => {};
   export let onsubmit: (data: Partial<Ticket>) => void = () => {};
 
-  const CATEGORIES: Category[] = [
-    
-  ];
+  export const categories = derived(ticketsStore, ($store): Category[] => {
+    const uniqueCategories = new Map<number, Category>();
 
-  const PRIORITIES: TicketPriority[] = [
-    
-  ];
+    $store.tickets.forEach((ticket) => {
+      if (ticket.category && !uniqueCategories.has(ticket.category.id)) {
+        uniqueCategories.set(ticket.category.id, ticket.category);
+      }
+    });
 
-  // Local ids for the <select> bindings
-  // Initialise from formData so Edit mode pre-selects the right values
-  let selectedCategoryId: number = formData.category?.id ?? 1;
-  let selectedPriorityId: number = formData.priority?.id ?? 2;
+    return Array.from(uniqueCategories.values());
+  });
 
-  // Keep formData objects in sync with the selects
-  $: formData.category =
-    CATEGORIES.find((c) => c.id === selectedCategoryId) ?? CATEGORIES[0];
-  $: formData.priority =
-    PRIORITIES.find((p) => p.id === selectedPriorityId) ?? PRIORITIES[1];
+  export const priorities = derived(
+    ticketsStore,
+    ($store): TicketPriority[] => {
+      const uniquePriorities = new Map<number, TicketPriority>();
+      $store.tickets.forEach((ticket) => {
+        if (ticket.priority && !uniquePriorities.has(ticket.priority.id)) {
+          uniquePriorities.set(ticket.priority.id, ticket.priority);
+        }
+      });
+      return Array.from(uniquePriorities.values());
+    },
+  );
 
   function handleSubmit(event: Event) {
     event.preventDefault();
@@ -87,12 +95,12 @@
           </label>
           <select
             id="category"
-            bind:value={selectedCategoryId}
+            bind:value={formData.category}
             class="select select-bordered w-full"
             disabled={isLoading}
           >
-            {#each CATEGORIES as cat}
-              <option value={cat.id}>{cat.name}</option>
+            {#each $categories as c}
+              <option value={c.id}>{c.name}</option>
             {/each}
           </select>
         </div>
@@ -104,11 +112,11 @@
           {#if mode === "create"}
             <select
               id="priority"
-              bind:value={selectedPriorityId}
+              bind:value={formData.priority}
               class="select select-bordered w-full"
               disabled={isLoading}
             >
-              {#each PRIORITIES as p}
+              {#each $priorities as p}
                 <option value={p.id}>{p.name}</option>
               {/each}
             </select>

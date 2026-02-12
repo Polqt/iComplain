@@ -1,5 +1,5 @@
 import { get, writable, type Readable } from "svelte/store";
-import type { Ticket, TicketCreatePayload, TicketPriority, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
+import type { Ticket, TicketCreatePayload, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
 import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket } from "../lib/api/ticket.ts";
 
 interface TicketsStore extends Readable<TicketsState> {
@@ -45,7 +45,7 @@ function createTicketsStore(): TicketsStore {
 
             try {
                 const tickets = await fetchTickets();
-                set({ tickets, isLoading: false, error: null });
+                update(s => ({ ...s, tickets, isLoading: false, error: null }));
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
                 update(s => ({
@@ -173,6 +173,7 @@ function createTicketsStore(): TicketsStore {
         removeTicketFromStore(id: number) {
             update(s => ({ ...s, tickets: s.tickets.filter(t => t.id !== id) }));
         }
+        
     };
 }
 
@@ -200,4 +201,3 @@ export function searchTickets(query: string) {
             t.room_name.toLowerCase().includes(lowerQuery)
     )
 }
-

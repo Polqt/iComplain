@@ -1,3 +1,4 @@
+from typing import List
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -83,7 +84,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema):
     if payload.category is not None:
         ticket.category = Category.objects.get(id=payload.category)
     if payload.priority is not None:
-        ticket.priority = TicketPriority.objects.get(name=payload.priority)
+        ticket.priority = TicketPriority.objects.get(id=payload.priority)
     if payload.building is not None:
         ticket.building = payload.building
     if payload.room_name is not None:

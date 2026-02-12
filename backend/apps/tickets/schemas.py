@@ -18,6 +18,8 @@ class CategorySchema(BaseModel):
 class TicketPrioritySchema(BaseModel):
     id: int
     name: str
+    level: int
+    color_code: str
     class Config:
         from_attributes = True
 
