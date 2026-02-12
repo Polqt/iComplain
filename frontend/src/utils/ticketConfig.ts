@@ -40,6 +40,33 @@ export const priorityConfig: Record<
   urgent: { label: "Urgent", color: "badge-error" },
 };
 
+ export const baseColumns: Omit<TicketColumn, "reports">[] = [
+    {
+      id: "pending",
+      title: "Pending",
+      color: "text-yellow-300",
+      dotColor: "bg-yellow-300",
+    },
+    {
+      id: "in_progress",
+      title: "In Progress",
+      color: "text-info",
+      dotColor: "bg-info",
+    },
+    {
+      id: "resolved",
+      title: "Resolved",
+      color: "text-green-300",
+      dotColor: "bg-green-300",
+    },
+    {
+      id: "closed",
+      title: "Closed",
+      color: "text-gray-300",
+      dotColor: "bg-gray-300",
+    },
+  ];
+
 export const columnConfigs: Column[] = [
     {
       id: "pending",

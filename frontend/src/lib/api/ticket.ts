@@ -1,5 +1,5 @@
 import { PUBLIC_API_URL } from '$env/static/public';
-import type { RawTicketResponse, Ticket, TicketCreatePayload, TicketUpdatePayload } from '../../types/tickets.ts';
+import type { Ticket, TicketCreatePayload, TicketUpdatePayload } from '../../types/tickets.ts';
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
 

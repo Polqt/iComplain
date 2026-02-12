@@ -16,6 +16,7 @@ export type TicketPriority = {
 
 export type Ticket = {
     id: number;
+    ticket_number: string;
     title: string;
     description: string;
     student: User;
@@ -26,7 +27,6 @@ export type Ticket = {
     status: TicketStatus;
     created_at: string;
     updated_at: string;
-    ticket_number: string;
 }
 
 export type TicketCreatePayload = {
@@ -45,12 +45,6 @@ export type TicketUpdatePayload = {
     building?: string;
     room_name?: string;
     status?: TicketStatus;
-}
-
-export type RawTicketResponse = {
-    success: boolean;
-    message: string;
-    ticket: Ticket[];
 }
 
 export type TicketColumn = {
