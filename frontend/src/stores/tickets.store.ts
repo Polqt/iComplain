@@ -1,5 +1,5 @@
 import { get, writable, type Readable } from "svelte/store";
-import type { Ticket, TicketCreatePayload, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
+import type { RawTicket, Ticket, TicketCreatePayload, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
 import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket } from "../lib/api/ticket.ts";
 
 interface TicketsStore extends Readable<TicketsState> {
@@ -44,8 +44,15 @@ function createTicketsStore(): TicketsStore {
             update((state) => ({ ...state, isLoading: true, error: null }));
 
             try {
-                const tickets = await fetchTickets();
-                update(s => ({ ...s, tickets, isLoading: false, error: null }));
+                const tickets: RawTicket[] =  await fetchTickets();
+                
+                const mappedTickets = tickets.map((t) => ({
+                    ...t,
+                    category: t.category ?? { id: 0, name: "Unknown" },
+                    priority: t.priority ?? { id: 0, name: "Unknown", level: 0, color_code: "#000" },
+                }));
+
+                update(s => ({ ...s, tickets: mappedTickets, isLoading: false, error: null }));
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
                 update(s => ({

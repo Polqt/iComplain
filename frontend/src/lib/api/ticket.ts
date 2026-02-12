@@ -114,3 +114,23 @@ export async function deleteTicket(id: number): Promise<void> {
         throw error;
     }
 }
+
+export async function fetchCategories(): Promise<Category[]> {
+    const res = await fetch(`${BASE}/categories`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to fetch categories');
+    return res.json() as Promise<Category[]>;
+}
+
+export async function fetchPriorities(): Promise<TicketPriority[]> {
+    const res = await fetch(`${BASE}/priorities`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to fetch priorities');
+    return res.json() as Promise<TicketPriority[]>;
+}

@@ -1,11 +1,10 @@
-from typing import List
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
 
 
-from ninja import File, Router, UploadedFile
+from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 
 from .validation import validate_file
@@ -48,7 +47,7 @@ def ticket_detail(request, id: int):
     
 
 @router.post("/", response=TicketSchema)
-def create_ticket(request, ticket: TicketCreateSchema, attachment: UploadedFile = File(None)):
+def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: UploadedFile = File(None)):
     category = Category.objects.get(id=ticket.category)
     priority = TicketPriority.objects.get(name="Medium")
     ticket_obj = Ticket.objects.create(

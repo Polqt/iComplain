@@ -1,5 +1,10 @@
 import type { User } from "./user.ts";
 
+export type RawTicket = Omit<Ticket, "category" | "priority"> & {
+  category?: Category | null;
+  priority?: TicketPriority | null;
+};
+
 export type Category = {
     id: number;
     name: string;
