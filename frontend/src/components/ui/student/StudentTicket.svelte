@@ -104,59 +104,63 @@
 
 <StudentLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
-    <div class="flex items-center justify-between mb-6 shrink-0">
-      <div>
-        <h1 class="text-2xl font-black text-base-content">My Tickets</h1>
-        {#if !isLoading}
-          <p class="text-sm text-base-content/50">
-            {tickets.length} ticket{tickets.length !== 1 ? "s" : ""} total
-          </p>
-        {/if}
-      </div>
+    {#if tickets.length > 0}
+      <div class="flex items-center justify-between mb-6 shrink-0">
+        <div>
+          <h1 class="text-2xl font-black text-base-content">My Tickets</h1>
+          {#if !isLoading}
+            <p class="text-sm text-base-content/50">
+              {tickets.length} ticket{tickets.length !== 1 ? "s" : ""} total
+            </p>
+          {/if}
+        </div>
 
-      <div class="flex items-center gap-3">
-        <button
-          class="btn btn-primary btn-sm gap-2"
-          onclick={() => openModal("create")}
-          disabled={isLoading}
-        >
-          <Icon icon="mdi:plus" width="18" height="18" />
-          Create Ticket
-        </button>
+        <div class="flex items-center gap-3">
+          <button
+            class="btn btn-primary btn-sm gap-2"
+            onclick={() => openModal("create")}
+            disabled={isLoading}
+          >
+            <Icon icon="mdi:plus" width="18" height="18" />
+            Create Ticket
+          </button>
 
-        <div class="flex items-center gap-2 bg-base-200 p-1 rounded-lg">
-          <button
-            class="btn btn-sm"
-            class:btn-primary={viewMode === "list"}
-            class:btn-ghost={viewMode !== "list"}
-            onclick={() => (viewMode = "list")}
-          >
-            <Icon icon="mdi:format-list-bulleted" width="18" height="18" />
-            List
-          </button>
-          <button
-            class="btn btn-sm"
-            class:btn-primary={viewMode === "grid"}
-            class:btn-ghost={viewMode !== "grid"}
-            onclick={() => (viewMode = "grid")}
-          >
-            <Icon icon="mdi:view-grid-outline" width="18" height="18" />
-            Board
-          </button>
+          <div class="flex items-center gap-2 bg-base-200 p-1 rounded-lg">
+            <button
+              class="btn btn-sm"
+              class:btn-primary={viewMode === "list"}
+              class:btn-ghost={viewMode !== "list"}
+              onclick={() => (viewMode = "list")}
+            >
+              <Icon icon="mdi:format-list-bulleted" width="18" height="18" />
+              List
+            </button>
+            <button
+              class="btn btn-sm"
+              class:btn-primary={viewMode === "grid"}
+              class:btn-ghost={viewMode !== "grid"}
+              onclick={() => (viewMode = "grid")}
+            >
+              <Icon icon="mdi:view-grid-outline" width="18" height="18" />
+              Board
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    {/if}
 
     {#if error}
-      <div class="alert alert-error mb-4 shrink-0">
-        <Icon icon="mdi-alert-circle-outline" width="20" height="20" />
-        <span>{error}</span>
-        <button
-          class="btn btn-ghost btn-xs ml-auto"
-          onclick={() => ticketsStore.setError(null)}
-        >
-          Dismiss
-        </button>
+      <div class="toast toast-top toast-end z-9999">
+        <div class="alert alert-error">
+          <Icon icon="mdi-alert-circle-outline" width="20" height="20" />
+          <span>{error}</span>
+          <button
+            class="btn btn-ghost btn-xs ml-auto"
+            onclick={() => ticketsStore.setError(null)}
+          >
+            Dismiss
+          </button>
+        </div>
       </div>
     {/if}
 

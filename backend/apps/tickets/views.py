@@ -10,7 +10,7 @@ from ninja.security import SessionAuth
 
 from .validation import validate_file
 
-from .schemas import TicketCommentCreateSchema, TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
+from .schemas import CategorySchema, TicketCommentCreateSchema, TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketPrioritySchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
 from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback
 
 router = Router(auth=SessionAuth())
@@ -23,6 +23,14 @@ def expensive_data(request):
         data = ...
         cache.set(cache_key, data, timeout=300)
     return data
+
+@router.get("/categories", response=list[CategorySchema])
+def get_categories(request):
+    return Category.objects.all()
+
+@router.get("/priorities", response=list[TicketPrioritySchema])
+def get_priorities(request):
+    return TicketPriority.objects.all()
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
@@ -249,3 +257,4 @@ def delete_feedback(request, id: int, feedback_id: int):
 
     feedback.delete()
     return redirect('ticket_list')
+
