@@ -1,0 +1,168 @@
+<script lang="ts">
+  import Icon from "@iconify/svelte";
+  import {
+    baseColumns,
+    getPriorityKey,
+    priorityConfig,
+    statusConfig,
+  } from "../../../utils/ticketConfig.ts";
+  import type { TicketColumn, ViewMode } from "../../../types/tickets.ts";
+  import { ticketsStore } from "../../../stores/tickets.store.ts";
+
+  let viewMode: ViewMode = "grid";
+
+  $: ({ tickets } = $ticketsStore);
+
+  $: columns = baseColumns.map(
+    (col): TicketColumn => ({
+      ...col,
+      reports: tickets.filter((t) => t.status === col.id),
+    }),
+  );
+</script>
+
+<div class="flex items-center justify-between mb-6 shrink-0">
+  <h1 class="text-2xl font-black text-base-content">Ticket Status Board</h1>
+
+  <div class="flex items-center gap-2 bg-base-200 p-1 rounded-lg">
+    <button
+      class="btn btn-sm {viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}"
+      onclick={() => (viewMode = "list")}
+    >
+      <Icon icon="mdi:format-list-bulleted" width="18" height="18" />
+      List
+    </button>
+    <button
+      class="btn btn-sm {viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'}"
+      onclick={() => (viewMode = "grid")}
+    >
+      <Icon icon="mdi:view-grid-outline" width="18" height="18" />
+      Board
+    </button>
+  </div>
+</div>
+
+{#if viewMode === "grid"}
+  <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
+    {#each columns as column}
+      <div
+        class="flex flex-col shrink-0 w-80 bg-base-100 dark:bg-base-100 shadow rounded-lg h-full"
+      >
+        <div
+          class="flex items-center justify-between p-4 border-b border-base-content/5 shrink-0"
+        >
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full {column.dotColor}"></div>
+            <h2 class="font-semibold text-sm {column.color}">
+              {column.title}
+            </h2>
+            <div class="badge badge-sm badge-ghost">
+              {column.reports.length}
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button class="btn btn-ghost btn-xs btn-circle">
+              <Icon icon="mdi:dots-horizontal" width="16" height="16" />
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1 max-h-130">
+          {#each column.reports as report}
+            <div
+              class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0 cursor-pointer"
+            >
+              <div class="card-body p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <div
+                    class="badge badge-sm {statusConfig[report.status].color}"
+                  >
+                    {statusConfig[report.status].label}
+                  </div>
+                  <div class="dropdown dropdown-end">
+                    <label
+                      class="btn btn-ghost btn-xs btn-circle cursor-pointer"
+                    >
+                      <Icon icon="mdi:dots-horizontal" width="14" height="14" />
+                    </label>
+                    <ul
+                      class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-lg border border-base-content/5"
+                    >
+                      <li>
+                        <button type="button" class="gap-2">
+                          <Icon icon="mdi:eye-outline" width="16" height="16" />
+                          View
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="gap-2">
+                          <Icon
+                            icon="mdi:pencil-outline"
+                            width="16"
+                            height="16"
+                          />
+                          Update
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <h3
+                  class="font-semibold text-base text-base-content mb-2 line-clamp-2"
+                >
+                  {report.title}
+                </h3>
+
+                <p class="text-sm text-base-content/60 mb-3 line-clamp-2">
+                  {report.description}
+                </p>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/each}
+  </div>
+{:else}
+  <div class="flex-1 overflow-y-auto space-y-2 pr-2">
+    {#each columns as column}
+      {#each column.reports as report}
+        <div
+          class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5"
+        >
+          <div class="card-body p-4">
+            <div class="flex items-center gap-4">
+              <div
+                class="badge badge-sm whitespace-nowrap {statusConfig[
+                  report.status
+                ].color}"
+              >
+                {statusConfig[report.status].label}
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <h3
+                  class="font-semibold text-sm text-base-content truncate mb-1"
+                >
+                  {report.title}
+                </h3>
+                <p class="text-xs text-base-content/60 truncate">
+                  {report.description}
+                </p>
+              </div>
+
+              <div
+                class="badge badge-sm {priorityConfig[
+                  getPriorityKey(report.priority)
+                ].color}"
+              >
+                {priorityConfig[getPriorityKey(report.priority)].label}
+              </div>
+            </div>
+          </div>
+        </div>
+      {/each}
+    {/each}
+  </div>
+{/if}

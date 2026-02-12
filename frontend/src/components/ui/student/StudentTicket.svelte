@@ -3,9 +3,10 @@
   import StudentLayout from "../../../components/layout/StudentLayout.svelte";
   import { goto } from "$app/navigation";
   import type {
-    Column,
     ModalMode,
     Ticket,
+    TicketCreatePayload,
+    TicketUpdatePayload,
     ViewMode,
   } from "../../../types/tickets.ts";
   import {
@@ -17,106 +18,107 @@
   import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
   import TicketCreateModal from "../../../components/ui/tickets/TicketCreateModal.svelte";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
+  import { onMount } from "svelte";
 
   let viewMode: ViewMode = "grid";
   let modalMode: ModalMode = null;
   let selectedReport: Ticket | null = null;
   let formData: Partial<Ticket> = {};
+  let attachmentFile: File | null = null;
 
-  $: ({ tickets } = $ticketsStore);
+  // Reactive statement to update local variables when the store changes
+  $: ({ tickets, isLoading, error } = $ticketsStore);
+
+  $: columns = columnConfigs.map((config) => ({
+    ...config,
+    reports: tickets.filter((t) => t.status === config.id),
+  }));
+
+  // Load tickets when component mounts
+  onMount(async () => {
+    await ticketsStore.loadTickets();
+  });
 
   function openModal(mode: ModalMode, report: Ticket | null = null) {
     modalMode = mode;
     selectedReport = report;
-    if (mode === "create") {
-      formData = {
-        title: "",
-        description: "",
-        status: "pending",
-        priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
-        comments: 0,
-        attachments: "0/3",
-        student: {
-          id: 0,
-          email: "student@example.com",
-          is_active: true,
-          role: "student",
-        },
-      };
-    } else if (mode === "edit" && report) {
-      formData = { ...report };
-    }
+    attachmentFile = null;
+    formData = mode === "edit" && report ? { ...report } : {};
   }
 
   function closeModal() {
     modalMode = null;
     selectedReport = null;
     formData = {};
+    attachmentFile = null;
+    ticketsStore.setError(null);
   }
 
-  function handleSubmit(data: Partial<Ticket>) {
-    if (modalMode === "create" && data) {
-      // Fill all required Ticket fields with defaults if missing
-      const newTicket: Ticket = {
-        id: `TKT-${String(Date.now()).slice(-6)}`,
-        title: data.title ?? "",
-        description: data.description ?? "",
-        status: data.status ?? "pending",
-        priority: data.priority ?? {
-          id: 1,
-          name: "Low",
-          level: 1,
-          color_code: "#6b7280",
-        },
-        student: data.student ?? {
-          id: 0,
-          email: "student@example.com",
-          is_active: true,
-          role: "student",
-        },
-        category: data.category ?? { id: 1, name: "General" },
-        building: data.building ?? "Building A",
-        room_name: data.room_name ?? "Room 101",
-        created_at: data.created_at ?? new Date().toISOString(),
-        updated_at: data.updated_at ?? new Date().toISOString(),
-        ticket_number:
-          data.ticket_number ?? `TKT-${String(Date.now()).slice(-6)}`,
-        attachments: data.attachments ?? "0/3",
-        comments: data.comments ?? 0,
+  async function handleSubmit(data: Partial<Ticket>) {
+    if (modalMode === "create") {
+      const payload: TicketCreatePayload = {
+        title: data.title!,
+        description: data.description!,
+        category: data.category?.id ?? 1,
+        building: data.building!,
+        room_name: data.room_name!,
       };
-      ticketsStore.addTicket(newTicket);
-    } else if (modalMode === "edit" && selectedReport && data) {
-      ticketsStore.updateTicket(selectedReport.id, data);
+
+      const created = await ticketsStore.createTicket(
+        payload,
+        attachmentFile ?? undefined,
+      );
+    } else if (modalMode === "edit" && selectedReport) {
+      const payload: TicketUpdatePayload = {
+        title: data.title!,
+        description: data.description!,
+        building: data.building!,
+        room_name: data.room_name!,
+        category: data.category?.id!,
+      };
+
+      const updated = await ticketsStore.updateTicket(
+        selectedReport.id,
+        payload,
+      );
+
+      if (updated) {
+        closeModal();
+      }
     }
-    closeModal();
   }
 
-  function handleDelete() {
-    if (selectedReport) {
-      ticketsStore.removeTicket(selectedReport.id);
+  async function handleDelete() {
+    if (!selectedReport) return;
+
+    const success = await ticketsStore.deleteTicket(selectedReport.id);
+    if (success) {
+      closeModal();
     }
-    closeModal();
   }
 
-  function navigateToTicket(reportId: string) {
+  function navigateToTicket(reportId: number) {
     goto(`/student/tickets/${reportId}`);
   }
-
-  $: columns = columnConfigs.map((config) => ({
-    ...config,
-    reports: tickets.filter((t) => t.status === config.id),
-  }));
 </script>
 
 <StudentLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
     <div class="flex items-center justify-between mb-6 shrink-0">
-      <h1 class="text-2xl font-black text-base-content">My Tickets</h1>
+      <div>
+        <h1 class="text-2xl font-black text-base-content">My Tickets</h1>
+        {#if !isLoading}
+          <p class="text-sm text-base-content/50">
+            {tickets.length} ticket{tickets.length !== 1 ? "s" : ""} total
+          </p>
+        {/if}
+      </div>
 
       <div class="flex items-center gap-3">
         <button
           class="btn btn-primary btn-sm gap-2"
           onclick={() => openModal("create")}
+          disabled={isLoading}
         >
           <Icon icon="mdi:plus" width="18" height="18" />
           Create Ticket
@@ -145,7 +147,60 @@
       </div>
     </div>
 
-    {#if viewMode === "grid"}
+    {#if error}
+      <div class="alert alert-error mb-4 shrink-0">
+        <Icon icon="mdi-alert-circle-outline" width="20" height="20" />
+        <span>{error}</span>
+        <button
+          class="btn btn-ghost btn-xs ml-auto"
+          onclick={() => ticketsStore.setError(null)}
+        >
+          Dismiss
+        </button>
+      </div>
+    {/if}
+
+    {#if isLoading}
+      <div class="flex gap-6 flex-1">
+        {#each columnConfigs as _}
+          <div
+            class="flex flex-col shrink-0 w-80 bg-base-100 rounded-lg p-4 gap-3"
+          >
+            <div class="skeleton w-28 h-5 rounded mb-2">
+              {#each [1, 2] as _}
+                <div class="skeleton h-37 w-full rounded-lg"></div>
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {:else if tickets.length === 0}
+      <div class="flex flex-col items-center justify-center flex-1 gap-4">
+        <div class="p-6 bg-base-200 rounded-full">
+          <Icon
+            icon="mdi:ticket-outline"
+            width="48"
+            height="48"
+            class="text-base-content/30"
+          />
+        </div>
+        <div class="text-center">
+          <h3 class="font-semibold text-base-content/70 mb-1">
+            No tickets yet
+          </h3>
+          <p class="text-sm text-base-content/50">
+            Create your first ticket to report a facility issue.
+          </p>
+        </div>
+        <button
+          class="btn btn-primary btn-sm gap-2"
+          onclick={() => openModal("create")}
+        >
+          <Icon icon="mdi:plus" width="18" height="18" />
+          Create Ticket
+        </button>
+      </div>
+    {:else if viewMode === "grid"}
       <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
         {#each columns as column}
           <div
@@ -163,12 +218,6 @@
                   {column.reports.length}
                 </div>
               </div>
-
-              <div class="flex items-center gap-1">
-                <button class="btn btn-ghost btn-xs btn-circle">
-                  <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-                </button>
-              </div>
             </div>
             <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1">
               {#each column.reports as report}
@@ -179,16 +228,6 @@
                     class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0 cursor-pointer text-left w-full"
                     style="padding-right:2.5rem;"
                     onclick={() => navigateToTicket(report.id)}
-                    onkeydown={(e) => {
-                      if (
-                        e.key === "Enter" ||
-                        e.key === " " ||
-                        e.code === "Space"
-                      ) {
-                        e.preventDefault();
-                        navigateToTicket(report.id);
-                      }
-                    }}
                   >
                     <div class="card-body p-4">
                       <div class="flex items-center justify-between mb-3">
@@ -198,8 +237,11 @@
                         >
                           {statusConfig[report.status].label}
                         </div>
+                        <span class="text-xs text-base-content/40 font-mono"
+                          >{report.ticket_number}</span
+                        >
                       </div>
-                      <!-- end card action row -->
+
                       <h3
                         class="font-semibold text-base text-base-content mb-2 line-clamp-2"
                       >
@@ -223,6 +265,9 @@
                       </p>
 
                       <div class="flex items-center justify-between mb-3">
+                        <span class="badge badge-ghost badge-sm">
+                          {report.category.name}
+                        </span>
                         <div
                           class="badge badge-sm {priorityConfig[
                             getPriorityKey(report.priority)
@@ -234,21 +279,17 @@
                       </div>
 
                       <div
-                        class="flex items-center gap-4 text-xs text-base-content/50 pt-3 border-t border-base-content/5"
+                        class="flex items-center gap-4 text-xs text-base-content/50"
                       >
                         <div class="flex items-center gap-1">
-                          <Icon
-                            icon="mdi:message-outline"
-                            width="14"
-                            height="14"
-                          />
-                          <span>{report.comments}</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                          <Icon icon="mdi:paperclip" width="14" height="14" />
-                          <span>{report.attachments}</span>
+                          <span
+                            >{new Date(
+                              report.created_at,
+                            ).toLocaleDateString()}</span
+                          >
                         </div>
                       </div>
+                      <!-- Later adding comments -->
                     </div>
                   </button>
                   <div class="absolute top-4 right-4 z-10">
@@ -271,47 +312,82 @@
                         role="menu"
                         class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-lg border border-base-content/5"
                       >
-                        <li>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            class="gap-2"
-                            onclick={(e) => {
-                              e.stopPropagation();
-                              openModal("edit", report);
-                            }}
-                          >
-                            <Icon
-                              icon="mdi:pencil-outline"
-                              width="16"
-                              height="16"
-                            />
-                            Edit
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
-                            onclick={(e) => {
-                              e.stopPropagation();
-                              openModal("delete", report);
-                            }}
-                          >
-                            <Icon
-                              icon="mdi:delete-outline"
-                              width="16"
-                              height="16"
-                            />
-                            Delete
-                          </button>
-                        </li>
+                        {#if report.status === "pending"}
+                          <li>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              class="gap-2"
+                              onclick={(e) => {
+                                e.stopPropagation();
+                                openModal("edit", report);
+                              }}
+                            >
+                              <Icon
+                                icon="mdi:pencil-outline"
+                                width="16"
+                                height="16"
+                              />
+                              Edit
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
+                              onclick={(e) => {
+                                e.stopPropagation();
+                                openModal("delete", report);
+                              }}
+                            >
+                              <Icon
+                                icon="mdi:delete-outline"
+                                width="16"
+                                height="16"
+                              />
+                              Delete
+                            </button>
+                          </li>
+                        {:else}
+                          <li>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              class="gap-2 btn-disabled"
+                              onclick={(e) => {
+                                e.stopPropagation();
+                                openModal("edit", report);
+                              }}
+                            >
+                              <Icon
+                                icon="mdi:eye-outline"
+                                width="16"
+                                height="16"
+                              />
+                              Edit
+                            </button>
+                          </li>
+                        {/if}
                       </ul>
                     </div>
                   </div>
                 </div>
               {/each}
+
+              {#if column.reports.length === 0}
+                <div
+                  class="flex flex-col items-center justify-center py-8 text-center"
+                >
+                  <Icon
+                    icon="mdi:inbox-outline"
+                    width="32"
+                    height="32"
+                    class="text-base-content/20 mb-2"
+                  />
+                  <p class="text-xs text-base-content/40">No tickets</p>
+                </div>
+              {/if}
             </div>
           </div>
         {/each}
@@ -328,16 +404,6 @@
                 class="card-body p-4 text-left w-full cursor-pointer"
                 aria-label={`Open ticket ${report.title}`}
                 onclick={() => navigateToTicket(report.id)}
-                onkeydown={(e) => {
-                  if (
-                    e.key === "Enter" ||
-                    e.key === " " ||
-                    e.code === "Space"
-                  ) {
-                    e.preventDefault();
-                    navigateToTicket(report.id);
-                  }
-                }}
               >
                 <div class="flex items-center gap-4">
                   <div
@@ -362,6 +428,10 @@
                     </p>
                   </div>
 
+                  <span class="badge badge-ghost badge-sm hidden sm:flex">
+                    {report.category.name}
+                  </span>
+
                   <div
                     class="badge badge-sm {priorityConfig[
                       getPriorityKey(report.priority)
@@ -370,17 +440,16 @@
                     {priorityConfig[getPriorityKey(report.priority)].label}
                   </div>
 
-                  <div
-                    class="flex items-center gap-3 text-xs text-base-content/50"
+                  <span class="text-xs text-base-content/40 font-mono hidden"
+                    >{report.ticket_number}</span
                   >
-                    <div class="flex items-center gap-1">
-                      <Icon icon="mdi:message-outline" width="14" height="14" />
-                      <span>{report.comments}</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <Icon icon="mdi:paperclip" width="14" height="14" />
-                      <span>{report.attachments}</span>
-                    </div>
+
+                  <div
+                    class="flex items-center gap-1 text-xs text-base-content/50 whitespace-nowrap lg:flex"
+                  >
+                    <span
+                      >{new Date(report.created_at).toLocaleDateString()}</span
+                    >
                   </div>
                 </div>
               </button>
@@ -389,8 +458,6 @@
                 <div class="dropdown dropdown-end">
                   <button
                     type="button"
-                    aria-haspopup="menu"
-                    aria-expanded="false"
                     class="btn btn-ghost btn-xs btn-circle cursor-pointer"
                     onclick={(e) => e.stopPropagation()}
                   >
@@ -399,40 +466,60 @@
                   <ul
                     class="dropdown-content menu bg-base-100 rounded-box z-1 w-40 p-2 shadow-lg border border-base-content/5"
                   >
-                    <li>
-                      <button
-                        type="button"
-                        class="gap-2"
-                        onclick={(e) => {
-                          e.stopPropagation();
-                          openModal("edit", report);
-                        }}
-                      >
-                        <Icon
-                          icon="mdi:pencil-outline"
-                          width="16"
-                          height="16"
-                        />
-                        Edit
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
-                        onclick={(e) => {
-                          e.stopPropagation();
-                          openModal("delete", report);
-                        }}
-                      >
-                        <Icon
-                          icon="mdi:delete-outline"
-                          width="16"
-                          height="16"
-                        />
-                        Delete
-                      </button>
-                    </li>
+                    {#if report.status === "pending"}
+                      <li>
+                        <button
+                          type="button"
+                          class="gap-2"
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            openModal("edit", report);
+                          }}
+                        >
+                          <Icon
+                            icon="mdi:pencil-outline"
+                            width="16"
+                            height="16"
+                          />
+                          Edit
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          class="gap-2 text-error hover:bg-error/10 focus:bg-error/10 focus:text-error"
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            openModal("delete", report);
+                          }}
+                        >
+                          <Icon
+                            icon="mdi:delete-outline"
+                            width="16"
+                            height="16"
+                          />
+                          Delete
+                        </button>
+                      </li>
+                    {:else}
+                      <li>
+                        <button
+                          type="button"
+                          class="gap-2 btn-disabled"
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            openModal("edit", report);
+                          }}
+                        >
+                          <Icon
+                            icon="mdi:pencil-outline"
+                            width="16"
+                            height="16"
+                          />
+                          Edit
+                        </button>
+                      </li>
+                    {/if}
                   </ul>
                 </div>
               </div>
@@ -447,12 +534,14 @@
     open={modalMode === "create" || modalMode === "edit"}
     mode={modalMode === "create" ? "create" : "edit"}
     {formData}
+    {isLoading}
     onclose={closeModal}
     onsubmit={handleSubmit}
   />
   <TicketDeleteModal
     open={modalMode === "delete"}
     ticket={selectedReport}
+    {isLoading}
     onclose={closeModal}
     onconfirm={handleDelete}
   />

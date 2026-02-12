@@ -15,7 +15,8 @@ export type TicketPriority = {
 };
 
 export type Ticket = {
-    id: string;
+    id: number;
+    ticket_number: string;
     title: string;
     description: string;
     student: User;
@@ -26,9 +27,24 @@ export type Ticket = {
     status: TicketStatus;
     created_at: string;
     updated_at: string;
-    ticket_number: string;
-    attachments: string;
-    comments: number;
+}
+
+export type TicketCreatePayload = {
+    title: string;
+    description: string;
+    category: number;
+    building: string;
+    room_name: string;
+}
+
+export type TicketUpdatePayload = {
+    title?: string;
+    description?: string;
+    category?: number;
+    priority?: number;
+    building?: string;
+    room_name?: string;
+    status?: TicketStatus;
 }
 
 export type TicketColumn = {

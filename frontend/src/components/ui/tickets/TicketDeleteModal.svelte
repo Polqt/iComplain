@@ -4,6 +4,7 @@
 
   export let open = false;
   export let ticket: Ticket | null = null;
+  export let isLoading = false;
   export let onclose: () => void = () => {};
   export let onconfirm: () => void = () => {};
 </script>

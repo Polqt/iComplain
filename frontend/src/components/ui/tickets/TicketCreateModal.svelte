@@ -1,23 +1,53 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { Ticket } from "../../../types/tickets.js";
+  import { derived } from "svelte/store";
+  import type {
+    Ticket,
+    Category,
+    TicketPriority,
+  } from "../../../types/tickets.ts";
   import {
     statusConfig,
     priorityConfig,
     getPriorityKey,
   } from "../../../utils/ticketConfig.js";
+  import { ticketsStore } from "../../../stores/tickets.store.ts";
 
   export let open = false;
   export let mode: "create" | "edit" = "create";
   /** When false (e.g. student), priority/status are hidden on create and read-only on edit. */
   export let canEditPriorityStatus = false;
   export let formData: Partial<Ticket> = {};
+  export let isLoading = false;
   export let onclose: () => void = () => {};
   export let onsubmit: (data: Partial<Ticket>) => void = () => {};
 
+  export const categories = derived(ticketsStore, ($store): Category[] => {
+    const uniqueCategories = new Map<number, Category>();
+
+    $store.tickets.forEach((ticket) => {
+      if (ticket.category && !uniqueCategories.has(ticket.category.id)) {
+        uniqueCategories.set(ticket.category.id, ticket.category);
+      }
+    });
+
+    return Array.from(uniqueCategories.values());
+  });
+
+  export const priorities = derived(
+    ticketsStore,
+    ($store): TicketPriority[] => {
+      const uniquePriorities = new Map<number, TicketPriority>();
+      $store.tickets.forEach((ticket) => {
+        if (ticket.priority && !uniquePriorities.has(ticket.priority.id)) {
+          uniquePriorities.set(ticket.priority.id, ticket.priority);
+        }
+      });
+      return Array.from(uniquePriorities.values());
+    },
+  );
+
   function handleSubmit(event: Event) {
     event.preventDefault();
-    // Students must not send priority/status; only admins can change them
     const data = canEditPriorityStatus
       ? formData
       : (({ priority, status, ...rest }) => rest)(formData);
@@ -60,6 +90,49 @@
         </div>
 
         <div class="form-control">
+          <label for="category" class="label">
+            <span class="label-text font-semibold">Category</span>
+          </label>
+          <select
+            id="category"
+            bind:value={formData.category}
+            class="select select-bordered w-full"
+            disabled={isLoading}
+          >
+            {#each $categories as c}
+              <option value={c.id}>{c.name}</option>
+            {/each}
+          </select>
+        </div>
+
+        <div class="form-control">
+          <label for="priority" class="label">
+            <span class="label-text font-semibold">Priority</span>
+          </label>
+          {#if mode === "create"}
+            <select
+              id="priority"
+              bind:value={formData.priority}
+              class="select select-bordered w-full"
+              disabled={isLoading}
+            >
+              {#each $priorities as p}
+                <option value={p.id}>{p.name}</option>
+              {/each}
+            </select>
+          {:else if formData.priority}
+            <div class="flex items-center pt-2">
+              <span
+                class="badge {priorityConfig[getPriorityKey(formData.priority)]
+                  .color}"
+              >
+                {priorityConfig[getPriorityKey(formData.priority)].label}
+              </span>
+            </div>
+          {/if}
+        </div>
+
+        <div class="form-control">
           <label for="building" class="label">
             <span class="label-text font-semibold">Building</span>
           </label>
@@ -86,8 +159,6 @@
           />
         </div>
 
-
-        <!-- Priority and Status: editable only for admin (canEditPriorityStatus), else view-only in edit or hidden in create -->
         {#if canEditPriorityStatus}
           <div class="grid grid-cols-2 gap-4">
             <div class="form-control">
@@ -150,12 +221,21 @@
         {/if}
 
         <div class="modal-action">
-          <button type="button" class="btn btn-ghost" onclick={onclose}>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            onclick={onclose}
+            disabled={isLoading}
+          >
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary">
-            <Icon icon="mdi:check" width="18" height="18" />
-            {mode === "create" ? "Create Ticket" : "Save Changes"}
+          <button type="submit" class="btn btn-primary" disabled={isLoading}>
+            {#if isLoading}
+              <span class="loading loading-spinner loading-sm"></span>
+              {mode === "create" ? "Creating..." : "Saving..."}
+            {:else}
+              {mode === "create" ? "Create Ticket" : "Save Changes"}
+            {/if}
           </button>
         </div>
       </form>

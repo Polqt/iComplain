@@ -1,6 +1,5 @@
 export type UserRole = 'student' | 'admin';
 
-// Backend/auth user shape
 export type User = {
     id: number;
     email: string;
@@ -10,7 +9,6 @@ export type User = {
     avatar?: string | null;
 }
 
-// UI profile user shape (for header/profile dropdown etc.)
 export type ProfileUser = {
     name: string;
     email: string;
