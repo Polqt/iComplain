@@ -1,8 +1,21 @@
 import type { SearchResult } from "../types/search.ts";
 
+export const typeIcons = {
+    report: "mdi:file-document-outline",
+    notification: "mdi:bell-outline",
+    page: "mdi:view-dashboard-outline",
+};
+
+
+export const typeColors = {
+    report: "text-primary",
+    notification: "text-warning",
+    page: "text-info",
+};
+
+
 export async function performSearch(query: string): Promise<SearchResult[]> {
-    // TODO: Replace with actual API call
-    
+
     await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
 
     const mockResults: SearchResult[] = [

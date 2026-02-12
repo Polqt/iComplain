@@ -65,11 +65,6 @@
         building: data.building!,
         room_name: data.room_name!,
       };
-
-      const created = await ticketsStore.createTicket(
-        payload,
-        file ?? undefined,
-      );
     } else if (modalMode === "edit" && selectedReport) {
       const categoryId =
         typeof data.category === "number" ? data.category : data.category?.id;

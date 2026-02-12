@@ -6,6 +6,7 @@
   import { createEventDispatcher } from "svelte";
   import { searchStore } from "../../stores/search.store.ts";
   import type { SearchResult } from "../../types/search.ts";
+  import { typeColors, typeIcons } from "../../utils/useSearch.ts";
 
   export let isOpen: boolean = false;
 
@@ -22,20 +23,6 @@
   $: recentSearches = $searchStore.recentSearches;
   $: isSearching = $searchStore.isSearching;
   $: selectedIndex = $searchStore.selectedIndex;
-
-  // Result type icons
-  const typeIcons = {
-    report: "mdi:file-document-outline",
-    notification: "mdi:bell-outline",
-    page: "mdi:view-dashboard-outline",
-  };
-
-  // Result type colors
-  const typeColors = {
-    report: "text-primary",
-    notification: "text-warning",
-    page: "text-info",
-  };
 
   // Global keyboard shortcut handler (Cmd+K to open modal)
   function handleKeyDown(event: KeyboardEvent) {

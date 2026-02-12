@@ -3,7 +3,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
 
-
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 
