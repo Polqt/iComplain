@@ -1,6 +1,9 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { Ticket } from "../../../types/tickets.js";
+  import type {
+    Ticket,
+    Category,
+    TicketPriority,
+  } from "../../../types/tickets.js";
   import {
     statusConfig,
     priorityConfig,
@@ -12,12 +15,31 @@
   /** When false (e.g. student), priority/status are hidden on create and read-only on edit. */
   export let canEditPriorityStatus = false;
   export let formData: Partial<Ticket> = {};
+  export let isLoading = false;
   export let onclose: () => void = () => {};
   export let onsubmit: (data: Partial<Ticket>) => void = () => {};
 
+  const CATEGORIES: Category[] = [
+    
+  ];
+
+  const PRIORITIES: TicketPriority[] = [
+    
+  ];
+
+  // Local ids for the <select> bindings
+  // Initialise from formData so Edit mode pre-selects the right values
+  let selectedCategoryId: number = formData.category?.id ?? 1;
+  let selectedPriorityId: number = formData.priority?.id ?? 2;
+
+  // Keep formData objects in sync with the selects
+  $: formData.category =
+    CATEGORIES.find((c) => c.id === selectedCategoryId) ?? CATEGORIES[0];
+  $: formData.priority =
+    PRIORITIES.find((p) => p.id === selectedPriorityId) ?? PRIORITIES[1];
+
   function handleSubmit(event: Event) {
     event.preventDefault();
-    // Students must not send priority/status; only admins can change them
     const data = canEditPriorityStatus
       ? formData
       : (({ priority, status, ...rest }) => rest)(formData);
@@ -60,6 +82,49 @@
         </div>
 
         <div class="form-control">
+          <label for="category" class="label">
+            <span class="label-text font-semibold">Category</span>
+          </label>
+          <select
+            id="category"
+            bind:value={selectedCategoryId}
+            class="select select-bordered w-full"
+            disabled={isLoading}
+          >
+            {#each CATEGORIES as cat}
+              <option value={cat.id}>{cat.name}</option>
+            {/each}
+          </select>
+        </div>
+
+        <div class="form-control">
+          <label for="priority" class="label">
+            <span class="label-text font-semibold">Priority</span>
+          </label>
+          {#if mode === "create"}
+            <select
+              id="priority"
+              bind:value={selectedPriorityId}
+              class="select select-bordered w-full"
+              disabled={isLoading}
+            >
+              {#each PRIORITIES as p}
+                <option value={p.id}>{p.name}</option>
+              {/each}
+            </select>
+          {:else if formData.priority}
+            <div class="flex items-center pt-2">
+              <span
+                class="badge {priorityConfig[getPriorityKey(formData.priority)]
+                  .color}"
+              >
+                {priorityConfig[getPriorityKey(formData.priority)].label}
+              </span>
+            </div>
+          {/if}
+        </div>
+
+        <div class="form-control">
           <label for="building" class="label">
             <span class="label-text font-semibold">Building</span>
           </label>
@@ -86,8 +151,6 @@
           />
         </div>
 
-
-        <!-- Priority and Status: editable only for admin (canEditPriorityStatus), else view-only in edit or hidden in create -->
         {#if canEditPriorityStatus}
           <div class="grid grid-cols-2 gap-4">
             <div class="form-control">
@@ -150,12 +213,21 @@
         {/if}
 
         <div class="modal-action">
-          <button type="button" class="btn btn-ghost" onclick={onclose}>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            onclick={onclose}
+            disabled={isLoading}
+          >
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary">
-            <Icon icon="mdi:check" width="18" height="18" />
-            {mode === "create" ? "Create Ticket" : "Save Changes"}
+          <button type="submit" class="btn btn-primary" disabled={isLoading}>
+            {#if isLoading}
+              <span class="loading loading-spinner loading-sm"></span>
+              {mode === "create" ? "Creating..." : "Saving..."}
+            {:else}
+              {mode === "create" ? "Create Ticket" : "Save Changes"}
+            {/if}
           </button>
         </div>
       </form>
