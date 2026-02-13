@@ -102,6 +102,7 @@ def ticket_history(request):
             "ticket": ticket,
             "action": "created",
             "description": "Ticket created",
+            "event_status": "pending",
         })
         # Status history
         for h in ticket.status_history.all():
@@ -116,6 +117,7 @@ def ticket_history(request):
                     f"Status changed from {_map_status_for_history(h.old_status)} "
                     f"to {_map_status_for_history(h.new_status)}"
                 ),
+                "event_status": h.new_status,
             })
         # Comments
         for c in ticket.comments.all():
@@ -134,6 +136,7 @@ def ticket_history(request):
         t = e["ticket"]
         priority_name = t.priority.name if t.priority else ""
         category_name = t.category.name if t.category else None
+        event_status = e.get("event_status", t.status)
         if e["action"] in status_change_actions:
             event_status = _map_status_for_history(e["new_status"])
         elif e["action"] == "created":
@@ -149,7 +152,7 @@ def ticket_history(request):
             description=e["description"],
             timestamp=_format_timestamp(e["at"]),
             date=_format_date(e["at"]),
-            status=event_status,
+            status=_map_status_for_history(event_status),
             priority=_map_priority_for_history(priority_name),
             category=category_name,
         ))
