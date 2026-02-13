@@ -118,7 +118,7 @@ def delete_ticket(request, id: int):
     return 204, None
 
 # Ticket Comments Views
-@router.get("/{id}/comments", response=List[TicketCommentSchema])
+@router.get("/{id}/comments", response=list[TicketCommentSchema])
 def get_comments(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
     comments = TicketComment.objects.select_related('user').filter(ticket=ticket).order_by('created_at')
