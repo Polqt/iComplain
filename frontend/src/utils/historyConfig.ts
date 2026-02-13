@@ -1,4 +1,4 @@
-import type { HistoryAction, HistoryStatus, HistoryPriority, HistoryItem, HistoryFilterType, HistorySortType } from "../types/history.js";
+import type { HistoryAction, HistoryStatus, HistoryPriority, HistoryItem, HistoryFilterType, HistorySortType } from "../types/history.ts";
 
 export const historyConfig: Record<HistoryAction, {
     label: string;
@@ -102,6 +102,30 @@ export function sortHistory(
         const timeB = getSortTime(b);
         return sortBy === "newest" ? timeB - timeA : timeA - timeB;
     });
+}
+
+/**
+ * Format an ISO or date string as a relative time label (e.g. "2 hours ago").
+ * Uses fallbackDate when the input is invalid or older than ~1 week.
+ */
+export function formatRelativeTime(isoOrDate: string, fallbackDate: string): string {
+  const d = new Date(isoOrDate);
+  if (Number.isNaN(d.getTime())) return fallbackDate;
+  const now = new Date();
+  const sec = Math.floor((now.getTime() - d.getTime()) / 1000);
+  if (sec < 60) return "just now";
+  const mins = Math.floor(sec / 60);
+  if (sec < 3600) return mins === 1 ? "1 min ago" : `${mins} mins ago`;
+  const hours = Math.floor(sec / 3600);
+  if (sec < 86400) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  const days = Math.floor(sec / 86400);
+  if (sec < 604800) return days === 1 ? "1 day ago" : `${days} days ago`;
+  return fallbackDate;
+}
+
+/** Return "activity" or "activities" for display (e.g. "Showing 5 activities"). */
+export function getActivityLabel(count: number): "activity" | "activities" {
+  return count === 1 ? "activity" : "activities";
 }
 
 /**
