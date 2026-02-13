@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
@@ -81,10 +82,16 @@ def ticket_list(request):
 
 @router.get("/history", response=list[TicketHistoryItemSchema])
 def ticket_history(request):
+    status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
+    comments_qs = TicketComment.objects.select_related("user").order_by("created_at")
+    base = Ticket.objects.select_related("category", "priority", "student").prefetch_related(
+        Prefetch("status_history", queryset=status_history_qs),
+        Prefetch("comments", queryset=comments_qs),
+    )
     if request.user.is_staff:
-        tickets = Ticket.objects.select_related("category", "priority", "student").all()
+        tickets = base.all()
     else:
-        tickets = Ticket.objects.select_related("category", "priority", "student").filter(student=request.user)
+        tickets = base.filter(student=request.user)
 
     events = []
     for ticket in tickets:
@@ -97,17 +104,20 @@ def ticket_history(request):
             "description": "Ticket created",
         })
         # Status history
-        for h in ticket.status_history.select_related("changed_by").order_by("changed_at"):
+        for h in ticket.status_history.all():
             action = _history_action_for_status_change(h.old_status, h.new_status)
             events.append({
                 "at": h.changed_at,
                 "id": f"status-{h.id}",
                 "ticket": ticket,
                 "action": action,
-                "description": f"Status changed from {h.old_status} to {h.new_status}",
+                "description": (
+                    f"Status changed from {_map_status_for_history(h.old_status)} "
+                    f"to {_map_status_for_history(h.new_status)}"
+                ),
             })
         # Comments
-        for c in ticket.comments.select_related("user").order_by("created_at"):
+        for c in ticket.comments.all():
             events.append({
                 "at": c.created_at,
                 "id": f"comment-{c.id}",
@@ -117,22 +127,25 @@ def ticket_history(request):
             })
 
     events.sort(key=lambda e: e["at"], reverse=True)
-    return [
-        TicketHistoryItemSchema(
+    out = []
+    for e in events:
+        t = e["ticket"]
+        priority_name = t.priority.name if t.priority else ""
+        category_name = t.category.name if t.category else None
+        out.append(TicketHistoryItemSchema(
             id=e["id"],
-            ticketPk=e["ticket"].id,
-            ticketId=e["ticket"].ticket_number,
-            title=e["ticket"].title,
+            ticketPk=t.id,
+            ticketId=t.ticket_number,
+            title=t.title,
             action=e["action"],
             description=e["description"],
             timestamp=_format_timestamp(e["at"]),
             date=_format_date(e["at"]),
-            status=_map_status_for_history(e["ticket"].status),
-            priority=_map_priority_for_history(e["ticket"].priority.name),
-            category=e["ticket"].category.name,
-        )
-        for e in events
-    ]
+            status=_map_status_for_history(t.status),
+            priority=_map_priority_for_history(priority_name),
+            category=category_name,
+        ))
+    return out
 
 @router.get("/{id}", response=TicketSchema)
 def ticket_detail(request, id: int):

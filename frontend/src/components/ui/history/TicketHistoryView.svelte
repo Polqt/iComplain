@@ -80,30 +80,32 @@
     <div class="flex-1 flex items-center justify-center text-error">
       {error}
     </div>
-  {:else if filteredItems.length > 0}
-    <div class="mb-4 shrink-0">
-      <p class="text-sm text-base-content/60">
-        Showing <span class="font-semibold text-primary"
-          >{filteredItems.length}</span
-        >
-        {filteredItems.length === 1 ? "activity" : "activities"}
-        {#if activeFilter !== "all"}
-          in <span class="font-semibold"
-            >{historyConfig[activeFilter].label}</span
+  {:else}
+    {#if filteredItems.length > 0}
+      <div class="mb-4 shrink-0">
+        <p class="text-sm text-base-content/60">
+          Showing <span class="font-semibold text-primary"
+            >{filteredItems.length}</span
           >
-        {/if}
-      </p>
+          {filteredItems.length === 1 ? "activity" : "activities"}
+          {#if activeFilter !== "all"}
+            in <span class="font-semibold"
+              >{historyConfig[activeFilter].label}</span
+            >
+          {/if}
+        </p>
+      </div>
+    {/if}
+
+    <div class="flex-1 overflow-y-auto pr-2">
+      <HistoryTimeline
+        items={filteredItems}
+        {activeFilter}
+        {searchQuery}
+        sortBy={sortBy}
+        {ticketUrlPrefix}
+        onclearfilters={clearFilters}
+      />
     </div>
   {/if}
-
-  <div class="flex-1 overflow-y-auto pr-2">
-    <HistoryTimeline
-      items={filteredItems}
-      {activeFilter}
-      {searchQuery}
-      sortBy={sortBy}
-      {ticketUrlPrefix}
-      onclearfilters={clearFilters}
-    />
-  </div>
 </div>
