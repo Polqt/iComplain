@@ -111,6 +111,7 @@ def ticket_history(request):
                 "id": f"status-{h.id}",
                 "ticket": ticket,
                 "action": action,
+                "new_status": h.new_status,
                 "description": (
                     f"Status changed from {_map_status_for_history(h.old_status)} "
                     f"to {_map_status_for_history(h.new_status)}"
@@ -127,11 +128,18 @@ def ticket_history(request):
             })
 
     events.sort(key=lambda e: e["at"], reverse=True)
+    status_change_actions = ("updated", "resolved", "closed", "reopened")
     out = []
     for e in events:
         t = e["ticket"]
         priority_name = t.priority.name if t.priority else ""
         category_name = t.category.name if t.category else None
+        if e["action"] in status_change_actions:
+            event_status = _map_status_for_history(e["new_status"])
+        elif e["action"] == "created":
+            event_status = _map_status_for_history("pending")
+        else:
+            event_status = _map_status_for_history(t.status)
         out.append(TicketHistoryItemSchema(
             id=e["id"],
             ticketPk=t.id,
@@ -141,18 +149,18 @@ def ticket_history(request):
             description=e["description"],
             timestamp=_format_timestamp(e["at"]),
             date=_format_date(e["at"]),
-            status=_map_status_for_history(t.status),
+            status=event_status,
             priority=_map_priority_for_history(priority_name),
             category=category_name,
         ))
     return out
 
-@router.get("/{id}", response=TicketSchema)
+@router.get("/{id}", response={200: TicketSchema, 404: dict})
 def ticket_detail(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "Not found."}, 404
-    return TicketSchema.from_orm(ticket)
+    return 200, TicketSchema.from_orm(ticket)
 
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: UploadedFile = File(None)):
@@ -338,8 +346,17 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attac
             file_type=attachment.content_type,
         )
 
-    # Auto-close ticket upon feedback
-    ticket.status = 'closed'
+    # Auto-close ticket upon feedback; record status history like update_ticket
+    old_status = ticket.status
+    if old_status != "closed":
+        TicketStatusHistory.objects.create(
+            ticket=ticket,
+            old_status=old_status,
+            new_status="closed",
+            changed_by=request.user,
+            changed_at=timezone.now(),
+        )
+    ticket.status = "closed"
     ticket.save()
 
     return 201, feedback
