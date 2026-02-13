@@ -1,21 +1,31 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import type { HistoryItem, HistoryFilterType } from "../../../types/history.js";
-  import { historyConfig } from "../../../utils/historyConfig.js";
+  import type {
+    HistoryItem,
+    HistoryFilterType,
+    HistorySortType,
+  } from "../../../types/history.ts";
+  import { historyConfig } from "../../../utils/historyConfig.ts";
   import HistoryCard from "./HistoryCard.svelte";
   import HistoryEmptyState from "./HistoryEmptyState.svelte";
 
   export let items: HistoryItem[] = [];
   export let activeFilter: HistoryFilterType = "all";
   export let searchQuery: string = "";
-  export let ticketUrlPrefix: string = "/student/tickets";
+  export let sortBy: HistorySortType = "newest";
+  export let ticketUrlPrefix: string = "/tickets";
   export let onclearfilters: () => void = () => {};
+
+  $: hasAnyFilter =
+    activeFilter !== "all" ||
+    searchQuery.length > 0 ||
+    sortBy !== "newest";
 </script>
 
 {#if items.length === 0}
   <HistoryEmptyState
     searchQuery={searchQuery}
-    hasActiveFilter={activeFilter !== "all"}
+    hasActiveFilter={hasAnyFilter}
     onclear={onclearfilters}
   />
 {:else}

@@ -8,8 +8,21 @@ from ninja.security import SessionAuth
 
 from .validation import validate_file
 
-from .schemas import CategorySchema, TicketCommentCreateSchema, TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketPrioritySchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
-from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback
+from .schemas import (
+    CategorySchema,
+    TicketCommentCreateSchema,
+    TicketCommentSchema,
+    TicketCommentUpdateSchema,
+    TicketCreateSchema,
+    TicketHistoryItemSchema,
+    TicketPrioritySchema,
+    TicketSchema,
+    TicketUpdateSchema,
+    TicketFeedbackSchema,
+    TicketFeedbackCreateSchema,
+    TicketFeedbackUpdateSchema,
+)
+from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback, TicketStatusHistory
 
 router = Router(auth=SessionAuth())
 
@@ -30,20 +43,103 @@ def get_categories(request):
 def get_priorities(request):
     return TicketPriority.objects.all()
 
+def _format_date(dt):
+    return timezone.localtime(dt).strftime("%d %b %Y")
+
+def _format_timestamp(dt):
+    return timezone.localtime(dt).isoformat()
+
+def _map_status_for_history(db_status: str) -> str:
+    if db_status == "in_progress":
+        return "in-progress"
+    return db_status
+
+def _map_priority_for_history(priority_name: str) -> str:
+    if not priority_name:
+        return "medium"
+    name = (priority_name or "").strip().lower()
+    if name == "low":
+        return "low"
+    if name in ("high", "urgent"):
+        return "high"
+    return "medium"
+
+def _history_action_for_status_change(old_status: str, new_status: str) -> str:
+    if new_status == "resolved":
+        return "resolved"
+    if new_status == "closed":
+        return "closed"
+    if new_status == "pending" and old_status in ("resolved", "closed"):
+        return "reopened"
+    return "updated"
+
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
 def ticket_list(request):
+    qs = Ticket.objects.select_related("category", "priority", "student")
+    return qs.all() if request.user.is_staff else qs.filter(student=request.user)
+
+@router.get("/history", response=list[TicketHistoryItemSchema])
+def ticket_history(request):
     if request.user.is_staff:
-        return Ticket.objects.select_related('category', 'priority', 'student').all()
+        tickets = Ticket.objects.select_related("category", "priority", "student").all()
     else:
-        return Ticket.objects.select_related('category', 'priority', 'student').filter(student=request.user)
-    
+        tickets = Ticket.objects.select_related("category", "priority", "student").filter(student=request.user)
+
+    events = []
+    for ticket in tickets:
+        # Created
+        events.append({
+            "at": ticket.created_at,
+            "id": f"created-{ticket.id}-{ticket.created_at.isoformat()}",
+            "ticket": ticket,
+            "action": "created",
+            "description": "Ticket created",
+        })
+        # Status history
+        for h in ticket.status_history.select_related("changed_by").order_by("changed_at"):
+            action = _history_action_for_status_change(h.old_status, h.new_status)
+            events.append({
+                "at": h.changed_at,
+                "id": f"status-{h.id}",
+                "ticket": ticket,
+                "action": action,
+                "description": f"Status changed from {h.old_status} to {h.new_status}",
+            })
+        # Comments
+        for c in ticket.comments.select_related("user").order_by("created_at"):
+            events.append({
+                "at": c.created_at,
+                "id": f"comment-{c.id}",
+                "ticket": ticket,
+                "action": "commented",
+                "description": f"Comment: {c.message[:100]}{'…' if len(c.message) > 100 else ''}",
+            })
+
+    events.sort(key=lambda e: e["at"], reverse=True)
+    return [
+        TicketHistoryItemSchema(
+            id=e["id"],
+            ticketPk=e["ticket"].id,
+            ticketId=e["ticket"].ticket_number,
+            title=e["ticket"].title,
+            action=e["action"],
+            description=e["description"],
+            timestamp=_format_timestamp(e["at"]),
+            date=_format_date(e["at"]),
+            status=_map_status_for_history(e["ticket"].status),
+            priority=_map_priority_for_history(e["ticket"].priority.name),
+            category=e["ticket"].category.name,
+        )
+        for e in events
+    ]
 
 @router.get("/{id}", response=TicketSchema)
 def ticket_detail(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
+    if ticket.student != request.user and not request.user.is_staff:
+        return {"detail": "Not found."}, 404
     return TicketSchema.from_orm(ticket)
-    
 
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: UploadedFile = File(None)):
@@ -96,6 +192,15 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema):
     if payload.room_name is not None:
         ticket.room_name = payload.room_name
     if payload.status is not None:
+        old_status = ticket.status
+        if old_status != payload.status:
+            TicketStatusHistory.objects.create(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=payload.status,
+                changed_by=request.user,
+                changed_at=timezone.now(),
+            )
         ticket.status = payload.status
 
     ticket.updated_at = timezone.now()

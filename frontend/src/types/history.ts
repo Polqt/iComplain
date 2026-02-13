@@ -9,14 +9,15 @@ export type HistoryFilterType = "all" | "created" | "updated" | "resolved" | "cl
 export type HistorySortType = "newest" | "oldest";
 
 export type HistoryItem = {
-    id: string;
-    ticketId: string;
-    title: string;
-    action: HistoryAction;
-    description: string;
-    timestamp: string;
-    date: string;
-    status: HistoryStatus;
-    priority: HistoryPriority;
-    category?: string;
-}
+  id: string;
+  ticketPk: number;
+  ticketId: string;
+  title: string;
+  action: HistoryAction;
+  description: string;
+  timestamp: string;
+  date: string;
+  status: HistoryStatus;
+  priority: HistoryPriority;
+  category?: string;
+};

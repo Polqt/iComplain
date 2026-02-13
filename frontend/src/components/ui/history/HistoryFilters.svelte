@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import type { HistoryFilterType, HistorySortType } from "../../../types/history.js";
+  import type { HistoryFilterType, HistorySortType } from "../../../types/history.ts";
 
   export let activeFilter: HistoryFilterType = "all";
   export let sortBy: HistorySortType = "newest";
