@@ -16,9 +16,6 @@
   /** Called on mount to load history items. */
   export let fetchItems: () => Promise<HistoryItem[]> = async () => [];
 
-  export let title: string = "Ticket History";
-  export let description: string =
-    "View all your ticket activities and status changes.";
   export let ticketUrlPrefix: string = "/tickets";
 
   let activeFilter: HistoryFilterType = "all";
@@ -57,9 +54,9 @@
 
 <div class="flex flex-col h-[calc(100vh-8rem)]">
   <div class="shrink-0 mb-6">
-    <h1 class="text-2xl font-black text-base-content mb-1">{title}</h1>
+    <h1 class="text-2xl font-black text-base-content mb-1">Ticket History</h1>
     <p class="text-sm text-base-content/60">
-      {description}
+      View all your ticket activities and status changes.
     </p>
   </div>
 

@@ -7,8 +7,6 @@
 <StudentLayout>
   <TicketHistoryView
     fetchItems={fetchTicketHistory}
-    title="Ticket History"
-    description="View all your ticket activities and status changes."
     ticketUrlPrefix="/tickets"
   />
 </StudentLayout>
