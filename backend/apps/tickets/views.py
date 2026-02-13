@@ -62,10 +62,6 @@ def ticket_list(request):
     return [TicketSchema.from_orm(ticket) for ticket in qs.filter(student=request.user)]
     
 
-@router.get("/{id}", response=TicketSchema)
-    qs = Ticket.objects.select_related("category", "priority", "student")
-    return qs.all() if request.user.is_staff else qs.filter(student=request.user)
-
 @router.get("/history", response=list[TicketHistoryItemSchema])
 def ticket_history(request):
     status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
