@@ -40,6 +40,27 @@ export const priorityConfig: Record<
   urgent: { label: "Urgent", color: "badge-error" },
 };
 
+export const priorityIcons: Record<string, string> = {
+  low: "mdi:arrow-down",
+  medium: "mdi:minus",
+  high: "mdi:arrow-up",
+  urgent: "mdi:alert",
+};
+
+export const priorityAccent: Record<string, string> = {
+  low: "border-l-info",
+  medium: "border-l-warning",
+  high: "border-l-error",
+  urgent: "border-l-error",
+};
+
+export const columnAccent: Record<string, string> = {
+  pending: "border-l-yellow-400",
+  in_progress: "border-l-sky-400",
+  resolved: "border-l-emerald-400",
+  closed: "border-l-base-content/25",
+};
+
  export const baseColumns: Omit<TicketColumn, "reports">[] = [
     {
       id: "pending",

@@ -10,12 +10,12 @@
     priorityConfig,
     getPriorityKey,
   } from "../../../utils/ticketConfig.js";
+  import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
   import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
 
   export let open = false;
   export let mode: "create" | "edit" = "create";
-  /** When false (e.g. student), priority/status are hidden on create and read-only on edit. */
   export let canEditPriorityStatus = false;
   export let formData: Partial<Ticket> = {};
   export let isLoading = false;
@@ -70,39 +70,13 @@
 
 {#if open}
   <dialog class="modal modal-open">
-    <!-- Sheet -->
     <div
       class="modal-box max-w-xl rounded-2xl p-0 overflow-hidden shadow-2xl border border-base-content/8"
     >
-      <!-- Modal header -->
       <div
         class="flex items-center justify-between px-6 py-5 border-b border-base-content/6"
       >
         <div class="flex items-center gap-3">
-          <div
-            class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4 text-primary"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              {#if mode === "create"}
-                <path d="M12 5v14M5 12h14" />
-              {:else}
-                <path
-                  d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                /><path
-                  d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                />
-              {/if}
-            </svg>
-          </div>
           <div>
             <h3 class="font-bold text-sm text-base-content">
               {mode === "create" ? "New Ticket" : "Edit Ticket"}
@@ -121,23 +95,12 @@
           disabled={isLoading}
           aria-label="Close"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-          >
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <Icon icon="mdi:close" class="w-4 h-4" />
         </button>
       </div>
 
-      <!-- Scrollable form body -->
       <form onsubmit={handleSubmit} class="overflow-y-auto max-h-[70vh]">
         <div class="px-6 py-5 space-y-5">
-          <!-- Title -->
           <div class="form-control gap-1.5">
             <label
               for="title"
@@ -156,7 +119,6 @@
             />
           </div>
 
-          <!-- Description -->
           <div class="form-control gap-1.5">
             <label
               for="description"
@@ -167,14 +129,13 @@
             <textarea
               id="description"
               bind:value={formData.description}
-              placeholder="Describe the issue in detail — include anything that helps us understand the problem…"
+              placeholder="Describe the issue in detail..."
               class="textarea textarea-bordered w-full h-28 rounded-xl text-sm resize-none focus:border-primary focus:outline-none"
               required
               disabled={isLoading}
             ></textarea>
           </div>
 
-          <!-- Category + Priority row -->
           <div class="grid grid-cols-2 gap-4">
             <div class="form-control gap-1.5">
               <label
@@ -232,7 +193,6 @@
             </div>
           </div>
 
-          <!-- Building + Room row -->
           <div class="grid grid-cols-2 gap-4">
             <div class="form-control gap-1.5">
               <label
@@ -270,19 +230,17 @@
             </div>
           </div>
 
-          <!-- Attachment -->
-          <div class="form-control gap-1.5">
+          <div class="form-control gap-1">
             <label
               for="attachment"
-              class="text-xs font-semibold text-base-content/70 uppercase tracking-wide"
+              class="text-xs font-semibold text-base-content/60 uppercase tracking-wider"
             >
               Attachment <span
-                class="text-base-content/30 font-normal normal-case"
+                class="text-base-content/35 font-normal normal-case tracking-normal ml-"
                 >(optional)</span
               >
             </label>
 
-            <!-- Custom file drop zone -->
             <label
               for="attachment"
               class="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-base-content/15 hover:border-primary/40 hover:bg-primary/3 transition-colors cursor-pointer py-6 px-4 text-center"
@@ -291,18 +249,7 @@
             >
               {#if selectedFile}
                 <div class="flex items-center gap-2 text-primary">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                    /><polyline points="14 2 14 8 20 8" />
-                  </svg>
+                  <Icon icon="mdi:file" class="w-5 h-5" />
                   <span class="text-sm font-medium truncate max-w-xs"
                     >{selectedFile.name}</span
                   >
@@ -311,23 +258,7 @@
                   >Click to change file</span
                 >
               {:else}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-7 h-7 text-base-content/20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <polyline points="16 16 12 12 8 16" /><line
-                    x1="12"
-                    y1="12"
-                    x2="12"
-                    y2="21"
-                  /><path
-                    d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"
-                  />
-                </svg>
+                <Icon icon="mdi:upload" class="w-7 h-7 text-base-content/20" />
                 <span class="text-xs text-base-content/40">
                   Drop a file or <span class="text-primary font-medium"
                     >browse</span
@@ -343,11 +274,10 @@
               type="file"
               class="hidden"
               onchange={handleFileChange}
-              accept="image/*,.pdf,.doc,.docx,.txt"
+              accept="image/*"
             />
           </div>
 
-          <!-- Admin-only: status override -->
           {#if canEditPriorityStatus}
             <div class="grid grid-cols-2 gap-4 pt-1">
               <div class="form-control gap-1.5">
@@ -388,21 +318,10 @@
             <div
               class="flex items-center gap-3 p-3 rounded-xl bg-base-200/60 border border-base-content/6"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
+              <Icon
+                icon="mdi:information-outline"
                 class="w-4 h-4 text-base-content/30 shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <circle cx="12" cy="12" r="10" /><line
-                  x1="12"
-                  y1="8"
-                  x2="12"
-                  y2="12"
-                /><line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
+              />
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs text-base-content/50"
                   >Admin-controlled:</span
@@ -423,7 +342,6 @@
           {/if}
         </div>
 
-        <!-- Footer actions -->
         <div
           class="flex items-center justify-end gap-2 px-6 py-4 border-t border-base-content/6 bg-base-100"
         >
@@ -451,7 +369,6 @@
       </form>
     </div>
 
-    <!-- Backdrop -->
     <form method="dialog" class="modal-backdrop">
       <button
         type="submit"
