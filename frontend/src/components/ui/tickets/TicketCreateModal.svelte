@@ -168,7 +168,7 @@
                   id="priority"
                   bind:value={formData.priority}
                   class="select select-bordered w-full rounded-xl text-sm focus:border-primary focus:outline-none"
-                  disabled={isLoading}
+                  disabled={true}
                 >
                   {#each $prioritiesStore as p}
                     <option value={p.id}>{p.name}</option>

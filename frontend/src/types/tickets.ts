@@ -30,6 +30,7 @@ export type Ticket = {
     building: string;
     room_name: string;
     status: TicketStatus;
+    attachment?: string;
     created_at: string;
     updated_at: string;
 }
@@ -71,6 +72,12 @@ export type TicketsState = {
     tickets: Ticket[];
     isLoading: boolean;
     error: string | null;
+};
+
+export type PipelineStep = {
+  id:    TicketStatus;
+  label: string;
+  icon:  string;
 };
 
 export type ViewMode = "grid" | "list";

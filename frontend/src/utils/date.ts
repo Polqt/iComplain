@@ -23,3 +23,16 @@ function formatMobileDate(date: Date): string {
 const currentDate = new Date();
 export const formattedDate = formatDateToCustomString(currentDate);
 export const mobileFormattedDate = formatMobileDate(currentDate);
+
+export function formatDate(iso: string) {
+    return new Date(iso).toLocaleString("en-US", {
+        month: "long", day: "numeric", year: "numeric"
+    })
+}
+
+export function formatDateTime(iso: string) {
+    return new Date(iso).toLocaleString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+        hour: "numeric", minute: "2-digit"
+    })
+}

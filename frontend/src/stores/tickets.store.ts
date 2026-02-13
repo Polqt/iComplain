@@ -10,7 +10,7 @@ interface TicketsStore extends Readable<TicketsState> {
     loadTickets: () => Promise<void>;
     loadTicketById: (id: number) => Promise<Ticket | null>;
     createTicket: (ticketData: TicketCreatePayload, attachment?: File) => Promise<Ticket | null>;
-    updateTicket: (id: number, updates: TicketUpdatePayload) => Promise<Ticket | null>;
+    updateTicket: (id: number, updates: TicketUpdatePayload, attachment?: File | null) => Promise<Ticket | null>;
     deleteTicket: (id: number) => Promise<boolean>;
 
     addTicketToStore: (ticket: Ticket) => void;
@@ -116,11 +116,11 @@ function createTicketsStore(): TicketsStore {
             }
         },
 
-        async updateTicket(id: number, updates: TicketUpdatePayload): Promise<Ticket | null> {
+        async updateTicket(id: number, updates: TicketUpdatePayload, attachment?: File | null): Promise<Ticket | null> {
             update(s => ({ ...s, isLoading: true, error: null }));
 
             try {
-                const updatedTicket = await apiUpdateTicket(id, updates);
+                const updatedTicket = await apiUpdateTicket(id, updates, attachment ?? undefined);
 
                 if (updatedTicket) {
                     update(s => ({
@@ -137,7 +137,7 @@ function createTicketsStore(): TicketsStore {
                 update(s => ({
                     ...s,
                     isLoading: false,
-                    error: `Failed to load tickets: ${errorMessage}`,
+                    error: `Failed to update ticket: ${errorMessage}`,
                 }))
                 return null;
             }
