@@ -19,7 +19,7 @@
   $: pAccent = priorityAccent[pKey] ?? "border-l-info";
 
   function navigate() {
-    goto(`/student/tickets/${report.id}`);
+    goto(`/tickets/${report.ticket_number}`);
   }
 </script>
 

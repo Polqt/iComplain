@@ -21,7 +21,7 @@
   import TicketCard from "../../../components/ui/tickets/TicketCard.svelte";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { onMount } from "svelte";
-
+  
   let viewMode: ViewMode = "grid";
   let modalMode: ModalMode = null;
   let selectedReport: Ticket | null = null;
@@ -93,8 +93,8 @@
     if (success) closeModal();
   }
 
-  function navigateToTicket(reportId: number) {
-    goto(`/student/tickets/${reportId}`);
+  function navigateToTicket(ticketnumber: string) {
+    goto(`/student/tickets/${ticketnumber}`);
   }
 </script>
 
@@ -302,11 +302,11 @@
                 role="button"
                 tabindex="0"
                 aria-label={`Open ticket ${report.title}`}
-                onclick={() => navigateToTicket(report.id)}
+                onclick={() => navigateToTicket(report.ticket_number)}
                 onkeydown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    navigateToTicket(report.id);
+                    navigateToTicket(report.ticket_number);
                   }
                 }}
               >

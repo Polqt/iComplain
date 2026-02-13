@@ -3,31 +3,12 @@
   import StudentLayout from "../../layout/StudentLayout.svelte";
   import { authStore } from "../../../stores/auth.store.ts";
   import type { User } from "../../../types/user.ts";
+  import { deriveNameFromEmail, getInitials } from "../../../utils/userConfig.ts";
 
   let user: User | null = null;
   let isLoading: boolean = true;
 
   $: ({ user, isLoading } = $authStore);
-
-  function deriveNameFromEmail(email: string): string {
-    const local = (email || "").split("@")[0] || "";
-    if (!local) return "";
-    return local
-      .replace(/[._-]+/g, " ")
-      .split(" ")
-      .filter(Boolean)
-      .map((p) => p[0]?.toUpperCase() + p.slice(1))
-      .join(" ");
-  }
-
-  function initials(name: string): string {
-    return (name || "")
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase())
-      .join("");
-  }
 </script>
 
 <svelte:head>
@@ -51,7 +32,7 @@
                   <img src={user.avatar} alt={displayName} />
                 {:else}
                   <div class="w-full h-full bg-primary text-primary-content flex items-center justify-center font-bold text-lg">
-                    {initials(displayName)}
+                    {getInitials(displayName)}
                   </div>
                 {/if}
               </div>

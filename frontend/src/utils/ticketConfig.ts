@@ -1,4 +1,4 @@
-import type { Column, Ticket, TicketColumn, TicketPriority, TicketStatus } from "../types/tickets.ts";
+import type { Column, PipelineStep, Ticket, TicketColumn, TicketPriority, TicketStatus } from "../types/tickets.ts";
 
 export type PriorityKey = "low" | "medium" | "high" | "urgent";
 
@@ -18,7 +18,6 @@ export function getPriorityKey(priority: TicketPriority | string | any): Priorit
   }
   return "low";
 }
-
 
 export const statusConfig: Record<
   TicketStatus,
@@ -115,6 +114,28 @@ export const columnConfigs: Column[] = [
     },
   ];
 
+export const pipelineSteps = [
+  { id: "pending",     label: "Pending",     icon: "mdi:clock-outline"        },
+  { id: "in_progress", label: "In Progress", icon: "mdi:progress-wrench"      },
+  { id: "resolved",    label: "Resolved",    icon: "mdi:check-circle-outline" },
+  { id: "closed",      label: "Closed",      icon: "mdi:lock-outline"         },
+] satisfies PipelineStep[];;
+
+export function getStepState(
+  currentStatus: TicketStatus,
+  stepId: TicketStatus,
+): "active" | "past" | "future" {
+  const currentIdx = TICKET_STATUSES.indexOf(currentStatus);
+  const stepIdx    = TICKET_STATUSES.indexOf(stepId);
+  if (currentIdx === stepIdx) return "active";
+  if (currentIdx > stepIdx)   return "past";
+  return "future";
+}
+
+export const TICKET_STATUSES = [
+  "pending", "in_progress", "resolved", "closed",
+] as const satisfies readonly TicketStatus[];
+
 /**
  * Groups tickets into columns based on their status.
  *
@@ -135,49 +156,3 @@ export function groupTicketsByStatus(
     reports: tickets.filter(t => t.status === column.id),
   }))
 }
-
-/**
- * @param tickets - Array of tickets to be sorted
- */
-// export function calculateTicketStatus(tickets: Ticket[]) {
-//   const total = tickets.length;
-//   const byStatus = tickets.reduce((acc, ticket) => {
-//       acc[ticket.status as Status] = (acc[ticket.status as Status] || 0) + 1;
-//       return acc;
-//     },
-//   {} as Record<Status, number>)
-
-//   const byPriority = tickets.reduce((acc, ticket) => {
-//     acc[ticket.priority] = (acc[ticket.priority] || 0) + 1;
-//     return acc;
-//   }, {} as Record<string, number>)
-
-//   return {
-//     total, byStatus, byPriority
-//   }
-// }
-
-/**
- * Sorts tickets by various criteria
- */
-// export function sortTickets(
-//   tickets: Ticket[],
-//   sortBy: "date" | "priority" | "title" = "date",
-//   order: "asc" | "desc" = "desc"
-// ): Ticket[] {
-//   const sorted = [...tickets].sort((a, b) => {
-//     switch (sortBy) {
-//       case "title":
-//         return a.title.localeCompare(b.title);
-//       case "priority": {
-//         const priorityOrder = { high: 3, medium: 2, low: 1 };
-//         return priorityOrder[b.priority] - priorityOrder[a.priority];
-//       }
-//       case "date":
-//       default:
-//         return new Date(b.date).getTime() - new Date(a.date).getTime();
-//     }
-//   });
-
-//   return order === "asc" ? sorted.reverse() : sorted;
-// }
