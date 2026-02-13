@@ -9,6 +9,7 @@
   } from "../../../types/history.ts";
   import {
     filterAndSortHistory,
+    getActivityLabel,
     historyConfig,
   } from "../../../utils/historyConfig.ts";
 
@@ -87,7 +88,7 @@
           Showing <span class="font-semibold text-primary"
             >{filteredItems.length}</span
           >
-          {filteredItems.length === 1 ? "activity" : "activities"}
+          {getActivityLabel(filteredItems.length)}
           {#if activeFilter !== "all"}
             in <span class="font-semibold"
               >{historyConfig[activeFilter].label}</span

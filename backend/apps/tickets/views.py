@@ -7,6 +7,13 @@ from datetime import timedelta
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 
+from .utils import (
+    format_date,
+    format_timestamp,
+    history_action_for_status_change,
+    map_priority_for_history,
+    map_status_for_history,
+)
 from .validation import validate_file
 
 from .schemas import (
@@ -44,36 +51,6 @@ def get_categories(request):
 def get_priorities(request):
     return TicketPriority.objects.all()
 
-def _format_date(dt):
-    return timezone.localtime(dt).strftime("%d %b %Y")
-
-def _format_timestamp(dt):
-    return timezone.localtime(dt).isoformat()
-
-def _map_status_for_history(db_status: str) -> str:
-    if db_status == "in_progress":
-        return "in-progress"
-    return db_status
-
-def _map_priority_for_history(priority_name: str) -> str:
-    if not priority_name:
-        return "medium"
-    name = (priority_name or "").strip().lower()
-    if name == "low":
-        return "low"
-    if name in ("high", "urgent"):
-        return "high"
-    return "medium"
-
-def _history_action_for_status_change(old_status: str, new_status: str) -> str:
-    if new_status == "resolved":
-        return "resolved"
-    if new_status == "closed":
-        return "closed"
-    if new_status == "pending" and old_status in ("resolved", "closed"):
-        return "reopened"
-    return "updated"
-
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
 def ticket_list(request):
@@ -106,7 +83,7 @@ def ticket_history(request):
         })
         # Status history
         for h in ticket.status_history.all():
-            action = _history_action_for_status_change(h.old_status, h.new_status)
+            action = history_action_for_status_change(h.old_status, h.new_status)
             events.append({
                 "at": h.changed_at,
                 "id": f"status-{h.id}",
@@ -114,8 +91,8 @@ def ticket_history(request):
                 "action": action,
                 "new_status": h.new_status,
                 "description": (
-                    f"Status changed from {_map_status_for_history(h.old_status)} "
-                    f"to {_map_status_for_history(h.new_status)}"
+                    f"Status changed from {map_status_for_history(h.old_status)} "
+                    f"to {map_status_for_history(h.new_status)}"
                 ),
                 "event_status": h.new_status,
             })
@@ -138,11 +115,11 @@ def ticket_history(request):
         category_name = t.category.name if t.category else None
         event_status = e.get("event_status", t.status)
         if e["action"] in status_change_actions:
-            event_status = _map_status_for_history(e["new_status"])
+            event_status = map_status_for_history(e["new_status"])
         elif e["action"] == "created":
-            event_status = _map_status_for_history("pending")
+            event_status = map_status_for_history("pending")
         else:
-            event_status = _map_status_for_history(t.status)
+            event_status = map_status_for_history(t.status)
         out.append(TicketHistoryItemSchema(
             id=e["id"],
             ticketPk=t.id,
@@ -150,10 +127,10 @@ def ticket_history(request):
             title=t.title,
             action=e["action"],
             description=e["description"],
-            timestamp=_format_timestamp(e["at"]),
-            date=_format_date(e["at"]),
-            status=_map_status_for_history(event_status),
-            priority=_map_priority_for_history(priority_name),
+            timestamp=format_timestamp(e["at"]),
+            date=format_date(e["at"]),
+            status=map_status_for_history(event_status),
+            priority=map_priority_for_history(priority_name),
             category=category_name,
         ))
     return out

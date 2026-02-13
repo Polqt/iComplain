@@ -3,7 +3,12 @@
   import { onDestroy } from "svelte";
   import Icon from "@iconify/svelte";
   import type { HistoryItem } from "../../../types/history.ts";
-  import { historyConfig, statusConfig, priorityConfig } from "../../../utils/historyConfig.ts";
+  import {
+    historyConfig,
+    statusConfig,
+    priorityConfig,
+    formatRelativeTime,
+  } from "../../../utils/historyConfig.ts";
 
   export let item: HistoryItem;
   /** Base path for "View Ticket" link; item.ticketPk is appended (e.g. "/tickets"). */
@@ -21,23 +26,7 @@
   }
 
   $: menuId = `history-card-menu-${item.id}`;
-
-  function formatRelativeTime(isoOrDate: string): string {
-    const d = new Date(isoOrDate);
-    if (Number.isNaN(d.getTime())) return item.date;
-    const now = new Date();
-    const sec = Math.floor((now.getTime() - d.getTime()) / 1000);
-    if (sec < 60) return "just now";
-    const mins = Math.floor(sec / 60);
-    if (sec < 3600) return mins === 1 ? "1 min ago" : `${mins} mins ago`;
-    const hours = Math.floor(sec / 3600);
-    if (sec < 86400) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
-    const days = Math.floor(sec / 86400);
-    if (sec < 604800) return days === 1 ? "1 day ago" : `${days} days ago`;
-    return item.date;
-  }
-
-  $: timeLabel = formatRelativeTime(item.timestamp);
+  $: timeLabel = formatRelativeTime(item.timestamp, item.date);
 
   function handleClickOutside(e: MouseEvent) {
     const target = e.target as Node;
