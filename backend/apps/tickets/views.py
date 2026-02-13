@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
@@ -6,10 +7,30 @@ from datetime import timedelta
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 
+from .utils import (
+    format_date,
+    format_timestamp,
+    history_action_for_status_change,
+    map_priority_for_history,
+    map_status_for_history,
+)
 from .validation import validate_file
 
-from .schemas import CategorySchema, TicketCommentCreateSchema, TicketCommentSchema, TicketCommentUpdateSchema, TicketCreateSchema, TicketPrioritySchema, TicketSchema, TicketUpdateSchema, TicketFeedbackSchema, TicketFeedbackCreateSchema, TicketFeedbackUpdateSchema 
-from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback
+from .schemas import (
+    CategorySchema,
+    TicketCommentCreateSchema,
+    TicketCommentSchema,
+    TicketCommentUpdateSchema,
+    TicketCreateSchema,
+    TicketHistoryItemSchema,
+    TicketPrioritySchema,
+    TicketSchema,
+    TicketUpdateSchema,
+    TicketFeedbackSchema,
+    TicketFeedbackCreateSchema,
+    TicketFeedbackUpdateSchema,
+)
+from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback, TicketStatusHistory
 
 router = Router(auth=SessionAuth())
 
@@ -42,10 +63,93 @@ def ticket_list(request):
     
 
 @router.get("/{id}", response=TicketSchema)
+    qs = Ticket.objects.select_related("category", "priority", "student")
+    return qs.all() if request.user.is_staff else qs.filter(student=request.user)
+
+@router.get("/history", response=list[TicketHistoryItemSchema])
+def ticket_history(request):
+    status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
+    comments_qs = TicketComment.objects.select_related("user").order_by("created_at")
+    base = Ticket.objects.select_related("category", "priority", "student").prefetch_related(
+        Prefetch("status_history", queryset=status_history_qs),
+        Prefetch("comments", queryset=comments_qs),
+    )
+    if request.user.is_staff:
+        tickets = base.all()
+    else:
+        tickets = base.filter(student=request.user)
+
+    events = []
+    for ticket in tickets:
+        # Created
+        events.append({
+            "at": ticket.created_at,
+            "id": f"created-{ticket.id}-{ticket.created_at.isoformat()}",
+            "ticket": ticket,
+            "action": "created",
+            "description": "Ticket created",
+            "event_status": "pending",
+        })
+        # Status history
+        for h in ticket.status_history.all():
+            action = history_action_for_status_change(h.old_status, h.new_status)
+            events.append({
+                "at": h.changed_at,
+                "id": f"status-{h.id}",
+                "ticket": ticket,
+                "action": action,
+                "new_status": h.new_status,
+                "description": (
+                    f"Status changed from {map_status_for_history(h.old_status)} "
+                    f"to {map_status_for_history(h.new_status)}"
+                ),
+                "event_status": h.new_status,
+            })
+        # Comments
+        for c in ticket.comments.all():
+            events.append({
+                "at": c.created_at,
+                "id": f"comment-{c.id}",
+                "ticket": ticket,
+                "action": "commented",
+                "description": f"Comment: {c.message[:100]}{'…' if len(c.message) > 100 else ''}",
+            })
+
+    events.sort(key=lambda e: e["at"], reverse=True)
+    status_change_actions = ("updated", "resolved", "closed", "reopened")
+    out = []
+    for e in events:
+        t = e["ticket"]
+        priority_name = t.priority.name if t.priority else ""
+        category_name = t.category.name if t.category else None
+        event_status = e.get("event_status", t.status)
+        if e["action"] in status_change_actions:
+            event_status = map_status_for_history(e["new_status"])
+        elif e["action"] == "created":
+            event_status = map_status_for_history("pending")
+        else:
+            event_status = map_status_for_history(t.status)
+        out.append(TicketHistoryItemSchema(
+            id=e["id"],
+            ticketPk=t.id,
+            ticketId=t.ticket_number,
+            title=t.title,
+            action=e["action"],
+            description=e["description"],
+            timestamp=format_timestamp(e["at"]),
+            date=format_date(e["at"]),
+            status=map_status_for_history(event_status),
+            priority=map_priority_for_history(priority_name),
+            category=category_name,
+        ))
+    return out
+
+@router.get("/{id}", response={200: TicketSchema, 404: dict})
 def ticket_detail(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
-    return TicketSchema.from_orm(ticket)
-    
+    if ticket.student != request.user and not request.user.is_staff:
+        return {"detail": "Not found."}, 404
+    return 200, TicketSchema.from_orm(ticket)
 
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: UploadedFile = File(None)):
@@ -100,6 +204,15 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
     if payload.room_name is not None:
         ticket.room_name = payload.room_name
     if payload.status is not None:
+        old_status = ticket.status
+        if old_status != payload.status:
+            TicketStatusHistory.objects.create(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=payload.status,
+                changed_by=request.user,
+                changed_at=timezone.now(),
+            )
         ticket.status = payload.status
 
     ticket.updated_at = timezone.now()
@@ -243,8 +356,17 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attac
             file_type=attachment.content_type,
         )
 
-    # Auto-close ticket upon feedback
-    ticket.status = 'closed'
+    # Auto-close ticket upon feedback; record status history like update_ticket
+    old_status = ticket.status
+    if old_status != "closed":
+        TicketStatusHistory.objects.create(
+            ticket=ticket,
+            old_status=old_status,
+            new_status="closed",
+            changed_by=request.user,
+            changed_at=timezone.now(),
+        )
+    ticket.status = "closed"
     ticket.save()
 
     return 201, feedback

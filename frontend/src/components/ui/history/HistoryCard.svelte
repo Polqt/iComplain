@@ -2,12 +2,17 @@
   import { browser } from "$app/environment";
   import { onDestroy } from "svelte";
   import Icon from "@iconify/svelte";
-  import type { HistoryItem } from "../../../types/history.js";
-  import { historyConfig, statusConfig, priorityConfig } from "../../../utils/historyConfig.js";
+  import type { HistoryItem } from "../../../types/history.ts";
+  import {
+    historyConfig,
+    statusConfig,
+    priorityConfig,
+    formatRelativeTime,
+  } from "../../../utils/historyConfig.ts";
 
   export let item: HistoryItem;
-  /** Base URL for "View Ticket" link, e.g. "/student/tickets". Item.ticketId is appended. */
-  export let ticketUrlPrefix: string = "/student/tickets";
+  /** Base path for "View Ticket" link; item.ticketPk is appended (e.g. "/tickets"). */
+  export let ticketUrlPrefix: string = "/tickets";
 
   let menuOpen = false;
   let menuButtonEl: HTMLButtonElement;
@@ -21,6 +26,7 @@
   }
 
   $: menuId = `history-card-menu-${item.id}`;
+  $: timeLabel = formatRelativeTime(item.timestamp, item.date);
 
   function handleClickOutside(e: MouseEvent) {
     const target = e.target as Node;
@@ -90,7 +96,7 @@
             <li role="none">
               <a
                 role="menuitem"
-                href={`${ticketUrlPrefix}/${item.ticketId}`}
+                href={`${ticketUrlPrefix}/${item.ticketPk}`}
                 class="gap-2"
               >
                 <Icon icon="mdi:eye-outline" width="16" height="16" />
@@ -106,7 +112,7 @@
       <div class="flex items-center gap-3 text-xs text-base-content/60">
         <div class="flex items-center gap-1">
           <Icon icon="mdi:clock-outline" width="14" height="14" />
-          <span>{item.timestamp}</span>
+          <span>{timeLabel}</span>
         </div>
         <div class="flex items-center gap-1">
           <Icon icon="mdi:calendar-outline" width="14" height="14" />
@@ -132,7 +138,7 @@
 
     <div class="mt-3">
       <a
-        href={`${ticketUrlPrefix}/${item.ticketId}`}
+        href={`${ticketUrlPrefix}/${item.ticketPk}`}
         class="btn btn-sm btn-outline btn-primary w-full sm:w-auto"
       >
         <Icon icon="mdi:eye-outline" width="16" height="16" />

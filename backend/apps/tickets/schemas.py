@@ -1,4 +1,5 @@
 from typing import Optional
+from typing import Literal
 from pydantic import BaseModel
 from datetime import datetime
 from ninja import Schema
@@ -127,4 +128,18 @@ class TicketFeedbackCreateSchema(Schema):
 class TicketFeedbackUpdateSchema(Schema):
     rating: int | None = None
     comments: str | None = None
-    
+
+
+class TicketHistoryItemSchema(Schema):
+    """History feed item for student/admin history pages. Matches frontend HistoryItem."""
+    id: str
+    ticketPk: int
+    ticketId: str
+    title: str
+    action: Literal["created", "updated", "resolved", "closed", "commented", "reopened"]
+    description: str
+    timestamp: str
+    date: str
+    status: Literal["pending", "in-progress", "resolved", "closed"]
+    priority: Literal["low", "medium", "high"]
+    category: str | None = None
