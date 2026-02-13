@@ -77,14 +77,25 @@ export async function createTicket(ticketData: TicketCreatePayload, attachment?:
     }
 }
 
-export async function updateTicket(id: number, ticketData: TicketUpdatePayload): Promise<Ticket> { 
+export async function updateTicket(id: number, ticketData: TicketUpdatePayload, attachment?: File | null): Promise<Ticket> { 
     try {
+        const formData = new FormData();
+
+        if (ticketData.title       !== undefined) formData.append('title',       ticketData.title);
+        if (ticketData.description !== undefined) formData.append('description', ticketData.description);
+        if (ticketData.building    !== undefined) formData.append('building',    ticketData.building);
+        if (ticketData.room_name   !== undefined) formData.append('room_name',   ticketData.room_name);
+        if (ticketData.category    !== undefined) formData.append('category',    ticketData.category.toString());
+        if (ticketData.priority    !== undefined) formData.append('priority',    ticketData.priority.toString());
+        if (ticketData.status      !== undefined) formData.append('status',      ticketData.status);
+
+        if (attachment) {
+            formData.append('attachment', attachment);
+        }
+
         const res = await fetch(`${BASE}/${id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ ...ticketData }),
+            body: formData,
             credentials: 'include',
         })
 

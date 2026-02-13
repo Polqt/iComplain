@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
 from ninja import Schema
@@ -37,8 +38,32 @@ class TicketSchema(BaseModel):
     created_at: datetime
     updated_at: datetime
     ticket_number: str
+    attachment: Optional[str] = None
     class Config:
         from_attributes = True
+        
+    @classmethod
+    def from_orm(cls, ticket):
+        data = {
+            "id":            ticket.id,
+            "title":         ticket.title,
+            "description":   ticket.description,
+            "student":       ticket.student,
+            "category":      ticket.category,
+            "priority":      ticket.priority,
+            "building":      ticket.building,
+            "room_name":     ticket.room_name,
+            "status":        ticket.status,
+            "created_at":    ticket.created_at,
+            "updated_at":    ticket.updated_at,
+            "ticket_number": ticket.ticket_number,
+            "attachment": (
+                ticket.attachments_tickets.first().file_path.url
+                if ticket.attachments_tickets.exists()
+                else None
+            ),
+        }
+        return cls.model_validate(data)
 
 
 class TicketCreateSchema(Schema):

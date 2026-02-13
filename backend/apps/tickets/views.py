@@ -33,10 +33,12 @@ def get_priorities(request):
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
 def ticket_list(request):
+    qs = Ticket.objects.select_related(
+        'category', 'priority', 'student'
+    ).prefetch_related('attachments_tickets')
     if request.user.is_staff:
-        return Ticket.objects.select_related('category', 'priority', 'student').all()
-    else:
-        return Ticket.objects.select_related('category', 'priority', 'student').filter(student=request.user)
+        return [TicketSchema.from_orm(ticket) for ticket in qs]
+    return [TicketSchema.from_orm(ticket) for ticket in qs.filter(student=request.user)]
     
 
 @router.get("/{id}", response=TicketSchema)
@@ -69,10 +71,12 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
             file_type=attachment.content_type,
         )
     
+    ticket_obj.refresh_from_db()
+    ticket_obj = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket_obj.id)
     return TicketSchema.from_orm(ticket_obj)
 
 @router.put("/{id}", response=TicketSchema)
-def update_ticket(request, id: int, payload: TicketUpdateSchema):
+def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), attachment: UploadedFile = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     # Permission check
@@ -100,6 +104,25 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema):
 
     ticket.updated_at = timezone.now()
     ticket.save()
+    
+    if attachment:
+        validate_file(attachment)
+        existing = ticket.attachments_tickets.first()
+        if existing:
+            # Delete old file and replace
+            existing.file_path.delete(save=False)
+            existing.file_path = attachment
+            existing.file_type = attachment.content_type
+            existing.save()
+        else:
+            TicketAttachment.objects.create(
+                ticket=ticket,
+                uploaded_by=request.user,
+                file_path=attachment,
+                file_type=attachment.content_type,
+            )
+        
+    ticket = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket.id)
     return TicketSchema.from_orm(ticket)
 
 @router.delete("/{id}", response={204: None})
