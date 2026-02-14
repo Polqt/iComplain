@@ -6,12 +6,24 @@
     priorityConfig,
     statusConfig,
   } from "../../../utils/ticketConfig.ts";
-  import type { TicketColumn, ViewMode } from "../../../types/tickets.ts";
+  import type {
+    Ticket,
+    TicketColumn,
+    ViewMode,
+  } from "../../../types/tickets.ts";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
+  import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
 
   let viewMode: ViewMode = "grid";
 
-  $: ({ tickets } = $ticketsStore);
+  $: ({ tickets, isLoading } = $ticketsStore);
+
+  onMount(async () => {
+    if ($ticketsStore.tickets.length === 0) {
+      await ticketsStore.loadTickets();
+    }
+  });
 
   $: columns = baseColumns.map(
     (col): TicketColumn => ({
@@ -19,6 +31,10 @@
       reports: tickets.filter((t) => t.status === col.id),
     }),
   );
+
+  function navigate(t: Ticket) {
+    goto(`/tickets/${t.ticket_number}`);
+  }
 </script>
 
 <div class="flex items-center justify-between mb-6 shrink-0">
@@ -42,7 +58,30 @@
   </div>
 </div>
 
-{#if viewMode === "grid"}
+{#if isLoading}
+  <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overyflow-y-hidden">
+    {#each [1, 2, 3, 4] as _}
+      <div
+        class="flex flex-col shrink-0 w-80 bg-base-100 shadow- rounded-lg h-64"
+      >
+        <div class="p-4 border-b border-base-content/5">
+          <div class="skeleton w-28 h-4 rounded"></div>
+        </div>
+        <div class="flex flex-col gap-3 p-4">
+          <div class="skeleton h-20 rounded-xl"></div>
+          <div class="skeleton h-20 rounded-xl"></div>
+        </div>
+      </div>
+    {/each}
+  </div>
+{:else if tickets.length === 0}
+  <div
+    class="flex-1 flex flex-col items-center justify-center gap-3 text-base-content/40"
+  >
+    <Icon icon="mdi:ticket-outline" width="48" height="48" />
+    <p class="text-sm font-medium">No tickets yet</p>
+  </div>
+{:else if viewMode === "grid"}
   <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
     {#each columns as column}
       <div
@@ -65,6 +104,16 @@
         <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1 max-h-130">
           {#each column.reports as report}
             <div
+              role="button"
+              tabindex="0"
+              aria-label={`Open ticket ${report.title}`}
+              onclick={() => navigate(report)}
+              onkeydown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(report);
+                }
+              }}
               class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0 cursor-pointer"
             >
               <div class="card-body p-4">
@@ -97,7 +146,17 @@
     {#each columns as column}
       {#each column.reports as report}
         <div
-          class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5"
+          role="button"
+          tabindex="0"
+          aria-label={`Open ticket ${report.title}`}
+          onclick={() => navigate(report)}
+          onkeydown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate(report);
+            }
+          }}
+          class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 cursor-pointer hover:border-primary/20"
         >
           <div class="card-body p-4">
             <div class="flex items-center gap-4">
@@ -115,10 +174,12 @@
                 >
                   {report.title}
                 </h3>
-                <p class="text-xs text-base-content/60 truncate">
-                  {report.description}
-                </p>
+                <p class="text-xs text-base-content/60">{report.description}</p>
               </div>
+
+              <span class="text-[10px] font-mono text-base-content/30 shrink-0"
+                >{report.ticket_number}</span
+              >
 
               <div
                 class="badge badge-sm {priorityConfig[
