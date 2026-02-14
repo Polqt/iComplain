@@ -127,6 +127,7 @@
       href: "/dashboard",
     },
     { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
+    { name: "Community Board", icon: "lucide:globe", href: "/community-board" },
     {
       name: "Notifications",
       icon: "lucide:bell",

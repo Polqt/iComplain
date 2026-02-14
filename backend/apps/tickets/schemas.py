@@ -86,6 +86,10 @@ class TicketUpdateSchema(Schema):
     building: str | None = None
     room_name: str | None = None
     status: str | None = None
+
+class TicketAdminUpdateSchema(Schema):
+    status: str | None = None
+    priority: int | None = None
     
 
 class TicketAttachmentSchema(Schema):    

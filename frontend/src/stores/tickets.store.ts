@@ -1,6 +1,6 @@
 import { get, writable, type Readable } from "svelte/store";
 import type { RawTicket, Ticket, TicketCreatePayload, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
-import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket } from "../lib/api/ticket.ts";
+import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket, adminPatchTicket as apiAdminPatch } from "../lib/api/ticket.ts";
 
 interface TicketsStore extends Readable<TicketsState> {
     setTickets: (tickets: Ticket[]) => void;
@@ -12,7 +12,7 @@ interface TicketsStore extends Readable<TicketsState> {
     createTicket: (ticketData: TicketCreatePayload, attachment?: File) => Promise<Ticket | null>;
     updateTicket: (id: number, updates: TicketUpdatePayload, attachment?: File | null) => Promise<Ticket | null>;
     deleteTicket: (id: number) => Promise<boolean>;
-
+    adminPatchTicket: (id: number, patch: { status?: string; priority?: number }) => Promise<Ticket | null>;
     addTicketToStore: (ticket: Ticket) => void;
     updateTicketInStore: (id: number, updates: Partial<Ticket>) => void;
     removeTicketFromStore: (id: number) => void;
@@ -139,6 +139,23 @@ function createTicketsStore(): TicketsStore {
                     isLoading: false,
                     error: `Failed to update ticket: ${errorMessage}`,
                 }))
+                return null;
+            }
+        },
+
+        async adminPatchTicket(id: number, patch: { status?: string; priority?: number }) {
+            update(s => ({ ...s, isLoading: true, error: null }));
+            try {
+                const updated = await apiAdminPatch(id, patch);
+                update(s => ({
+                    ...s,
+                    tickets: s.tickets.map(t => t.id === id ? updated : t),
+                    isLoading: false,
+                }));
+                return updated;
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Update failed';
+                update(s => ({ ...s, isLoading: false, error: msg }));
                 return null;
             }
         },
