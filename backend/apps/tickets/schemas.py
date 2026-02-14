@@ -44,7 +44,15 @@ class TicketSchema(BaseModel):
         from_attributes = True
         
     @classmethod
-    def from_orm(cls, ticket):
+    def from_orm(cls, ticket, request=None):
+        attachment_url = None
+        first = ticket.attachments_tickets.first()
+        if first:
+            relative = first.file_path.url
+            if request is not None:
+                attachment_url = request.build_absolute_uri(relative)
+            else:
+                attachment_url = relative
         data = {
             "id":            ticket.id,
             "title":         ticket.title,
@@ -58,11 +66,7 @@ class TicketSchema(BaseModel):
             "created_at":    ticket.created_at,
             "updated_at":    ticket.updated_at,
             "ticket_number": ticket.ticket_number,
-            "attachment": (
-                ticket.attachments_tickets.first().file_path.url
-                if ticket.attachments_tickets.exists()
-                else None
-            ),
+            "attachment":    attachment_url
         }
         return cls.model_validate(data)
 
@@ -131,7 +135,6 @@ class TicketFeedbackUpdateSchema(Schema):
 
 
 class TicketHistoryItemSchema(Schema):
-    """History feed item for student/admin history pages. Matches frontend HistoryItem."""
     id: str
     ticketPk: int
     ticketId: str
