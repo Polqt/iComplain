@@ -37,8 +37,8 @@
       setTimeout(() => {
         saved = null;
       }, 2000);
-      saving = null;
     }
+    saving = null;
   }
 
   async function applyPriority(newKey: string) {
@@ -59,8 +59,8 @@
       setTimeout(() => {
         saved = null;
       }, 2000);
-      saving = null;
     }
+    saving = null;
   }
 
   function clickOutside(node: HTMLElement, cb: () => void) {
