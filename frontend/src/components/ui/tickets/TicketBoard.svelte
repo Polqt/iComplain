@@ -62,7 +62,7 @@
   <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overyflow-y-hidden">
     {#each [1, 2, 3, 4] as _}
       <div
-        class="flex flex-col shrink-0 w-80 bg-base-100 shadow- rounded-lg h-64"
+        class="flex flex-col shrink-0 w-80 bg-base-100 shadow-sm rounded-lg h-64"
       >
         <div class="p-4 border-b border-base-content/5">
           <div class="skeleton w-28 h-4 rounded"></div>

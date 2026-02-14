@@ -101,16 +101,14 @@
             onclick={() => applyStatus(s)}
           >
             <span
-              class="w-1.5 h-1.5 rounded-full shrink-0
-              {s === 'pending'
+              class="w-1.5 h-1.5 rounded-full shrink-0 {s === 'pending'
                 ? 'bg-warning'
                 : s === 'in_progress'
                   ? 'bg-info'
                   : s === 'resolved'
                     ? 'bg-success'
                     : 'bg-base-content/25'}"
-            >
-            </span>
+            ></span>
             {statusConfig[s].label}
             {#if s === ticket.status}
               <Icon

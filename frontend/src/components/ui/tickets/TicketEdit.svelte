@@ -5,9 +5,9 @@
 
   export let open = false;
   export let ticket: Ticket | null = null;
-  export let isLoading = false;
   export let onclose: () => void = () => {};
 
+  $: isLoading = $ticketsStore.isLoading;
   $: formData = ticket ? { ...ticket } : {};
 
   async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
