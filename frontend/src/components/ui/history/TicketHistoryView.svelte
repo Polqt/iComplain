@@ -13,7 +13,6 @@
     historyConfig,
   } from "../../../utils/historyConfig.ts";
 
-  /** Called on mount to load history items. */
   export let fetchItems: () => Promise<HistoryItem[]> = async () => [];
 
   export let ticketUrlPrefix: string = "/tickets";
