@@ -7,354 +7,537 @@
     statusConfig,
     priorityConfig,
     getPriorityKey,
+    priorityAccent,
+    priorityIcons,
+    getStepState,
+    pipelineSteps,
   } from "../../../utils/ticketConfig.ts";
-  import type { Ticket } from "../../../types/tickets.ts";
+  import type { Ticket, TicketUpdatePayload } from "../../../types/tickets.ts";
   import TicketCreateModal from "../../../components/ui/tickets/TicketCreateModal.svelte";
   import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
+  import { ticketsStore } from "../../../stores/tickets.store.ts";
+  import { onMount } from "svelte";
+  import { formatDate, formatDateTime } from "../../../utils/date.ts";
+  import {
+    getFileIcon,
+    getFileName,
+    isImage,
+  } from "../../../utils/attachment.ts";
+  import type { User } from "../../../types/user.ts";
+  import { authStore } from "../../../stores/auth.store.ts";
+  import { deriveNameFromEmail } from "../../../utils/userConfig.ts";
 
-  // Get ticket ID from URL
-  $: ticketId = $page.params.id;
+  $: ticketNumber = $page.params.id;
 
+  $: ({ tickets, isLoading, error } = $ticketsStore);
+  $: ticket = tickets.find((t) => t.ticket_number === ticketNumber) ?? null;
+
+  onMount(async () => {
+    if (tickets.length === 0) {
+      await ticketsStore.loadTickets();
+    }
+  });
+
+  let user: User | null = null;
   let showEditModal = false;
   let showDeleteModal = false;
   let formData: Partial<Ticket> = {};
 
-  // Mock data - replace with actual API call
-  let mockTickets: Ticket[] = [
-    {
-      id: "TKT-001",
-      title: "Broken AC Unit in Room 301",
-      description:
-        "Air conditioning not working properly, temperature control issues...",
-      status: "pending",
-      priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
-      comments: 5,
-      attachments: "3/3",
-      student: {
-        id: 1,
-        email: "student@example.com",
-        is_active: true, // TODO: replace with actual user data (avatar: "",)
-        role: "student",
-      },
-      category: { id: 1, name: "General" },
-      building: "Building A",
-      room_name: "Room 301",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ticket_number: "TKT-001",
-    },
-    {
-      id: "TKT-002",
-      title: "Leaking Faucet in Restroom",
-      description: "Water dripping continuously from the main sink...",
-      status: "in_progress",
-      priority: { id: 2, name: "Medium", level: 2, color_code: "#6b7280" },
-      comments: 12,
-      attachments: "2/3",
-      student: {
-        id: 2,
-        email: "student@example.com",
-        is_active: true, // TODO: replace with actual user data (avatar: "",)
-        role: "student",
-      },
-      category: { id: 1, name: "General" },
-      building: "Building B",
-      room_name: "Restroom",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ticket_number: "TKT-002",
-    },
-    {
-      id: "TKT-003",
-      title: "Flickering Hallway Lights",
-      description:
-        "Lights in 3F hallway flickering intermittently during evening hours...",
-      status: "in_progress",
-      priority: { id: 3, name: "High", level: 3, color_code: "#6b7280" },
-      comments: 8,
-      attachments: "2/3",
-      student: {
-        id: 3,
-        email: "student@example.com",
-        is_active: true, // TODO: replace with actual user data (avatar: "",)
-        role: "student",
-      },
-      category: { id: 1, name: "General" },
-      building: "Building C",
-      room_name: "Hallway",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ticket_number: "TKT-003",
-    },
-    {
-      id: "TKT-004",
-      title: "Broken Projector Screen",
-      description:
-        "Projection screen won't retract properly in lecture hall...",
-      status: "in_progress",
-      priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
-      comments: 3,
-      attachments: "2/3",
-      student: {
-        id: 4,
-        email: "student@example.com",
-        is_active: true, // TODO: replace with actual user data (avatar: "",)
-        role: "student",
-      },
-      category: { id: 1, name: "General" },
-      building: "Building D",
-      room_name: "Lecture Hall",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ticket_number: "TKT-004",
-    },
-    {
-      id: "TKT-005",
-      title: "Door Lock Malfunction",
-      description:
-        "Main entrance lock mechanism was jammed and needed repair...",
-      status: "resolved",
-      priority: { id: 3, name: "High", level: 3, color_code: "#6b7280" },
-      comments: 6,
-      attachments: "1/3",
-      student: {
-        id: 5,
-        email: "student@example.com",
-        is_active: true, // TODO: replace with actual user data (avatar: "",)
-        role: "student",
-      },
-      category: { id: 1, name: "General" },
-      building: "Building E",
-      room_name: "Entrance",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ticket_number: "TKT-005",
-    },
-    {
-      id: "TKT-006",
-      title: "Missing Whiteboard Markers",
-      description: "Classroom 205 needed new dry-erase markers for teaching...",
-      status: "pending",
-      priority: { id: 1, name: "Low", level: 1, color_code: "#6b7280" },
-      comments: 4,
-      attachments: "0/3",
-      student: {
-        id: 6,
-        email: "student@example.com",
-        is_active: true, // TODO: replace with actual user data (avatar: "",)
-        role: "student",
-      },
-      category: { id: 1, name: "General" },
-      building: "Building F",
-      room_name: "Classroom 205",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ticket_number: "TKT-006",
-    },
-  ];
-
-  $: ticket = mockTickets.find((t) => t.id === ticketId);
-
-  function goBack() {
-    goto("/student/tickets");
-  }
+  $: ({ user } = $authStore);
 
   function openEditModal() {
-    if (ticket) {
-      formData = { ...ticket };
-      showEditModal = true;
-    }
+    if (!ticket) return;
+    formData = { ...ticket };
+    showEditModal = true;
   }
 
   function closeEditModal() {
     showEditModal = false;
     formData = {};
+    ticketsStore.setError(null);
   }
 
-  function openDeleteModal() {
-    showDeleteModal = true;
-  }
-
-  function closeDeleteModal() {
-    showDeleteModal = false;
-  }
-
-  function confirmDelete() {
+  async function handleEdit(data: Partial<Ticket>, file?: File | null) {
     if (!ticket) return;
-    // TODO: call delete API when available
-    mockTickets = mockTickets.filter((t) => t.id !== ticket.id);
-    closeDeleteModal();
-    goBack();
+
+    const categoryId =
+      typeof data.category === "number" ? data.category : data.category?.id;
+    const payload: TicketUpdatePayload = {
+      title: data.title,
+      description: data.description,
+      building: data.building,
+      room_name: data.room_name,
+      category: categoryId,
+    };
+    const updated = await ticketsStore.updateTicket(ticket.id, payload, file);
+    if (updated) {
+      await ticketsStore.loadTicketById(ticket.id);
+      closeEditModal();
+    }
   }
+
+  async function handleDelete() {
+    if (!ticket) return;
+    const success = await ticketsStore.deleteTicket(ticket.id);
+    if (success) goto("/tickets");
+  }
+
+  $: pKey = ticket ? getPriorityKey(ticket.priority) : "low";
+  $: pAccent = priorityAccent[pKey] ?? "border-l-info";
+  $: pIcon = priorityIcons[pKey] ?? "mdi:minus";
+  $: timeline = ticket
+    ? [
+        {
+          icon: "mdi:ticket-outline",
+          color: "text-primary",
+          bg: "bg-primary/10",
+          label: "Ticket created",
+          time: formatDateTime(ticket.created_at),
+        },
+        ...(ticket.status !== "pending"
+          ? [
+              {
+                icon: "mdi:progress-clock",
+                color: "text-info",
+                bg: "bg-info/10",
+                label: "Status changed to " + statusConfig[ticket.status].label,
+                time: formatDateTime(ticket.updated_at),
+              },
+            ]
+          : []),
+      ]
+    : [];
 </script>
 
 <StudentLayout>
-  {#if ticket}
-    <div class="flex flex-col w-full min-h-[calc(100vh-8rem)]">
-      <!-- Header -->
-      <div class="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6 shrink-0">
-        <button
-          class="btn btn-ghost btn-sm btn-circle shrink-0"
-          onclick={goBack}
-        >
-          <Icon icon="mdi:arrow-left" width="20" height="20" />
-        </button>
-        <h1 class="text-xl sm:text-2xl font-black text-base-content truncate">
-          Ticket Details
-        </h1>
+  {#if isLoading && !ticket}
+    <div class="flex flex-col h-[calc(100vh-8rem)] gap-5">
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="skeleton w-8 h-8 rounded-lg"></div>
+        <div class="skeleton h-6 w-48 rounded-lg"></div>
+      </div>
+      <div class="grid grid-cols-[1fr_300px] gap-5 flex-1 min-h-0">
+        <div class="skeleton rounded-2xl h-full"></div>
+        <div class="skeleton rounded-2xl h-full"></div>
+      </div>
+    </div>
+  {:else if !ticket}
+    <div
+      class="flex flex-col items-center justify-center h-[calc(100vh-8rem)] gap-4"
+    >
+      <div
+        class="w-16 h-16 rounded-2xl bg-base-200 flex items-center justify-center"
+      >
+        <Icon
+          icon="mdi:ticket-off-outline"
+          width="32"
+          height="32"
+          class="text-base-content/25"
+        />
+      </div>
+      <p class="font-semibold text-base-content/60">Ticket not found</p>
+      <p class="text-xs text-base-content/40">
+        It may have been deleted or the ID is wrong.
+      </p>
+      <button
+        class="btn btn-primary btn-sm gap-2 mt-2"
+        onclick={() => goto("/tickets")}
+      >
+        <Icon icon="mdi:arrow-left" width="15" height="15" />
+        Back to tickets
+      </button>
+    </div>
+  {:else}
+    <div class="flex flex-col h-[calc(100vh-8rem)]">
+      <div class="flex items-center justify-between mb-4 shrink-0">
+        <div class="flex items-center gap-2">
+          <button
+            class="btn btn-ghost btn-sm btn-circle"
+            onclick={() => goto("/tickets")}
+            aria-label="Back"
+          >
+            <Icon icon="mdi:arrow-left" width="18" height="18" />
+          </button>
+          <div class="breadcrumbs text-xs text-base-content/40 p-0">
+            <ul>
+              <li><span>My Tickets</span></li>
+              <li>
+                <span class="font-mono text-base-content/60"
+                  >{ticket.ticket_number}</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {#if ticket.status === "pending"}
+          <div class="flex items-center gap-2">
+            <button
+              class="btn btn-ghost btn-sm gap-1.5 rounded-lg text-xs"
+              onclick={openEditModal}
+              disabled={isLoading}
+            >
+              <Icon icon="mdi:pencil-outline" width="14" height="14" />
+              Edit
+            </button>
+            <button
+              class="btn btn-error btn-outline btn-sm gap-1.5 rounded-lg text-xs"
+              onclick={() => (showDeleteModal = true)}
+              disabled={isLoading}
+            >
+              <Icon icon="mdi:delete-outline" width="14" height="14" />
+              Delete
+            </button>
+          </div>
+        {/if}
       </div>
 
-      <!-- Ticket Card -->
       <div
-        class="card bg-base-100 shadow-lg w-full flex-1 flex flex-col min-h-0"
+        class="grid grid-cols-[1fr_272px] gap-4 flex-1 min-h-0 overflow-hidden"
       >
-        <div class="card-body flex-1 flex flex-col p-4 sm:p-6">
-          <!-- Main content (scrolls if needed) -->
-          <div class="flex-1 min-h-0">
-            <!-- Title and Status -->
+        <div class="flex flex-col gap-4 overflow-y-auto min-h-0 pr-0.5">
+          <div
+            class="bg-base-100 rounded-2xl border border-base-content/8 border-l-[3px] {pAccent} p-6"
+          >
+            <div class="flex gap-2 mb-2">
+              <div
+                class="text-2xl font-bold text-base-content leading-snug mb-3"
+              >
+                {ticket.title}
+              </div>
+              <span
+                class="ml-auto text-[10px] font-mono text-base-content/25 tracking-widest"
+              >
+                {ticket.ticket_number}
+              </span>
+            </div>
+
+            <p class="text-sm text-base-content/60 leading-relaxed">
+              {ticket.description}
+            </p>
+          </div>
+
+          {#if ticket.attachment}
             <div
-              class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4"
+              class="bg-base-100 rounded-2xl border border-base-content/8 p-5"
             >
-              <div class="min-w-0 flex-1">
-                <h2
-                  class="text-lg sm:text-2xl font-bold text-base-content mb-2 wrap-break-word"
+              <h3
+                class="text-[10px] font-bold uppercase tracking-widest text-base-content/35 mb-3"
+              >
+                Attachment
+              </h3>
+
+              {#if isImage(ticket.attachment)}
+                <div
+                  class="rounded-xl overflow-hidden border border-base-content/8 mb-2"
                 >
-                  {ticket.title}
-                </h2>
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <img
+                    src={ticket.attachment}
+                    alt="Ticket attachment"
+                    class="w-full max-h-64 object-cover"
+                  />
+                </div>
+                <a
+                  href={ticket.attachment}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                >
+                  <Icon icon="mdi:open-in-new" width="12" height="12" />
+                  Open full image
+                </a>
+              {:else}
+                <a
+                  href={ticket.attachment}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center gap-3 p-3 rounded-xl border border-base-content/8
+                         hover:border-primary/30 hover:bg-primary/5 transition-colors group"
+                >
                   <div
-                    class="badge badge-sm sm:badge-lg {statusConfig[
-                      ticket.status
-                    ].color}"
+                    class="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center shrink-0
+                              group-hover:bg-primary/10 transition-colors"
                   >
-                    {statusConfig[ticket.status].label}
+                    <Icon
+                      icon={getFileIcon(ticket.attachment)}
+                      width="18"
+                      height="18"
+                      class="text-base-content/50 group-hover:text-primary transition-colors"
+                    />
                   </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium text-base-content truncate">
+                      {getFileName(ticket.attachment)}
+                    </p>
+                    <p class="text-[10px] text-base-content/40 mt-0.5">
+                      Click to download
+                    </p>
+                  </div>
+                  <Icon
+                    icon="mdi:download-outline"
+                    width="15"
+                    height="15"
+                    class="text-base-content/30 group-hover:text-primary shrink-0 transition-colors"
+                  />
+                </a>
+              {/if}
+            </div>
+          {/if}
+
+          <!-- Activity timeline -->
+          <div
+            class="bg-base-100 rounded-2xl border border-base-content/8 p-5 flex-1"
+          >
+            <h3
+              class="text-[10px] font-bold uppercase tracking-widest text-base-content/35 mb-4"
+            >
+              Activity
+            </h3>
+
+            <div class="relative">
+              <div
+                class="absolute left-3.75 top-2 bottom-2 w-px bg-base-content/8"
+              ></div>
+              <div class="flex flex-col gap-5">
+                {#each timeline as event}
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="w-7.5 h-7.5 rounded-full {event.bg} shrink-0
+                                flex items-center justify-center relative z-10"
+                    >
+                      <Icon
+                        icon={event.icon}
+                        width="14"
+                        height="14"
+                        class={event.color}
+                      />
+                    </div>
+                    <div class="pt-0.5 min-w-0">
+                      <p class="text-sm text-base-content/75 font-medium">
+                        {event.label}
+                      </p>
+                      <p class="text-[11px] text-base-content/35 mt-0.5">
+                        {event.time}
+                      </p>
+                    </div>
+                  </div>
+                {/each}
+
+                <!-- Comments placeholder -->
+                <div class="flex items-start gap-3">
                   <div
-                    class="badge badge-sm sm:badge-lg {priorityConfig[
-                      getPriorityKey(ticket.priority)
-                    ].color}"
+                    class="w-7.5 h-7.5 rounded-full bg-base-200 shrink-0
+                              flex items-center justify-center relative z-10"
                   >
-                    {priorityConfig[getPriorityKey(ticket.priority)].label}
+                    <Icon
+                      icon="mdi:message-outline"
+                      width="13"
+                      height="13"
+                      class="text-base-content/25"
+                    />
+                  </div>
+                  <div class="pt-1">
+                    <p class="text-xs text-base-content/25 italic">
+                      Comments coming soon...
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div class="divider my-3 sm:my-4"></div>
+        <div class="flex flex-col gap-3 overflow-y-auto min-h-0">
+          <div class="bg-base-100 rounded-2xl border border-base-content/8 p-4">
+            <h3
+              class="text-[10px] font-bold uppercase tracking-widest text-base-content/35 mb-3"
+            >
+              Details
+            </h3>
 
-            <div class="space-y-4">
-              <div>
-                <h3 class="text-sm font-semibold text-base-content/60 mb-2">
-                  Description
-                </h3>
-                <p
-                  class="text-sm sm:text-base text-base-content/80 wrap-break-word"
+            <div class="flex flex-col gap-2.5">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-xs text-base-content/45">Status</span>
+                <div
+                  class="badge badge-xs {statusConfig[ticket.status]
+                    .color} font-semibold"
                 >
-                  {ticket.description}
-                </p>
+                  {statusConfig[ticket.status].label}
+                </div>
               </div>
 
-              <div>
-                <h3 class="text-sm font-semibold text-base-content/60 mb-2">
-                  Location
-                </h3>
-                <p class="text-sm sm:text-base text-base-content/80">
-                  {ticket.building} • {ticket.room_name}
-                </p>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-xs text-base-content/45">Priority</span>
+                <div
+                  class="badge badge-xs {priorityConfig[pKey]
+                    .color} font-semibold gap-1"
+                >
+                  <Icon icon={pIcon} width="10" height="10" />
+                  {priorityConfig[pKey].label}
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-xs text-base-content/45 shrink-0"
+                  >Category</span
+                >
+                <div
+                  class="tooltip tooltip-left"
+                  data-tip={ticket.category.name}
+                >
+                  <div
+                    class="badge badge-ghost badge-xs font-medium max-w-30 truncate"
+                  >
+                    {ticket.category.name}
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider my-0.5"></div>
+
+              <div class="flex items-start gap-2">
+                <Icon
+                  icon="mdi:map-marker-outline"
+                  width="13"
+                  height="13"
+                  class="text-base-content/35 shrink-0 mt-0.5"
+                />
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-base-content/70 truncate">
+                    {ticket.building}
+                  </p>
+                  <p class="text-[11px] text-base-content/40 truncate mt-0.5">
+                    {ticket.room_name}
+                  </p>
+                </div>
+              </div>
+
+              <div class="divider my-0.5"></div>
+
+              <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-0.5">
+                  <span
+                    class="text-[10px] font-semibold uppercase tracking-wider text-base-content/30"
+                  >
+                    Created
+                  </span>
+                  <span class="text-xs text-base-content/55"
+                    >{formatDate(ticket.created_at)}</span
+                  >
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Bottom section: date, assignees, activity stats + actions (pinned to bottom) -->
-          <div
-            class="mt-auto pt-4 sm:pt-6 border-t border-base-content/10 shrink-0"
-          >
-            <!-- Activity Stats -->
-            <div
-              class="flex flex-wrap items-center gap-4 sm:gap-8 mb-4 sm:mb-6"
+          <div class="bg-base-100 rounded-2xl border border-base-content/8 p-4">
+            <h3
+              class="text-[10px] font-bold uppercase tracking-widest text-base-content/35 mb-3"
             >
-              <div class="flex items-center gap-2">
-                <Icon
-                  icon="mdi:message-outline"
-                  width="18"
-                  height="18"
-                  class="sm:w-5 sm:h-5 text-base-content/60 shrink-0"
-                />
-                <span class="text-sm sm:text-base"
-                  >{ticket.comments} Comments</span
-                >
-              </div>
-              <div class="flex items-center gap-2">
-                <Icon
-                  icon="mdi:paperclip"
-                  width="18"
-                  height="18"
-                  class="sm:w-5 sm:h-5 text-base-content/60 shrink-0"
-                />
-                <span class="text-sm sm:text-base"
-                  >{ticket.attachments} Attachments</span
-                >
+              Reporter
+            </h3>
+            <div class="flex items-center gap-2.5">
+              {#if user}
+                {@const displayName =
+                  user.name || deriveNameFromEmail(user.email) || "Student"}
+                <div class="avatar placeholder shrink-0">
+                  <div
+                    class="w-8 h-8 rounded-full bg-primary/15 ring-1 ring-primary/20
+                            flex items-center justify-center"
+                  >
+                    <img src={user.avatar} alt={displayName} />
+                  </div>
+                </div>
+              {/if}
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-base-content truncate">
+                  {ticket.student.email}
+                </p>
+                <p class="text-[10px] text-base-content/40 mt-0.5">Student</p>
               </div>
             </div>
+          </div>
 
-            <div
-              class="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end"
+          <div class="bg-base-100 rounded-2xl border border-base-content/8 p-4">
+            <h3
+              class="text-[10px] font-bold uppercase tracking-widest text-base-content/35 mb-3"
             >
-              <button
-                class="btn btn-ghost gap-2 w-full sm:w-auto"
-                onclick={openEditModal}
-              >
-                <Icon icon="mdi:pencil-outline" width="18" height="18" />
-                Edit
-              </button>
-              <button
-                class="btn btn-error gap-2 w-full sm:w-auto"
-                onclick={openDeleteModal}
-              >
-                <Icon icon="mdi:delete-outline" width="18" height="18" />
-                Delete
-              </button>
-            </div>
+              Progress
+            </h3>
+            <ul class="steps steps-vertical w-full">
+              {#each pipelineSteps as step}
+                {@const state = getStepState(ticket.status, step.id)}
+                <li
+                  class="step text-left
+                         {state === 'active' || state === 'past'
+                    ? 'step-primary'
+                    : ''}"
+                  data-content={state === "past"
+                    ? "✓"
+                    : state === "active"
+                      ? "●"
+                      : "○"}
+                >
+                  <div class="flex items-center gap-1.5 ml-1">
+                    <Icon
+                      icon={step.icon}
+                      width="12"
+                      height="12"
+                      class={state === "active"
+                        ? "text-primary"
+                        : state === "past"
+                          ? "text-base-content/50"
+                          : "text-base-content/20"}
+                    />
+                    <span
+                      class="text-xs
+                                 {state === 'active'
+                        ? 'text-primary font-semibold'
+                        : state === 'past'
+                          ? 'text-base-content/50'
+                          : 'text-base-content/25'}"
+                    >
+                      {step.label}
+                    </span>
+                    {#if state === "active"}
+                      <span
+                        class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse ml-1"
+                      ></span>
+                    {/if}
+                  </div>
+                </li>
+              {/each}
+            </ul>
           </div>
         </div>
       </div>
     </div>
-  {:else}
-    <div class="flex flex-col items-center justify-center min-h-[60vh]">
-      <Icon
-        icon="mdi:alert-circle-outline"
-        width="64"
-        height="64"
-        class="text-error mb-4"
-      />
-      <h2 class="text-2xl font-bold mb-2">Ticket Not Found</h2>
-      <p class="text-base-content/60 mb-6">
-        The ticket you're looking for doesn't exist or has been removed.
-      </p>
-      <button class="btn btn-primary" onclick={goBack}>
-        <Icon icon="mdi:arrow-left" width="18" height="18" />
-        Back to Tickets
-      </button>
-    </div>
+    {#if error}
+      <div class="toast toast-top toast-end z-9999">
+        <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
+          <Icon icon="mdi:alert-circle-outline" width="18" height="18" />
+          <span>{error}</span>
+          <button
+            class="btn btn-ghost btn-xs rounded-lg ml-1"
+            onclick={() => ticketsStore.setError(null)}>✕</button
+          >
+        </div>
+      </div>
+    {/if}
   {/if}
 
   <TicketCreateModal
     open={showEditModal && !!ticket}
     mode="edit"
     {formData}
+    {isLoading}
     onclose={closeEditModal}
-    onsubmit={(data) => {
-      if (!ticketId || !data) return;
-      mockTickets = mockTickets.map((t) =>
-        t.id === ticketId ? ({ ...t, ...data } as Ticket) : t,
-      );
-      closeEditModal();
-    }}
+    onsubmit={handleEdit}
   />
   <TicketDeleteModal
     open={showDeleteModal}
-    ticket={ticket ?? null}
-    onclose={closeDeleteModal}
-    onconfirm={confirmDelete}
+    {ticket}
+    {isLoading}
+    onclose={() => (showDeleteModal = false)}
+    onconfirm={handleDelete}
   />
 </StudentLayout>

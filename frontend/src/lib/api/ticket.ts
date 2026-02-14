@@ -3,12 +3,12 @@ import type { Ticket } from '../../types/tickets.ts';
 
 const BASE = `${import.meta.env.VITE_API_URL}/tickets`;
 
-async function handleRes(res: Response) {
+async function handleRes<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message || res.statusText);
     }
-    return res.json();
+    return res.json() as Promise<T>;
 }
 
 // Fetch all tickets

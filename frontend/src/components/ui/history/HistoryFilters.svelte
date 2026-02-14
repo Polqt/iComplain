@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import type { HistoryFilterType, HistorySortType } from "../../../types/history.js";
+  import type { HistoryFilterType, HistorySortType } from "../../../types/history.ts";
 
   export let activeFilter: HistoryFilterType = "all";
   export let sortBy: HistorySortType = "newest";
@@ -13,7 +13,6 @@
 </script>
 
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-  <!-- Filter Tabs -->
   <div class="tabs tabs-boxed bg-base-200 p-1">
     <button
       type="button"
@@ -67,7 +66,6 @@
     </button>
   </div>
 
-  <!-- Sort and Search Controls -->
   <div class="flex items-center gap-3">
     <div class="form-control">
       <div class="input-group">
