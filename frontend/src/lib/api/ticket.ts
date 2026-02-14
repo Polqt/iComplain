@@ -106,6 +106,24 @@ export async function updateTicket(id: number, ticketData: TicketUpdatePayload, 
     }
 }
 
+export async function adminPatchTicket(id: number, patch: {status?: string; priority?: number }): Promise<Ticket> {
+    try {
+        const res = await fetch(`${BASE}/${id}/admin`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(patch),
+            credentials: 'include',
+        });
+
+        return await handleRes<Ticket>(res);
+    } catch (error) {
+        console.error(`Error patching ticket with ID ${id}:`, error);
+        throw error;
+    }
+}
+
 export async function deleteTicket(id: number): Promise<void> {
     try {
         const res = await fetch(`${BASE}/${id}`, {
