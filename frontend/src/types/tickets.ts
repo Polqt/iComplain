@@ -83,3 +83,5 @@ export type PipelineStep = {
 export type ViewMode = "grid" | "list";
 
 export type ModalMode = "create" | "edit" | "delete" | null;
+
+export type AdminTicketEdit = "status" | "priority" | null;
