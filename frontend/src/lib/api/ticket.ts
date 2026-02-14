@@ -38,7 +38,7 @@ export async function createTicket(ticketData: Partial<Ticket>): Promise<Ticket>
 
 export async function updateTicket(id: number, ticketData: Partial<Ticket>): Promise<Ticket> { 
     // Change return type to Promise<Ticket[]>
-    const res = await fetch('${BASE}/${id}', {
+    const res = await fetch(`${BASE}/${id}`, {
         method: 'PUT',
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(ticketData),
