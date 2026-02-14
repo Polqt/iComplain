@@ -69,8 +69,11 @@
       room_name: data.room_name,
       category: categoryId,
     };
-    const updated = await ticketsStore.updateTicket(ticket.id, payload);
-    if (updated) closeEditModal();
+    const updated = await ticketsStore.updateTicket(ticket.id, payload, file);
+    if (updated) {
+      await ticketsStore.loadTicketById(ticket.id);
+      closeEditModal();
+    }
   }
 
   async function handleDelete() {
