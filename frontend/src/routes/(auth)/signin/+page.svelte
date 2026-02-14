@@ -138,6 +138,7 @@
         theme: "outline",
         size: "large",
         width,
+        text: "continue_with",
       });
     };
 
@@ -254,18 +255,4 @@
       ></div>
     </div>
   {/if}
-
-  <div class="text-center pt-4">
-    <p class="text-sm text-base-content/60">
-      Don't have an account?
-      <button
-        type="button"
-        class="link link-primary font-medium hover:link-hover"
-        onclick={handleSignupRedirect}
-        disabled={isLoading}
-      >
-        Sign up
-      </button>
-    </p>
-  </div>
 </div>
