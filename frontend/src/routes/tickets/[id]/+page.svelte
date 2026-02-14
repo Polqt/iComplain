@@ -26,10 +26,12 @@
   import type { User } from "../../../types/user.ts";
   import { authStore } from "../../../stores/auth.store.ts";
   import { deriveNameFromEmail } from "../../../utils/userConfig.ts";
+  import AdminLayout from "../../../components/layout/AdminLayout.svelte";
 
   $: ticketNumber = $page.params.id;
 
   $: ({ tickets, isLoading, error } = $ticketsStore);
+  $: ({ role } = $authStore);
   $: ticket = tickets.find((t) => t.ticket_number === ticketNumber) ?? null;
 
   onMount(async () => {
@@ -109,7 +111,7 @@
     : [];
 </script>
 
-<StudentLayout>
+<svelte:component this={role === "admin" ? AdminLayout : StudentLayout}>
   {#if isLoading && !ticket}
     <div class="flex flex-col h-[calc(100vh-8rem)] gap-5">
       <div class="flex items-center gap-3 shrink-0">
@@ -540,4 +542,4 @@
     onclose={() => (showDeleteModal = false)}
     onconfirm={handleDelete}
   />
-</StudentLayout>
+</svelte:component>
