@@ -283,9 +283,9 @@
     </div>
   </div>
   {#if markReadError}
-    <div class="toast toast-top toast-end z-[9999]">
+    <div class="toast toast-top toast-end z-9999">
       <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
-        <span>{markReadError}</span>
+      <span>{markReadError}</span>
         <button
           type="button"
           class="btn btn-ghost btn-xs rounded-lg ml-1"
