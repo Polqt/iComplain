@@ -4,12 +4,10 @@ from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
-
-User = get_user_model()
-
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from .utils import (
     format_date,
     format_timestamp,
@@ -38,6 +36,8 @@ from .schemas import (
 from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback, TicketStatusHistory
 
 router = Router(auth=SessionAuth())
+User = get_user_model()
+channel_layer = get_channel_layer()
 
 
 @router.get("/expensive-data", response=dict)
@@ -176,6 +176,17 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
             file_path=attachment,
             file_type=attachment.content_type,
         )
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_ticket_update",
+            "data": {
+                "action": "created",  # or "updated", "commented", etc.
+                "ticket_id": ticket_obj.id,
+                "message": "A ticket was created",
+            }
+        }
+    )
     
     ticket_obj.refresh_from_db()
     ticket_obj = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket_obj.id)
@@ -215,6 +226,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
+            notify_ticket_status_change(ticket.student, ticket.id, ticket.ticket_number, ticket.title, payload.status)
             notify_ticket_status_change(student=ticket.student, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, new_status=payload.status)
         ticket.status = payload.status
 
@@ -258,6 +270,7 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
+            notify_ticket_status_change(ticket.student, ticket.id, ticket.ticket_number, ticket.title, payload.status)
             notify_ticket_status_change(student=ticket.student, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, new_status=payload.status)
         ticket.status = payload.status
         

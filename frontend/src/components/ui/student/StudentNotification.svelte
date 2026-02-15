@@ -111,7 +111,7 @@
       </div>
     {/if}
     {#if deleteError}
-      <div class="toast toast-top toast-end z-[9999]">
+      <div class="toast toast-top toast-end z-9999">
         <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
           <span>{deleteError}</span>
           <button
