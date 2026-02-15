@@ -161,23 +161,23 @@ export function groupTicketsByStatus(
 }
 
 export const columns: {
-  id: TicketStatus;
-  label: string;
-  icon: string;
-  dot: string;
-  headerTint: string;
-  countBg: string;
-  countText: string;
-  emptyText: string;
-}[] = [
+    id: TicketStatus;
+    label: string;
+    icon: string;
+    dot: string;
+    headerTint: string;
+    countBg: string;
+    countText: string;
+    emptyText: string;
+  }[] = [
   {
     id: "pending",
     label: "Pending",
     icon: "mdi:circle-outline",
     dot: "bg-amber-400",
-    headerTint: "bg-amber-50/80 border-amber-200/60",
-    countBg: "bg-amber-100 text-amber-700",
-    countText: "text-amber-700",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-amber-400",
+    countBg: "bg-amber-400/15 text-amber-500",
+    countText: "text-amber-500",
     emptyText: "No pending issues",
   },
   {
@@ -185,9 +185,9 @@ export const columns: {
     label: "In Progress",
     icon: "mdi:progress-wrench",
     dot: "bg-sky-400",
-    headerTint: "bg-sky-50/80 border-sky-200/60",
-    countBg: "bg-sky-100 text-sky-700",
-    countText: "text-sky-700",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-sky-400",
+    countBg: "bg-sky-400/15 text-sky-400",
+    countText: "text-sky-400",
     emptyText: "Nothing in progress",
   },
   {
@@ -195,19 +195,19 @@ export const columns: {
     label: "Resolved",
     icon: "mdi:check-circle-outline",
     dot: "bg-emerald-400",
-    headerTint: "bg-emerald-50/80 border-emerald-200/60",
-    countBg: "bg-emerald-100 text-emerald-700",
-    countText: "text-emerald-700",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-emerald-400",
+    countBg: "bg-emerald-400/15 text-emerald-400",
+    countText: "text-emerald-400",
     emptyText: "Nothing resolved yet",
   },
   {
     id: "closed",
     label: "Closed",
     icon: "mdi:archive-outline",
-    dot: "bg-base-content/20",
-    headerTint: "bg-base-200/60 border-base-content/10",
-    countBg: "bg-base-300 text-base-content/50",
-    countText: "text-base-content/50",
+    dot: "bg-base-content/25",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-base-content/25",
+    countBg: "bg-base-content/8 text-base-content/45",
+    countText: "text-base-content/45",
     emptyText: "No closed issues",
   },
 ];

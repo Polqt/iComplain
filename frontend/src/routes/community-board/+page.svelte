@@ -83,7 +83,7 @@
 
     {#if isLoading}
       <div class="grid grid-cols-4 gap-3 flex-1">
-        {#each columns as col, i}
+        {#each columns as _, i}
           <div class="flex flex-col gap-2">
             <div class="skeleton h-9 w-full rounded-xl"></div>
             {#each Array(i === 0 ? 3 : i === 1 ? 2 : 1) as _}
@@ -118,7 +118,6 @@
           {@const colTickets = getColumnTickets(col.id)}
 
           <div class="flex flex-col min-h-0 gap-2">
-            <!-- Column header -->
             <div
               class="flex items-center justify-between px-3 py-2 rounded-xl
                      border {col.headerTint} shrink-0"
@@ -139,7 +138,6 @@
               </span>
             </div>
 
-            <!-- Cards + empty state (both inside the column loop) -->
             <div class="flex flex-col gap-1.5 overflow-y-auto flex-1 min-h-0">
               {#each colTickets as ticket (ticket.id)}
                 {@const pKey = getPriorityKey(ticket.priority)}
@@ -151,7 +149,6 @@
                          transition-all duration-150"
                 >
                   <div class="p-3.5">
-                    <!-- Priority dot + category + ticket number -->
                     <div class="flex items-center justify-between gap-2 mb-2">
                       <div class="flex items-center gap-1.5 min-w-0">
                         <span
@@ -173,7 +170,6 @@
                       </span>
                     </div>
 
-                    <!-- Title -->
                     <p
                       class="text-[13px] font-semibold text-base-content
                                leading-snug line-clamp-2 mb-1.5"
@@ -181,7 +177,6 @@
                       {ticket.title}
                     </p>
 
-                    <!-- Description -->
                     <p
                       class="text-[11px] text-base-content/40 leading-relaxed
                                line-clamp-2 mb-2.5"
@@ -189,7 +184,6 @@
                       {ticket.description}
                     </p>
 
-                    <!-- Location -->
                     <div class="flex items-center gap-1 mb-3">
                       <Icon
                         icon="mdi:map-marker-outline"
@@ -202,7 +196,6 @@
                       </span>
                     </div>
 
-                    <!-- Footer: reporter + date + actions -->
                     <div
                       class="flex items-center justify-between gap-2
                              pt-2.5 border-t border-base-content/6"
@@ -254,7 +247,6 @@
                 </div>
               {/each}
 
-              <!-- Empty column state — MUST be inside the {#each columns} block -->
               {#if colTickets.length === 0}
                 <div
                   class="flex flex-col items-center justify-center gap-2 flex-1
