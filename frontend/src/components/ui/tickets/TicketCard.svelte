@@ -70,64 +70,45 @@
           <ul
             tabindex="-1"
             role="menu"
-            class="dropdown-content menu bg-base-100 border border-base-content/10
-                   rounded-xl shadow-xl z-50 w-40 p-1.5 text-sm"
+            class="dropdown-content bg-base-100 border border-base-content/10
+                   rounded-xl shadow-xl z-50 w-36 p-1 mt-1"
           >
-            {#if report.status === "pending"}
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-base-200"
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    onEdit(report);
-                  }}
-                >
-                  <Icon icon="mdi:pencil-outline" width="14" height="14" /> Edit
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  class="flex items-center gap-2 rounded-lg px-3 py-2 text-error hover:bg-error/10"
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    onDelete(report);
-                  }}
-                >
-                  <Icon icon="mdi:delete-outline" width="14" height="14" /> Delete
-                </button>
-              </li>
-            {:else}
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-base-200 btn-disabled cursor-not-allowed"
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    onEdit(report);
-                  }}
-                >
-                  <Icon icon="mdi:pencil-outline" width="14" height="14" /> Edit
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  class="flex items-center gap-2 rounded-lg px-3 py-2 text-error hover:bg-error/10 btn-disabled cursor-not-allowed"
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    onDelete(report);
-                  }}
-                >
-                  <Icon icon="mdi:delete-outline" width="14" height="14" /> Delete
-                </button>
-              </li>
-            {/if}
+            <li>
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs
+                       transition-colors text-left
+                       {report.status === 'pending'
+                  ? 'hover:bg-base-200 text-base-content/70'
+                  : 'opacity-35 cursor-not-allowed pointer-events-none'}"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  if (report.status === "pending") onEdit(report);
+                }}
+              >
+                <Icon icon="mdi:pencil-outline" width="13" height="13" />
+                Edit
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs
+                       transition-colors text-left
+                       {report.status === 'pending'
+                  ? 'hover:bg-error/10 text-error'
+                  : 'opacity-35 cursor-not-allowed pointer-events-none text-error'}"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  if (report.status === "pending") onDelete(report);
+                }}
+              >
+                <Icon icon="mdi:delete-outline" width="13" height="13" />
+                Delete
+              </button>
+            </li>
           </ul>
         </div>
       </div>
