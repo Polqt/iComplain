@@ -5,41 +5,38 @@
   $: isSignIn = $page.url.pathname.includes("/signin");
 </script>
 
-<div class="min-h-screen flex flex-col bg-base-100">
-  <div class="w-full border-b border-base-300 px-4">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8">
-      <Header />
-    </div>
+<div class="min-h-screen flex flex-col">
+  <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <Header />
   </div>
 
   <div class="flex-1 flex flex-col lg:flex-row">
     <div
-      class="lg:w-1/2 relative flex flex-col justify-center p-8 lg:p-16 bg-linear-to-br from-base-200/30 to-base-100"
+      class="relative lg:w-1/2 p-8 lg:p-12 flex flex-col justify-between overflow-hidden"
     >
-      <div class="absolute inset-0 overflow-hidden">
-        <img
-          src="/images/lasalle.jpg"
-          alt="La Salle Campus"
-          class="w-full h-full object-cover opacity-[0.08]"
-        />
-      </div>
-      <div class="space-y-6">
-        <h1
-          class="text-4xl lg:text-5xl font-bold text-base-content tracking-tight"
-        >
-          {isSignIn ? "Welcome Back" : "Join iComplain"}
-        </h1>
+      <div class="absolute inset-0 opacity-[0.03]"></div>
 
-        <p class="text-lg text-base-content/70 leading-relaxed">
-          {isSignIn
-            ? "Access your dashboard to manage campus facilities with transparency and efficiency."
-            : "Empower campus improvement through streamlined facility reporting and community collaboration."}
-        </p>
+      <div class="relative z-10">
+        <div class="flex items-center gap-3 mb-12">
+          <div
+            class="w-10 h-10 rounded-lg flex items-center justify-center"
+          ></div>
+        </div>
+
+        <div class="max-w-md">
+          <h1 class="text-4xl lg:text-5xl text-base-content leading-tight mb-4">
+            {isSignIn ? "The Campus Awaits" : "Start Making a Difference"}
+          </h1>
+          <p class="text-lg text-base-content/70 leading-relaxed mb-2">
+            {isSignIn
+              ? "Continue managing campus facilities with transparency and efficiency."
+              : "Join the movement to create a better campus environment for every Lasallian."}
+          </p>
+        </div>
       </div>
     </div>
-
     <div
-      class="lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-base-100"
+      class="lg:w-1/2 bg-base-100 flex items-center justify-center p-8 lg:p-12"
     >
       <div class="w-full max-w-md">
         <slot />

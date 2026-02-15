@@ -9,6 +9,8 @@
   import type { Notification } from "../../types/notifications.js";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
   import { authStore } from "../../stores/auth.store.ts";
+  import { fetchNotifications, markAsRead as apiMarkAsRead } from "../../lib/api/notifications.ts";
+  import { formatNotificationTimestamp } from "../../utils/notificationConfig.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
@@ -39,19 +41,17 @@
     await authStore.logout();
   }
 
-  function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
+  async function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
     const { id } = event.detail;
-
-    // Update local state
-    notifications = notifications.map((n) =>
-      n.id === id ? { ...n, read: true } : n,
-    );
-
-    // Recalculate unread count
-    unreadCount = notifications.filter((n) => !n.read).length;
-
-    // TODO: Call API to mark as read
-    // await api.markNotificationAsRead(id);
+    try {
+      await apiMarkAsRead(id);
+      notifications = notifications.map((n) =>
+        n.id === id ? { ...n, read: true } : n,
+      );
+      unreadCount = notifications.filter((n) => !n.read).length;
+    } catch {
+      // optimistic update already in UI; ignore
+    }
   }
 
   function handleNotificationClick(
@@ -75,45 +75,19 @@
     window.addEventListener("resize", checkMobile);
     checkMobile();
 
-    // TODO: Fetch user data from API
-    // user = await api.getCurrentUser();
-
-    // TODO: Fetch latest notifications from API
-    // const data = await api.getNotifications({ limit: 5 });
-    // notifications = data.notifications;
-    // unreadCount = data.unreadCount;
-
-    notifications = [
-      {
-        id: "1",
-        type: "success",
-        title: "Report Resolved",
-        message: "Your report about the broken AC unit has been resolved.",
-        timestamp: "5 minutes ago",
-        read: false,
-        actionUrl: "/student/reports/1",
-      },
-      {
-        id: "2",
-        type: "info",
-        title: "Report Update",
-        message: "Your leaking faucet report is being reviewed.",
-        timestamp: "2 hours ago",
-        read: false,
-        actionUrl: "/student/reports/2",
-      },
-      {
-        id: "3",
-        type: "warning",
-        title: "Action Required",
-        message: "Your report needs additional information.",
-        timestamp: "1 day ago",
-        read: true,
-        actionUrl: "/student/reports/3",
-      },
-    ];
-
-    unreadCount = notifications.filter((n) => !n.read).length;
+    (async () => {
+      try {
+        const list = await fetchNotifications(10);
+        notifications = list.map((n) => ({
+          ...n,
+          timestamp: formatNotificationTimestamp(n.timestamp),
+        }));
+        unreadCount = notifications.filter((n) => !n.read).length;
+      } catch {
+        notifications = [];
+        unreadCount = 0;
+      }
+    })();
 
     return () => {
       window.removeEventListener("resize", checkMobile);

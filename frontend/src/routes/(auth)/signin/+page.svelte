@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
   import { authStore } from "../../../stores/auth.store.ts";
-  import { GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
+  import { API_BASE, GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
   import {
     isValidEmail,
     validatePassword,
@@ -55,9 +55,7 @@
       goto("/dashboard");
     } catch (error) {
       generalError =
-        error instanceof Error
-          ? error.message
-          : "Sign-in failed. Please try again.";
+        error instanceof Error ? error.message : "Sign-in failed. Please try again.";
     } finally {
       isLoading = false;
     }
@@ -65,20 +63,13 @@
 
   function getErrorMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
-    if (
-      typeof err === "object" &&
-      err !== null &&
-      "message" in err &&
-      typeof (err as { message: unknown }).message === "string"
-    ) {
+    if (typeof err === "object" && err !== null && "message" in err && typeof (err as { message: unknown }).message === "string") {
       return (err as { message: string }).message;
     }
     return "Google sign-in failed. Please try again.";
   }
 
-  async function handleGoogleCallback(response: {
-    credential: string;
-  }): Promise<void> {
+  async function handleGoogleCallback(response: { credential: string }): Promise<void> {
     generalError = "";
     isLoading = true;
     try {
@@ -101,21 +92,19 @@
     if (!GOOGLE_CLIENT_ID || !googleButtonEl || !googleWrapperEl) return;
 
     let retryCount = 0;
-    const MAX_RETRIES = 50;
+    const MAX_RETRIES = 50; 
 
     const initGoogle = () => {
-      const g = (
-        window as unknown as {
-          google?: {
-            accounts: {
-              id: {
-                initialize: (c: object) => void;
-                renderButton: (el: HTMLElement, o: object) => void;
-              };
+      const g = (window as unknown as {
+        google?: {
+          accounts: {
+            id: {
+              initialize: (c: object) => void;
+              renderButton: (el: HTMLElement, o: object) => void;
             };
           };
-        }
-      ).google;
+        };
+      }).google;
 
       if (!g?.accounts?.id) {
         retryCount += 1;

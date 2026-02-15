@@ -15,6 +15,7 @@ from .utils import (
     map_status_for_history,
 )
 from .validation import validate_file
+from apps.notifications.utils import notify_ticket_status_change, notify_ticket_comment
 
 from .schemas import (
     CategorySchema,
@@ -34,6 +35,7 @@ from .schemas import (
 from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback, TicketStatusHistory
 
 router = Router(auth=SessionAuth())
+
 
 @router.get("/expensive-data", response=dict)
 def expensive_data(request):
@@ -210,6 +212,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
+            notify_ticket_status_change(ticket.student, ticket.id, ticket.title, payload.status)
         ticket.status = payload.status
 
     ticket.updated_at = timezone.now()
@@ -252,6 +255,7 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
+            notify_ticket_status_change(ticket.student, ticket.id, ticket.title, payload.status)
         ticket.status = payload.status
         
     if payload.priority is not None:
@@ -298,7 +302,9 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
         user=request.user,
         message=payload.message
     )
-    
+    if ticket.student != request.user:
+        preview = (payload.message or "")[:80] + ("…" if len(payload.message or "") > 80 else "")
+        notify_ticket_comment(ticket.student, ticket.id, ticket.title, preview)
     if attachment:
         validate_file(attachment)
         TicketAttachment.objects.create(

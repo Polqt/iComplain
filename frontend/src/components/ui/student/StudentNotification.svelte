@@ -1,79 +1,23 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
   import type {
     NotificationFilter,
     Notification,
   } from "../../../types/notifications.ts";
-  import { notificationConfig } from "../../../utils/notificationConfig.ts";
+  import {
+    notificationConfig,
+    formatNotificationTimestamp,
+  } from "../../../utils/notificationConfig.ts";
   import StudentLayout from "../../layout/StudentLayout.svelte";
+  import {
+    fetchNotifications,
+    markAsRead as apiMarkAsRead,
+    markAllAsRead as apiMarkAllAsRead,
+  } from "../../../lib/api/notifications.ts";
 
-  let notifications: Notification[] = [
-    {
-      id: "1",
-      type: "success",
-      title: "Report Resolved",
-      message:
-        "Your report about the broken AC unit in Room 301 has been marked as resolved.",
-      timestamp: "5 minutes ago",
-      read: false,
-      actionUrl: "/student/reports/1",
-      actionLabel: "View Report",
-    },
-    {
-      id: "2",
-      type: "info",
-      title: "Report Update",
-      message:
-        "Your leaking faucet report is now being reviewed by maintenance staff.",
-      timestamp: "2 hours ago",
-      read: false,
-      actionUrl: "/student/reports/2",
-      actionLabel: "View Details",
-    },
-    {
-      id: "3",
-      type: "warning",
-      title: "Pending Review",
-      message:
-        "Your report needs additional information. Please update it with more details.",
-      timestamp: "1 day ago",
-      read: true,
-      actionUrl: "/student/reports/3",
-      actionLabel: "Update Report",
-    },
-    {
-      id: "4",
-      type: "info",
-      title: "New Comment",
-      message:
-        "Admin responded to your question about the hallway lights issue.",
-      timestamp: "2 days ago",
-      read: true,
-      actionUrl: "/student/reports/4",
-      actionLabel: "Read Comment",
-    },
-    {
-      id: "5",
-      type: "success",
-      title: "Report Approved",
-      message:
-        "Your facility report has been approved and forwarded to maintenance.",
-      timestamp: "3 days ago",
-      read: true,
-    },
-    {
-      id: "6",
-      type: "error",
-      title: "Report Rejected",
-      message:
-        "Your report was rejected due to insufficient details. Please resubmit.",
-      timestamp: "1 week ago",
-      read: true,
-      actionUrl: "/student/new-report",
-      actionLabel: "Resubmit",
-    },
-  ];
-
+  let notifications: Notification[] = [];
+  let loading = true;
   let activeFilter: NotificationFilter = "all";
 
   $: filteredNotifications = notifications.filter((n) => {
@@ -84,30 +28,44 @@
 
   $: unreadCount = notifications.filter((n) => !n.read).length;
 
-  function markAsRead(notificationId: string) {
-    notifications = notifications.map((n) =>
-      n.id === notificationId ? { ...n, read: true } : n,
-    );
-    // TODO: Call API to mark as read
-    // await api.markNotificationAsRead(notificationId);
+  async function markAsRead(notificationId: string) {
+    try {
+      await apiMarkAsRead(notificationId);
+      notifications = notifications.map((n) =>
+        n.id === notificationId ? { ...n, read: true } : n,
+      );
+    } catch {
+      // ignore
+    }
   }
 
-  function markAllAsRead() {
-    notifications = notifications.map((n) => ({ ...n, read: true }));
-    // TODO: Call API to mark all as read
-    // await api.markAllNotificationsAsRead();
+  async function markAllAsRead() {
+    try {
+      await apiMarkAllAsRead();
+      notifications = notifications.map((n) => ({ ...n, read: true }));
+    } catch {
+      // ignore
+    }
   }
 
   function deleteNotification(notificationId: string) {
     notifications = notifications.filter((n) => n.id !== notificationId);
-    // TODO: Call API to delete notification
-    // await api.deleteNotification(notificationId);
   }
 
-  // TODO: Load notifications from API on mount
-  // onMount(async () => {
-  //   notifications = await api.getNotifications();
-  // });
+  onMount(async () => {
+    try {
+      loading = true;
+      const list = await fetchNotifications();
+      notifications = list.map((n) => ({
+        ...n,
+        timestamp: formatNotificationTimestamp(n.timestamp),
+      }));
+    } catch {
+      notifications = [];
+    } finally {
+      loading = false;
+    }
+  });
 </script>
 
 <svelte:head>
@@ -173,7 +131,11 @@
     {/if}
 
     <div class="flex-1 overflow-y-auto space-y-3 pr-2">
-      {#if filteredNotifications.length === 0}
+      {#if loading}
+        <div class="flex flex-col items-center justify-center py-12 text-base-content/60">
+          Loading notifications…
+        </div>
+      {:else if filteredNotifications.length === 0}
         <div
           class="flex flex-col items-center justify-center h-full text-center py-12"
         >
