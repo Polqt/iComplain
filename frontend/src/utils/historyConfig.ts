@@ -113,7 +113,7 @@ export function formatRelativeTime(isoOrDate: string, fallbackDate: string): str
   if (Number.isNaN(d.getTime())) return fallbackDate;
   const now = new Date();
   const sec = Math.floor((now.getTime() - d.getTime()) / 1000);
-  if (sec < 60) return "just now";
+  if (sec < 60) return "Just Now";
   const mins = Math.floor(sec / 60);
   if (sec < 3600) return mins === 1 ? "1 min ago" : `${mins} mins ago`;
   const hours = Math.floor(sec / 3600);

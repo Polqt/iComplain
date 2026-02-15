@@ -166,14 +166,13 @@ export async function fetchPriorities(): Promise<TicketPriority[]> {
 
 export async function loadCommunityTickets(): Promise<Ticket[]> {
     try {
-        const res = await fetch(`${BASE}/`, {
+        const res = await fetch(`${BASE}/community`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
 
             credentials: 'include',
         });
-        if (!res.ok) throw new Error('Failed to fetch community tickets');
-        return res.json() as Promise<Ticket[]>;
+        return await handleRes<Ticket[]>(res);
     } catch (error) {
         console.error(`Error fetching community tickets:`, error);
         throw error;
