@@ -7,10 +7,18 @@
   <title>About | iComplain</title>
 </svelte:head>
 
-<div class="w-full flex flex-col items-center bg-base-100 h-screen">
-  <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-    <Header />
+<div class="w-full flex flex-col items-center bg-base-100 min-h-screen">
+  <!-- Fixed header so nav stays visible when scrolling -->
+  <div
+    class="fixed top-0 left-0 right-0 z-50 bg-base-100 border-b border-base-content/5"
+  >
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Header />
+    </div>
   </div>
+
+  <!-- Spacer so content starts below the fixed header -->
+  <div class="w-full h-16 md:h-20 shrink-0" aria-hidden="true"></div>
 
   <section
     class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-12 sm:pb-16 md:pb-20"

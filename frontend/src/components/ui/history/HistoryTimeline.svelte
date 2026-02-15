@@ -13,7 +13,6 @@
   export let activeFilter: HistoryFilterType = "all";
   export let searchQuery: string = "";
   export let sortBy: HistorySortType = "newest";
-  export let ticketUrlPrefix: string = "/tickets";
   export let onclearfilters: () => void = () => {};
 
   $: hasAnyFilter =
@@ -49,7 +48,7 @@
         </div>
 
         <div class="flex-1 pb-4">
-          <HistoryCard {item} {ticketUrlPrefix} />
+          <HistoryCard {item} />
         </div>
       </div>
     {/each}

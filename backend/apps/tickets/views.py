@@ -18,6 +18,7 @@ from .validation import validate_file
 
 from .schemas import (
     CategorySchema,
+    TicketAdminUpdateSchema,
     TicketCommentCreateSchema,
     TicketCommentSchema,
     TicketCommentUpdateSchema,
@@ -233,6 +234,35 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
         
     ticket = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket.id)
     return TicketSchema.from_orm(ticket, request)
+
+@router.patch("/{id}/admin", response=TicketSchema)
+def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
+    if not request.user.is_staff:
+        return {"detail": "You do not have permission to perform this action."}, 403
+    
+    ticket = get_object_or_404(Ticket, id=id)
+    
+    if payload.status is not None:
+        old_status = ticket.status
+        if old_status != payload.status:
+            TicketStatusHistory.objects.create(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=payload.status,
+                changed_by=request.user,
+                changed_at=timezone.now(),
+            )
+        ticket.status = payload.status
+        
+    if payload.priority is not None:
+        ticket.priority = TicketPriority.objects.get(id=payload.priority)
+    
+    ticket.updated_at = timezone.now()
+    ticket.save()
+    
+    ticket = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket.id)
+    return 200, TicketSchema.from_orm(ticket, request)
+    
 
 @router.delete("/{id}", response={204: None})
 def delete_ticket(request, id: int):

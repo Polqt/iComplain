@@ -12,8 +12,6 @@
     getStepState,
     pipelineSteps,
   } from "../../../utils/ticketConfig.ts";
-  import type { Ticket, TicketUpdatePayload } from "../../../types/tickets.ts";
-  import TicketCreateModal from "../../../components/ui/tickets/TicketCreateModal.svelte";
   import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { onMount } from "svelte";
@@ -23,13 +21,15 @@
     getFileName,
     isImage,
   } from "../../../utils/attachment.ts";
-  import type { User } from "../../../types/user.ts";
   import { authStore } from "../../../stores/auth.store.ts";
   import { deriveNameFromEmail } from "../../../utils/userConfig.ts";
+  import AdminLayout from "../../../components/layout/AdminLayout.svelte";
+  import AdminTicketControl from "../../../components/ui/tickets/AdminTicketControl.svelte";
+  import TicketEdit from "../../../components/ui/tickets/TicketEdit.svelte";
 
   $: ticketNumber = $page.params.id;
-
   $: ({ tickets, isLoading, error } = $ticketsStore);
+  $: ({ role, user } = $authStore);
   $: ticket = tickets.find((t) => t.ticket_number === ticketNumber) ?? null;
 
   onMount(async () => {
@@ -38,43 +38,8 @@
     }
   });
 
-  let user: User | null = null;
   let showEditModal = false;
   let showDeleteModal = false;
-  let formData: Partial<Ticket> = {};
-
-  $: ({ user } = $authStore);
-
-  function openEditModal() {
-    if (!ticket) return;
-    formData = { ...ticket };
-    showEditModal = true;
-  }
-
-  function closeEditModal() {
-    showEditModal = false;
-    formData = {};
-    ticketsStore.setError(null);
-  }
-
-  async function handleEdit(data: Partial<Ticket>, file?: File | null) {
-    if (!ticket) return;
-
-    const categoryId =
-      typeof data.category === "number" ? data.category : data.category?.id;
-    const payload: TicketUpdatePayload = {
-      title: data.title,
-      description: data.description,
-      building: data.building,
-      room_name: data.room_name,
-      category: categoryId,
-    };
-    const updated = await ticketsStore.updateTicket(ticket.id, payload, file);
-    if (updated) {
-      await ticketsStore.loadTicketById(ticket.id);
-      closeEditModal();
-    }
-  }
 
   async function handleDelete() {
     if (!ticket) return;
@@ -109,7 +74,7 @@
     : [];
 </script>
 
-<StudentLayout>
+<svelte:component this={role === "admin" ? AdminLayout : StudentLayout}>
   {#if isLoading && !ticket}
     <div class="flex flex-col h-[calc(100vh-8rem)] gap-5">
       <div class="flex items-center gap-3 shrink-0">
@@ -170,11 +135,11 @@
           </div>
         </div>
 
-        {#if ticket.status === "pending"}
+        {#if ticket.status === "pending" && role === "student"}
           <div class="flex items-center gap-2">
             <button
               class="btn btn-ghost btn-sm gap-1.5 rounded-lg text-xs"
-              onclick={openEditModal}
+              onclick={() => (showEditModal = true)}
               disabled={isLoading}
             >
               <Icon icon="mdi:pencil-outline" width="14" height="14" />
@@ -189,9 +154,27 @@
               Delete
             </button>
           </div>
+        {:else if role === "admin"}
+          <AdminTicketControl {ticket} />
+        {:else if ticket.status === "pending" && role === "student"}
+          <div class="flex items-center gap-2">
+            <button
+              class="btn btn-ghost btn-sm gap-1.5 rounded-lg text-xs"
+              onclick={() => (showEditModal = true)}
+              disabled={isLoading}
+            >
+              <Icon icon="mdi:pencil-outline" width="14" height="14" /> Edit
+            </button>
+            <button
+              class="btn btn-error btn-outline btn-sm gap-1.5 rounded-lg text-xs"
+              onclick={() => (showDeleteModal = true)}
+              disabled={isLoading}
+            >
+              <Icon icon="mdi:delete-outline" width="14" height="14" /> Delete
+            </button>
+          </div>
         {/if}
       </div>
-
       <div
         class="grid grid-cols-[1fr_272px] gap-4 flex-1 min-h-0 overflow-hidden"
       >
@@ -525,13 +508,11 @@
     {/if}
   {/if}
 
-  <TicketCreateModal
-    open={showEditModal && !!ticket}
-    mode="edit"
-    {formData}
+  <TicketEdit
+    {ticket}
+    open={showEditModal}
     {isLoading}
-    onclose={closeEditModal}
-    onsubmit={handleEdit}
+    onclose={() => (showEditModal = false)}
   />
   <TicketDeleteModal
     open={showDeleteModal}
@@ -540,4 +521,4 @@
     onclose={() => (showDeleteModal = false)}
     onconfirm={handleDelete}
   />
-</StudentLayout>
+</svelte:component>

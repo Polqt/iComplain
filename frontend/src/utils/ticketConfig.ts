@@ -2,6 +2,9 @@ import type { Column, PipelineStep, Ticket, TicketColumn, TicketPriority, Ticket
 
 export type PriorityKey = "low" | "medium" | "high" | "urgent";
 
+export const statuses = ["pending", "in_progress", "resolved", "closed"] as const;
+export const priorities = ["low", "medium", "high", "urgent"] as const;
+export const priorityIdMap: Record<string, number> = { low: 1, medium: 2, high: 3, urgent: 4 };
 
 export function getPriorityKey(priority: TicketPriority | string | any): PriorityKey {
   if (!priority) return "low";

@@ -94,7 +94,7 @@
   }
 
   function navigateToTicket(ticketnumber: string) {
-    goto(`/student/tickets/${ticketnumber}`);
+    goto(`/tickets/${ticketnumber}`);
   }
 </script>
 

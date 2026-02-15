@@ -5,8 +5,6 @@
   import type { TicketStatus, ViewMode } from "../../../types/tickets.ts";
   import TicketBoard from "../tickets/TicketBoard.svelte";
 
-  let viewMode: ViewMode = "grid";
-
   const metrics = [
     {
       title: "Total Tickets",
