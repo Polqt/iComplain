@@ -225,6 +225,7 @@
               {notifications}
               {unreadCount}
               {notificationsConfig}
+              viewAllHref="/notifications"
               on:markAsRead={handleMarkAsRead}
               on:notificationClick={handleNotificationClick}
               on:viewAll={handleViewAllNotifications}
