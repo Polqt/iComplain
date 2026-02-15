@@ -22,6 +22,7 @@
   let activeFilter: NotificationFilter = "all";
   let markError = "";
   let deleteError = "";
+  let fetchError = "";
 
   $: filteredNotifications = notifications.filter((n) => {
     if (activeFilter === "unread") return !n.read;
@@ -69,9 +70,10 @@
     }
   }
 
-  onMount(async () => {
+  async function loadNotifications() {
     try {
       loading = true;
+      fetchError = "";
       const list = await fetchNotifications();
       notifications = list.map((n) => ({
         ...n,
@@ -79,10 +81,14 @@
       }));
     } catch (e) {
       console.error("Failed to load notifications", e);
-      notifications = [];
+      fetchError = "Could not load notifications. Please try again.";
     } finally {
       loading = false;
     }
+  }
+
+  onMount(() => {
+    loadNotifications();
   });
 </script>
 
@@ -170,6 +176,24 @@
       {#if loading}
         <div class="flex flex-col items-center justify-center py-12 text-base-content/60">
           Loading notifications…
+        </div>
+      {:else if fetchError}
+        <div
+          class="flex flex-col items-center justify-center h-full text-center py-12"
+        >
+          <div class="alert alert-error shadow-lg max-w-md">
+            <Icon icon="mdi:alert-circle-outline" width="24" height="24" />
+            <div class="flex flex-col gap-2 items-center">
+              <span>{fetchError}</span>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                onclick={loadNotifications}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       {:else if filteredNotifications.length === 0}
         <div
