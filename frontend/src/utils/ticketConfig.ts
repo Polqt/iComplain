@@ -159,3 +159,86 @@ export function groupTicketsByStatus(
     reports: tickets.filter(t => t.status === column.id),
   }))
 }
+
+export const columns: {
+  id: TicketStatus;
+  label: string;
+  icon: string;
+  dot: string;
+  headerTint: string;
+  countBg: string;
+  countText: string;
+  emptyText: string;
+}[] = [
+  {
+    id: "pending",
+    label: "Pending",
+    icon: "mdi:circle-outline",
+    dot: "bg-amber-400",
+    headerTint: "bg-amber-50/80 border-amber-200/60",
+    countBg: "bg-amber-100 text-amber-700",
+    countText: "text-amber-700",
+    emptyText: "No pending issues",
+  },
+  {
+    id: "in_progress",
+    label: "In Progress",
+    icon: "mdi:progress-wrench",
+    dot: "bg-sky-400",
+    headerTint: "bg-sky-50/80 border-sky-200/60",
+    countBg: "bg-sky-100 text-sky-700",
+    countText: "text-sky-700",
+    emptyText: "Nothing in progress",
+  },
+  {
+    id: "resolved",
+    label: "Resolved",
+    icon: "mdi:check-circle-outline",
+    dot: "bg-emerald-400",
+    headerTint: "bg-emerald-50/80 border-emerald-200/60",
+    countBg: "bg-emerald-100 text-emerald-700",
+    countText: "text-emerald-700",
+    emptyText: "Nothing resolved yet",
+  },
+  {
+    id: "closed",
+    label: "Closed",
+    icon: "mdi:archive-outline",
+    dot: "bg-base-content/20",
+    headerTint: "bg-base-200/60 border-base-content/10",
+    countBg: "bg-base-300 text-base-content/50",
+    countText: "text-base-content/50",
+    emptyText: "No closed issues",
+  },
+];
+
+export const priorityDot: Record<string, string> = {
+  urgent: "bg-red-500",
+  high:   "bg-orange-400",
+  medium: "bg-yellow-400",
+  low:    "bg-base-content/15",
+};
+
+export let statusCounts: Record<TicketStatus | "all", number> = {
+  all: 0,
+  pending: 0,
+  in_progress: 0,
+  resolved: 0,
+  closed: 0,
+};
+
+export const statusFilters: { id: TicketStatus | "all"; label: string; dot: string }[] = [
+  { id: "all",         label: "All",         dot: "bg-base-content/30" },
+  { id: "pending",     label: "Pending",     dot: "bg-amber-400"       },
+  { id: "in_progress", label: "In Progress", dot: "bg-sky-400"         },
+  { id: "resolved",    label: "Resolved",    dot: "bg-emerald-400"     },
+  { id: "closed",      label: "Closed",      dot: "bg-base-content/20" },
+];
+
+export const priorityFilters: { id: string; label: string }[] = [
+  { id: "all",    label: "All"    },
+  { id: "urgent", label: "Urgent" },
+  { id: "high",   label: "High"   },
+  { id: "medium", label: "Medium" },
+  { id: "low",    label: "Low"    },
+];
