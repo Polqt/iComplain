@@ -1,4 +1,5 @@
 from ninja import Router
+from ninja.errors import HttpError
 from ninja.security import SessionAuth
 
 from .models import EmailNotification, InAppNotification
@@ -23,7 +24,7 @@ def list_inapp_notifications(request, limit: int = 50):
 def mark_inapp_read(request, notification_id: int, payload: InAppNotificationMarkReadSchema):
     n = InAppNotification.objects.filter(user=request.user, id=notification_id).first()
     if not n:
-        return {"detail": "Not found."}, 404
+        raise HttpError(404, "Not found.")
     n.read = payload.read
     n.save(update_fields=["read"])
     return serialize_inapp_notification(n)
@@ -35,9 +36,18 @@ def mark_all_inapp_read(request):
     return 200, {"marked": updated}
 
 
+@router.delete("/inapp/{notification_id}/", response={204: None})
+def delete_inapp_notification(request, notification_id: int):
+    n = InAppNotification.objects.filter(user=request.user, id=notification_id).first()
+    if not n:
+        raise HttpError(404, "Not found.")
+    n.delete()
+    return 204, None
+
+
 @router.get("/", response=list[EmailNotificationSchema])
 def list_email_notifications(request):
-    return list(EmailNotification.objects.all())
+    return list(EmailNotification.objects.filter(user=request.user))
 
 
 @router.post("/", response=EmailNotificationSchema)

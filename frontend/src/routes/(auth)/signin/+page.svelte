@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
   import { authStore } from "../../../stores/auth.store.ts";
-  import { API_BASE, GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
+  import { GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
   import {
     isValidEmail,
     validatePassword,

@@ -30,8 +30,8 @@
       notifications = notifications.map((n) => ({ ...n, read: true }));
     } catch (e) {
       console.error("Failed to mark all as read", e);
-      markError = "Could not update read status.";
-      setTimeout(() => (markError = ""), 3000);
+      markError = "Could not mark all as read. Please try again.";
+      setTimeout(() => (markError = ""), 4000);
     }
   }
 
@@ -44,9 +44,17 @@
       );
     } catch (e) {
       console.error("Failed to mark notification as read", e);
-      markError = "Could not update read status.";
-      setTimeout(() => (markError = ""), 3000);
+      markError = "Could not update read status. Please try again.";
+      setTimeout(() => (markError = ""), 4000);
     }
+  }
+
+  function safeActionUrl(url: string | null | undefined): string {
+    if (!url || typeof url !== "string") return "#";
+    const t = url.trim();
+    if (t.startsWith("http://") || t.startsWith("https://")) return t;
+    if (t.startsWith("/")) return t;
+    return "https://" + t;
   }
 
   $: filtered = notifications.filter((n) => {
@@ -82,8 +90,16 @@
 <AdminLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
     {#if markError}
-      <div class="alert alert-warning mb-4 shrink-0" role="alert">
-        <span>{markError}</span>
+      <div class="toast toast-top toast-end z-[9999]">
+        <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
+          <span>{markError}</span>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs rounded-lg ml-1"
+            onclick={() => (markError = '')}
+            aria-label="Dismiss"
+          >✕</button>
+        </div>
       </div>
     {/if}
     <div
@@ -177,9 +193,14 @@
                       >
                         <span>{notice.timestamp}</span>
                         {#if notice.actionUrl}
-                          <span class="badge badge-ghost badge-xs">
+                          <a
+                            class="badge badge-ghost badge-xs"
+                            href={safeActionUrl(notice.actionUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             {notice.actionUrl}
-                          </span>
+                          </a>
                         {/if}
                       </div>
                     </div>

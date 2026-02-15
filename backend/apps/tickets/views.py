@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
+
+User = get_user_model()
 
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
@@ -302,9 +305,12 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
         user=request.user,
         message=payload.message
     )
+    preview = (payload.message or "")[:80] + ("…" if len(payload.message or "") > 80 else "")
     if ticket.student != request.user:
-        preview = (payload.message or "")[:80] + ("…" if len(payload.message or "") > 80 else "")
         notify_ticket_comment(ticket.student, ticket.id, ticket.title, preview)
+    else:
+        for staff_user in User.objects.filter(is_staff=True).exclude(pk=request.user.pk):
+            notify_ticket_comment(staff_user, ticket.id, ticket.title, preview)
     if attachment:
         validate_file(attachment)
         TicketAttachment.objects.create(

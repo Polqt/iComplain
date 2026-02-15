@@ -40,3 +40,15 @@ export async function markAllAsRead(): Promise<{ marked: number }> {
     });
     return handleRes(res) as Promise<{ marked: number }>;
 }
+
+export async function deleteNotification(id: string): Promise<void> {
+    const res = await fetch(`${INAPP}/${id}/`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { Accept: "application/json" },
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { detail?: string }).detail || res.statusText);
+    }
+}

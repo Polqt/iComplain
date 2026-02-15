@@ -14,12 +14,14 @@
     fetchNotifications,
     markAsRead as apiMarkAsRead,
     markAllAsRead as apiMarkAllAsRead,
+    deleteNotification as apiDeleteNotification,
   } from "../../../lib/api/notifications.ts";
 
   let notifications: Notification[] = [];
   let loading = true;
   let activeFilter: NotificationFilter = "all";
   let markError = "";
+  let deleteError = "";
 
   $: filteredNotifications = notifications.filter((n) => {
     if (activeFilter === "unread") return !n.read;
@@ -55,8 +57,16 @@
     }
   }
 
-  function deleteNotification(notificationId: string) {
-    notifications = notifications.filter((n) => n.id !== notificationId);
+  async function deleteNotification(notificationId: string) {
+    deleteError = "";
+    try {
+      await apiDeleteNotification(notificationId);
+      notifications = notifications.filter((n) => n.id !== notificationId);
+    } catch (e) {
+      console.error("Failed to delete notification", e);
+      deleteError = "Could not delete notification. Please try again.";
+      setTimeout(() => (deleteError = ""), 4000);
+    }
   }
 
   onMount(async () => {
@@ -92,6 +102,19 @@
     {#if markError}
       <div class="alert alert-warning mb-4 shrink-0" role="alert">
         <span>{markError}</span>
+      </div>
+    {/if}
+    {#if deleteError}
+      <div class="toast toast-top toast-end z-[9999]">
+        <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
+          <span>{deleteError}</span>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs rounded-lg ml-1"
+            onclick={() => (deleteError = '')}
+            aria-label="Dismiss"
+          >✕</button>
+        </div>
       </div>
     {/if}
     <div class="flex items-center justify-between mb-6 shrink-0">

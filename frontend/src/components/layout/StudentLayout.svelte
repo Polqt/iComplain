@@ -18,6 +18,7 @@
 
   let notifications: Notification[] = [];
   let unreadCount: number = 0;
+  let markReadError = "";
 
   function openModal() {
     showModal = true;
@@ -43,14 +44,21 @@
 
   async function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
     const { id } = event.detail;
+    markReadError = "";
+    const previousNotifications = notifications.map((n) => ({ ...n }));
+    const previousUnreadCount = unreadCount;
+    notifications = notifications.map((n) =>
+      n.id === id ? { ...n, read: true } : n,
+    );
+    unreadCount = notifications.filter((n) => !n.read).length;
     try {
       await apiMarkAsRead(id);
-      notifications = notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n,
-      );
-      unreadCount = notifications.filter((n) => !n.read).length;
     } catch (e) {
       console.error("Failed to mark notification as read", e);
+      notifications = previousNotifications;
+      unreadCount = previousUnreadCount;
+      markReadError = "Could not mark as read. Please try again.";
+      setTimeout(() => (markReadError = ""), 4000);
     }
   }
 
@@ -174,7 +182,7 @@
               aria-label="Light Theme"
               type="button"
               class="btn btn-ghost btn-xs sm:btn-sm rounded-full"
-              on:click={() => setTheme("lofi")}
+              onclick={() => setTheme("lofi")}
               disabled={theme === "lofi"}
             >
               <Icon icon="lucide:sun" width="20" height="20" />
@@ -184,7 +192,7 @@
               aria-label="Dark Theme"
               type="button"
               class="btn btn-ghost btn-xs sm:btn-sm rounded-full hidden sm:flex"
-              on:click={() => setTheme("night")}
+              onclick={() => setTheme("night")}
               disabled={theme === "night"}
             >
               <Icon
@@ -274,4 +282,17 @@
       </ul>
     </div>
   </div>
+  {#if markReadError}
+    <div class="toast toast-top toast-end z-[9999]">
+      <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
+        <span>{markReadError}</span>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs rounded-lg ml-1"
+          onclick={() => (markReadError = '')}
+          aria-label="Dismiss"
+        >✕</button>
+      </div>
+    </div>
+  {/if}
 </div>
