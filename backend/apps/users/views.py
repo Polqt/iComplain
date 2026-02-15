@@ -10,7 +10,7 @@ from .utils import (
     get_or_create_google_user,
     derive_name_from_email,
 )
-from .schemas import SignupRequest, LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
+from .schemas import LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
 
 logger = logging.getLogger(__name__)
 
