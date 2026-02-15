@@ -41,7 +41,8 @@
       const inStore = tickets.find((t) => t.id === id);
       if (!inStore) await ticketsStore.loadTicketById(id);
     } else {
-      if (tickets.length === 0) await ticketsStore.loadTickets();
+      const inStore = tickets.find((t) => t.ticket_number === idParam);
+      if (!inStore) await ticketsStore.loadTickets();
     }
   });
 

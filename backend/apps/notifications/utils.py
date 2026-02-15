@@ -45,7 +45,12 @@ STATUS_LABELS = {
 
 
 def notify_ticket_status_change(
-    student, ticket_id: int, ticket_number: str, ticket_title: str, new_status: str
+    *,
+    student,
+    ticket_id: int,
+    ticket_number: str,
+    ticket_title: str,
+    new_status: str,
 ):
     action_url = f"/tickets/{ticket_number}"
     tpl = STATUS_LABELS.get(
@@ -66,7 +71,12 @@ def notify_ticket_status_change(
 
 
 def notify_ticket_comment(
-    recipient_user, ticket_id: int, ticket_number: str, ticket_title: str, message_preview: str
+    *,
+    recipient_user,
+    ticket_id: int,
+    ticket_number: str,
+    ticket_title: str,
+    message_preview: str,
 ):
     create_in_app_notification(
         user=recipient_user,

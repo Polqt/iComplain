@@ -94,14 +94,22 @@ function createTicketsStore(): TicketsStore {
             try {
                 const ticket = await fetchTicketById(id);
 
-                update(s => ({
-                    ...s,
-                    tickets: s.tickets.some((t) => t.id === id)
-                        ? s.tickets.map((t) => (t.id === id ? ticket : t))
-                        : [...s.tickets, ticket],
-                    isLoading: false,
-                    error: null,
-                }))
+                update(s => {
+                    const exists = s.tickets.some((t: Ticket) => t.id === id);
+                    const nextTickets = exists
+                        ? s.tickets.map((t: Ticket) => (t.id === id ? ticket : t))
+                        : [...s.tickets, ticket].sort(
+                              (a, b) =>
+                                  new Date(b.created_at).getTime() -
+                                  new Date(a.created_at).getTime()
+                          );
+                    return {
+                        ...s,
+                        tickets: nextTickets,
+                        isLoading: false,
+                        error: null,
+                    };
+                })
 
                 return ticket;
             } catch (error) {
