@@ -5,6 +5,7 @@
 
 <StudentLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
+    <!-- Announcements Section -->
     <TicketBoard />
   </div>
 </StudentLayout>

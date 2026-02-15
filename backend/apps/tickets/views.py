@@ -432,3 +432,13 @@ def delete_feedback(request, id: int, feedback_id: int):
     feedback.delete()
     return redirect('ticket_list')
 
+@router.get("/community", response=list[TicketSchema])
+def community_tickets(request):
+    if not request.user.is_authenticated:
+        return {"detail": "Authentication required."}, 401
+
+    qs = Ticket.objects.select_related("category", "priority", "student") \
+            .prefetch_related('attachments_tickets') \
+            .order_by('-created_at')
+    
+    return [TicketSchema.from_orm(ticket, request) for ticket in qs]

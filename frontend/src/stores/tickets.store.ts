@@ -1,6 +1,6 @@
 import { get, writable, type Readable } from "svelte/store";
 import type { RawTicket, Ticket, TicketCreatePayload, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
-import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket, adminPatchTicket as apiAdminPatch } from "../lib/api/ticket.ts";
+import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket, adminPatchTicket as apiAdminPatch, loadCommunityTickets as apiGetCommunity } from "../lib/api/ticket.ts";
 
 interface TicketsStore extends Readable<TicketsState> {
     setTickets: (tickets: Ticket[]) => void;
@@ -13,6 +13,8 @@ interface TicketsStore extends Readable<TicketsState> {
     updateTicket: (id: number, updates: TicketUpdatePayload, attachment?: File | null) => Promise<Ticket | null>;
     deleteTicket: (id: number) => Promise<boolean>;
     adminPatchTicket: (id: number, patch: { status?: string; priority?: number }) => Promise<Ticket | null>;
+    loadCommunityTickets: () => Promise<void>;
+
     addTicketToStore: (ticket: Ticket) => void;
     updateTicketInStore: (id: number, updates: Partial<Ticket>) => void;
     removeTicketFromStore: (id: number) => void;
@@ -38,6 +40,29 @@ function createTicketsStore(): TicketsStore {
 
         setError(error: string | null) {
             update((State) => ({ ...State, error, isLoading: false }));
+        },
+
+        async loadCommunityTickets(): Promise<void> {
+            update((state) => ({ ...state, isLoading: true, error: null }));
+
+            try {
+                const tickets: RawTicket[] = await apiGetCommunity();
+
+                const mappedTickets = tickets.map((t) => ({
+                    ...t,
+                    category: t.category ?? { id: 0, name: "Unknown" },
+                    priority: t.priority ?? { id: 0, name: "Unknown", level: 0, color_code: "#000" },
+                }));
+
+                update(s => ({ ...s, tickets: mappedTickets, isLoading: false, error: null }));
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({
+                    ...s,
+                    isLoading: false,
+                    error: `Failed to load tickets: ${errorMessage}`,
+                }))
+            }
         },
 
         async loadTickets(): Promise<void> {

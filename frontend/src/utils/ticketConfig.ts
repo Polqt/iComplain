@@ -159,3 +159,86 @@ export function groupTicketsByStatus(
     reports: tickets.filter(t => t.status === column.id),
   }))
 }
+
+export const columns: {
+    id: TicketStatus;
+    label: string;
+    icon: string;
+    dot: string;
+    headerTint: string;
+    countBg: string;
+    countText: string;
+    emptyText: string;
+  }[] = [
+  {
+    id: "pending",
+    label: "Pending",
+    icon: "mdi:circle-outline",
+    dot: "bg-amber-400",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-amber-400",
+    countBg: "bg-amber-400/15 text-amber-500",
+    countText: "text-amber-500",
+    emptyText: "No pending issues",
+  },
+  {
+    id: "in_progress",
+    label: "In Progress",
+    icon: "mdi:progress-wrench",
+    dot: "bg-sky-400",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-sky-400",
+    countBg: "bg-sky-400/15 text-sky-400",
+    countText: "text-sky-400",
+    emptyText: "Nothing in progress",
+  },
+  {
+    id: "resolved",
+    label: "Resolved",
+    icon: "mdi:check-circle-outline",
+    dot: "bg-emerald-400",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-emerald-400",
+    countBg: "bg-emerald-400/15 text-emerald-400",
+    countText: "text-emerald-400",
+    emptyText: "Nothing resolved yet",
+  },
+  {
+    id: "closed",
+    label: "Closed",
+    icon: "mdi:archive-outline",
+    dot: "bg-base-content/25",
+    headerTint: "bg-base-200 border-base-content/10 border-l-2 border-l-base-content/25",
+    countBg: "bg-base-content/8 text-base-content/45",
+    countText: "text-base-content/45",
+    emptyText: "No closed issues",
+  },
+];
+
+export const priorityDot: Record<string, string> = {
+  urgent: "bg-red-500",
+  high:   "bg-orange-400",
+  medium: "bg-yellow-400",
+  low:    "bg-base-content/15",
+};
+
+export let statusCounts: Record<TicketStatus | "all", number> = {
+  all: 0,
+  pending: 0,
+  in_progress: 0,
+  resolved: 0,
+  closed: 0,
+};
+
+export const statusFilters: { id: TicketStatus | "all"; label: string; dot: string }[] = [
+  { id: "all",         label: "All",         dot: "bg-base-content/30" },
+  { id: "pending",     label: "Pending",     dot: "bg-amber-400"       },
+  { id: "in_progress", label: "In Progress", dot: "bg-sky-400"         },
+  { id: "resolved",    label: "Resolved",    dot: "bg-emerald-400"     },
+  { id: "closed",      label: "Closed",      dot: "bg-base-content/20" },
+];
+
+export const priorityFilters: { id: string; label: string }[] = [
+  { id: "all",    label: "All"    },
+  { id: "urgent", label: "Urgent" },
+  { id: "high",   label: "High"   },
+  { id: "medium", label: "Medium" },
+  { id: "low",    label: "Low"    },
+];
