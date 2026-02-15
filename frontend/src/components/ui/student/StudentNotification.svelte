@@ -1,80 +1,28 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
   import type {
     NotificationFilter,
     Notification,
   } from "../../../types/notifications.ts";
-  import { notificationConfig } from "../../../utils/notificationConfig.ts";
+  import {
+    notificationConfig,
+    formatNotificationTimestamp,
+  } from "../../../utils/notificationConfig.ts";
   import StudentLayout from "../../layout/StudentLayout.svelte";
+  import {
+    fetchNotifications,
+    markAsRead as apiMarkAsRead,
+    markAllAsRead as apiMarkAllAsRead,
+    deleteNotification as apiDeleteNotification,
+  } from "../../../lib/api/notifications.ts";
 
-  let notifications: Notification[] = [
-    {
-      id: "1",
-      type: "success",
-      title: "Report Resolved",
-      message:
-        "Your report about the broken AC unit in Room 301 has been marked as resolved.",
-      timestamp: "5 minutes ago",
-      read: false,
-      actionUrl: "/student/reports/1",
-      actionLabel: "View Report",
-    },
-    {
-      id: "2",
-      type: "info",
-      title: "Report Update",
-      message:
-        "Your leaking faucet report is now being reviewed by maintenance staff.",
-      timestamp: "2 hours ago",
-      read: false,
-      actionUrl: "/student/reports/2",
-      actionLabel: "View Details",
-    },
-    {
-      id: "3",
-      type: "warning",
-      title: "Pending Review",
-      message:
-        "Your report needs additional information. Please update it with more details.",
-      timestamp: "1 day ago",
-      read: true,
-      actionUrl: "/student/reports/3",
-      actionLabel: "Update Report",
-    },
-    {
-      id: "4",
-      type: "info",
-      title: "New Comment",
-      message:
-        "Admin responded to your question about the hallway lights issue.",
-      timestamp: "2 days ago",
-      read: true,
-      actionUrl: "/student/reports/4",
-      actionLabel: "Read Comment",
-    },
-    {
-      id: "5",
-      type: "success",
-      title: "Report Approved",
-      message:
-        "Your facility report has been approved and forwarded to maintenance.",
-      timestamp: "3 days ago",
-      read: true,
-    },
-    {
-      id: "6",
-      type: "error",
-      title: "Report Rejected",
-      message:
-        "Your report was rejected due to insufficient details. Please resubmit.",
-      timestamp: "1 week ago",
-      read: true,
-      actionUrl: "/student/new-report",
-      actionLabel: "Resubmit",
-    },
-  ];
-
+  let notifications: Notification[] = [];
+  let loading = true;
   let activeFilter: NotificationFilter = "all";
+  let markError = "";
+  let deleteError = "";
+  let fetchError = "";
 
   $: filteredNotifications = notifications.filter((n) => {
     if (activeFilter === "unread") return !n.read;
@@ -84,30 +32,64 @@
 
   $: unreadCount = notifications.filter((n) => !n.read).length;
 
-  function markAsRead(notificationId: string) {
-    notifications = notifications.map((n) =>
-      n.id === notificationId ? { ...n, read: true } : n,
-    );
-    // TODO: Call API to mark as read
-    // await api.markNotificationAsRead(notificationId);
+  async function markAsRead(notificationId: string) {
+    markError = "";
+    try {
+      await apiMarkAsRead(notificationId);
+      notifications = notifications.map((n) =>
+        n.id === notificationId ? { ...n, read: true } : n,
+      );
+    } catch (e) {
+      console.error("Failed to mark notification as read", e);
+      markError = "Could not update read status.";
+      setTimeout(() => (markError = ""), 3000);
+    }
   }
 
-  function markAllAsRead() {
-    notifications = notifications.map((n) => ({ ...n, read: true }));
-    // TODO: Call API to mark all as read
-    // await api.markAllNotificationsAsRead();
+  async function markAllAsRead() {
+    markError = "";
+    try {
+      await apiMarkAllAsRead();
+      notifications = notifications.map((n) => ({ ...n, read: true }));
+    } catch (e) {
+      console.error("Failed to mark all as read", e);
+      markError = "Could not update read status.";
+      setTimeout(() => (markError = ""), 3000);
+    }
   }
 
-  function deleteNotification(notificationId: string) {
-    notifications = notifications.filter((n) => n.id !== notificationId);
-    // TODO: Call API to delete notification
-    // await api.deleteNotification(notificationId);
+  async function deleteNotification(notificationId: string) {
+    deleteError = "";
+    try {
+      await apiDeleteNotification(notificationId);
+      notifications = notifications.filter((n) => n.id !== notificationId);
+    } catch (e) {
+      console.error("Failed to delete notification", e);
+      deleteError = "Could not delete notification. Please try again.";
+      setTimeout(() => (deleteError = ""), 4000);
+    }
   }
 
-  // TODO: Load notifications from API on mount
-  // onMount(async () => {
-  //   notifications = await api.getNotifications();
-  // });
+  async function loadNotifications() {
+    try {
+      loading = true;
+      fetchError = "";
+      const list = await fetchNotifications();
+      notifications = list.map((n) => ({
+        ...n,
+        timestamp: formatNotificationTimestamp(n.timestamp),
+      }));
+    } catch (e) {
+      console.error("Failed to load notifications", e);
+      fetchError = "Could not load notifications. Please try again.";
+    } finally {
+      loading = false;
+    }
+  }
+
+  onMount(() => {
+    loadNotifications();
+  });
 </script>
 
 <svelte:head>
@@ -123,6 +105,24 @@
       </p>
     </div>
 
+    {#if markError}
+      <div class="alert alert-warning mb-4 shrink-0" role="alert">
+        <span>{markError}</span>
+      </div>
+    {/if}
+    {#if deleteError}
+      <div class="toast toast-top toast-end z-[9999]">
+        <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
+          <span>{deleteError}</span>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs rounded-lg ml-1"
+            onclick={() => (deleteError = '')}
+            aria-label="Dismiss"
+          >✕</button>
+        </div>
+      </div>
+    {/if}
     <div class="flex items-center justify-between mb-6 shrink-0">
       <div class="tabs tabs-boxed bg-base-200 p-1">
         <button
@@ -173,7 +173,29 @@
     {/if}
 
     <div class="flex-1 overflow-y-auto space-y-3 pr-2">
-      {#if filteredNotifications.length === 0}
+      {#if loading}
+        <div class="flex flex-col items-center justify-center py-12 text-base-content/60">
+          Loading notifications…
+        </div>
+      {:else if fetchError}
+        <div
+          class="flex flex-col items-center justify-center h-full text-center py-12"
+        >
+          <div class="alert alert-error shadow-lg max-w-md">
+            <Icon icon="mdi:alert-circle-outline" width="24" height="24" />
+            <div class="flex flex-col gap-2 items-center">
+              <span>{fetchError}</span>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                onclick={loadNotifications}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      {:else if filteredNotifications.length === 0}
         <div
           class="flex flex-col items-center justify-center h-full text-center py-12"
         >

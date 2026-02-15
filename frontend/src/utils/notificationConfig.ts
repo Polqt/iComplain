@@ -1,3 +1,12 @@
+import { formatRelativeTime } from "./historyConfig.ts";
+
+export function formatNotificationTimestamp(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const fallback = Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString();
+  return formatRelativeTime(iso, fallback);
+}
+
 export const notificationConfig = {
     info: {
       icon: "mdi:information-outline",
