@@ -4,10 +4,10 @@
   import type { Ticket, TicketUpdatePayload } from "../../../types/tickets.ts";
 
   export let open = false;
+  export let isLoading = false;
   export let ticket: Ticket | null = null;
   export let onclose: () => void = () => {};
 
-  $: isLoading = $ticketsStore.isLoading;
   $: formData = ticket ? { ...ticket } : {};
 
   async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
