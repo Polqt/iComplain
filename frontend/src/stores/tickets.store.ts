@@ -96,7 +96,9 @@ function createTicketsStore(): TicketsStore {
 
                 update(s => ({
                     ...s,
-                    tickets: s.tickets.map(t => t.id === id ? ticket : t),
+                    tickets: s.tickets.some((t) => t.id === id)
+                        ? s.tickets.map((t) => (t.id === id ? ticket : t))
+                        : [...s.tickets, ticket],
                     isLoading: false,
                     error: null,
                 }))

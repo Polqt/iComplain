@@ -27,14 +27,21 @@
   import AdminTicketControl from "../../../components/ui/tickets/AdminTicketControl.svelte";
   import TicketEdit from "../../../components/ui/tickets/TicketEdit.svelte";
 
-  $: ticketNumber = $page.params.id;
+  $: idParam = $page.params.id;
+  $: isNumericId = /^\d+$/.test(idParam ?? "");
   $: ({ tickets, isLoading, error } = $ticketsStore);
   $: ({ role, user } = $authStore);
-  $: ticket = tickets.find((t) => t.ticket_number === ticketNumber) ?? null;
+  $: ticket = isNumericId
+    ? (tickets.find((t) => t.id === Number(idParam)) ?? null)
+    : (tickets.find((t) => t.ticket_number === idParam) ?? null);
 
   onMount(async () => {
-    if (tickets.length === 0) {
-      await ticketsStore.loadTickets();
+    if (isNumericId) {
+      const id = Number(idParam);
+      const inStore = tickets.find((t) => t.id === id);
+      if (!inStore) await ticketsStore.loadTicketById(id);
+    } else {
+      if (tickets.length === 0) await ticketsStore.loadTickets();
     }
   });
 

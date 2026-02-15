@@ -215,7 +215,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
-            notify_ticket_status_change(ticket.student, ticket.id, ticket.title, payload.status)
+            notify_ticket_status_change(ticket.student, ticket.id, ticket.ticket_number, ticket.title, payload.status)
         ticket.status = payload.status
 
     ticket.updated_at = timezone.now()
@@ -258,7 +258,7 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
-            notify_ticket_status_change(ticket.student, ticket.id, ticket.title, payload.status)
+            notify_ticket_status_change(ticket.student, ticket.id, ticket.ticket_number, ticket.title, payload.status)
         ticket.status = payload.status
         
     if payload.priority is not None:
@@ -307,10 +307,10 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
     )
     preview = (payload.message or "")[:80] + ("…" if len(payload.message or "") > 80 else "")
     if ticket.student != request.user:
-        notify_ticket_comment(ticket.student, ticket.id, ticket.title, preview)
+        notify_ticket_comment(ticket.student, ticket.id, ticket.ticket_number, ticket.title, preview)
     else:
         for staff_user in User.objects.filter(is_staff=True).exclude(pk=request.user.pk):
-            notify_ticket_comment(staff_user, ticket.id, ticket.title, preview)
+            notify_ticket_comment(staff_user, ticket.id, ticket.ticket_number, ticket.title, preview)
     if attachment:
         validate_file(attachment)
         TicketAttachment.objects.create(

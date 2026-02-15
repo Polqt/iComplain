@@ -44,8 +44,10 @@ STATUS_LABELS = {
 }
 
 
-def notify_ticket_status_change(student, ticket_id: int, ticket_title: str, new_status: str):
-    action_url = f"/tickets/{ticket_id}"
+def notify_ticket_status_change(
+    student, ticket_id: int, ticket_number: str, ticket_title: str, new_status: str
+):
+    action_url = f"/tickets/{ticket_number}"
     tpl = STATUS_LABELS.get(
         new_status,
         ("Status updated", f"Your ticket status was changed to {new_status}.", "info"),
@@ -63,7 +65,9 @@ def notify_ticket_status_change(student, ticket_id: int, ticket_title: str, new_
     )
 
 
-def notify_ticket_comment(recipient_user, ticket_id: int, ticket_title: str, message_preview: str):
+def notify_ticket_comment(
+    recipient_user, ticket_id: int, ticket_number: str, ticket_title: str, message_preview: str
+):
     create_in_app_notification(
         user=recipient_user,
         ticket_id=ticket_id,
@@ -71,5 +75,5 @@ def notify_ticket_comment(recipient_user, ticket_id: int, ticket_title: str, mes
         title="New comment on your ticket",
         message=f'"{ticket_title}": {message_preview}',
         notification_type="info",
-        action_url=f"/tickets/{ticket_id}",
+        action_url=f"/tickets/{ticket_number}",
     )
