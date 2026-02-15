@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'ninja',
+    'channels',
     'apps.users',
     'apps.tickets',
     'apps.notifications',
