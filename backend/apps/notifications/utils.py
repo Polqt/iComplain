@@ -18,16 +18,17 @@ def serialize_inapp_notification(n: InAppNotification) -> dict:
 def create_in_app_notification(
     user,
     *,
-    ticket=None,
+    ticket_id: int | None = None,
     event: str,
     title: str,
     message: str,
     notification_type: str = "info",
     action_url: str = "",
 ):
+    """Create an in-app notification. Set ticket_id to associate with a ticket."""
     InAppNotification.objects.create(
         user=user,
-        ticket=ticket,
+        ticket_id=ticket_id,
         event=event,
         title=title,
         message=message,
@@ -53,7 +54,7 @@ def notify_ticket_status_change(student, ticket_id: int, ticket_title: str, new_
     message = message_tpl.format(title=ticket_title)
     create_in_app_notification(
         user=student,
-        ticket=None,
+        ticket_id=ticket_id,
         event=f"status_{new_status}",
         title=title,
         message=message,
@@ -65,7 +66,7 @@ def notify_ticket_status_change(student, ticket_id: int, ticket_title: str, new_
 def notify_ticket_comment(recipient_user, ticket_id: int, ticket_title: str, message_preview: str):
     create_in_app_notification(
         user=recipient_user,
-        ticket=None,
+        ticket_id=ticket_id,
         event="comment_added",
         title="New comment on your ticket",
         message=f'"{ticket_title}": {message_preview}',

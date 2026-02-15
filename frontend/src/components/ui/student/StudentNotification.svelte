@@ -19,6 +19,7 @@
   let notifications: Notification[] = [];
   let loading = true;
   let activeFilter: NotificationFilter = "all";
+  let markError = "";
 
   $: filteredNotifications = notifications.filter((n) => {
     if (activeFilter === "unread") return !n.read;
@@ -29,22 +30,28 @@
   $: unreadCount = notifications.filter((n) => !n.read).length;
 
   async function markAsRead(notificationId: string) {
+    markError = "";
     try {
       await apiMarkAsRead(notificationId);
       notifications = notifications.map((n) =>
         n.id === notificationId ? { ...n, read: true } : n,
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Failed to mark notification as read", e);
+      markError = "Could not update read status.";
+      setTimeout(() => (markError = ""), 3000);
     }
   }
 
   async function markAllAsRead() {
+    markError = "";
     try {
       await apiMarkAllAsRead();
       notifications = notifications.map((n) => ({ ...n, read: true }));
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Failed to mark all as read", e);
+      markError = "Could not update read status.";
+      setTimeout(() => (markError = ""), 3000);
     }
   }
 
@@ -60,7 +67,8 @@
         ...n,
         timestamp: formatNotificationTimestamp(n.timestamp),
       }));
-    } catch {
+    } catch (e) {
+      console.error("Failed to load notifications", e);
       notifications = [];
     } finally {
       loading = false;
@@ -81,6 +89,11 @@
       </p>
     </div>
 
+    {#if markError}
+      <div class="alert alert-warning mb-4 shrink-0" role="alert">
+        <span>{markError}</span>
+      </div>
+    {/if}
     <div class="flex items-center justify-between mb-6 shrink-0">
       <div class="tabs tabs-boxed bg-base-200 p-1">
         <button

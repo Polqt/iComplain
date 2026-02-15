@@ -21,24 +21,31 @@
   let searchQuery = "";
   let notifications: Notification[] = [];
   let loading = true;
+  let markError = "";
 
   async function markAllRead() {
+    markError = "";
     try {
       await apiMarkAllAsRead();
       notifications = notifications.map((n) => ({ ...n, read: true }));
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Failed to mark all as read", e);
+      markError = "Could not update read status.";
+      setTimeout(() => (markError = ""), 3000);
     }
   }
 
   async function markRead(id: string) {
+    markError = "";
     try {
       await apiMarkAsRead(id);
       notifications = notifications.map((n) =>
         n.id === id ? { ...n, read: true } : n,
       );
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Failed to mark notification as read", e);
+      markError = "Could not update read status.";
+      setTimeout(() => (markError = ""), 3000);
     }
   }
 
@@ -63,7 +70,8 @@
         ...n,
         timestamp: formatNotificationTimestamp(n.timestamp),
       }));
-    } catch {
+    } catch (e) {
+      console.error("Failed to load notifications", e);
       notifications = [];
     } finally {
       loading = false;
@@ -73,6 +81,11 @@
 
 <AdminLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
+    {#if markError}
+      <div class="alert alert-warning mb-4 shrink-0" role="alert">
+        <span>{markError}</span>
+      </div>
+    {/if}
     <div
       class="flex flex-wrap items-center justify-between gap-4 mb-6 shrink-0"
     >

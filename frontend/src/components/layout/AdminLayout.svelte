@@ -48,8 +48,8 @@
         n.id === id ? { ...n, read: true } : n,
       );
       unreadCount = notifications.filter((n) => !n.read).length;
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Failed to mark notification as read", e);
     }
   }
 
@@ -80,7 +80,8 @@
           timestamp: formatNotificationTimestamp(n.timestamp),
         }));
         unreadCount = notifications.filter((n) => !n.read).length;
-      } catch {
+      } catch (e) {
+        console.error("Failed to load notifications", e);
         notifications = [];
         unreadCount = 0;
       }
