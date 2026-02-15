@@ -312,7 +312,7 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
     return TicketCommentSchema.from_orm(comment)
 
 
-@router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
+@router.put("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
 def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
     comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
@@ -338,7 +338,7 @@ def delete_comment(request, id: int, comment_id: int):
         return {"detail": "You do not have permission to delete this comment."}, 403
     
     comment.delete()
-    return redirect('ticket_list')
+    return 204, None
 
     
 # Ticket Feedback Views
@@ -430,15 +430,12 @@ def delete_feedback(request, id: int, feedback_id: int):
         return {"detail": "Feedback can only be deleted within 24 hours of submission."}, 400
 
     feedback.delete()
-    return redirect('ticket_list')
+    return 204, None
 
 @router.get("/community", response=list[TicketSchema])
 def community_tickets(request):
-    if not request.user.is_authenticated:
-        return {"detail": "Authentication required."}, 401
-
     qs = Ticket.objects.select_related("category", "priority", "student") \
             .prefetch_related('attachments_tickets') \
             .order_by('-created_at')
     
-    return [TicketSchema.from_orm(ticket, request) for ticket in qs]
+    return [TicketSchema.from_orm(ticket) for ticket in qs]
