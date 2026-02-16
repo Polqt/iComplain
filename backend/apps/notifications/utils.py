@@ -7,6 +7,9 @@ def serialize_inapp_notification(n: InAppNotification) -> dict:
     action_url = None
     if n.ticket_id:
         ticket_number = getattr(n.ticket, "ticket_number", None) if n.ticket else None
+        if ticket_number is None and getattr(n, "ticket", None) is not None:
+            ticket_number = getattr(n.ticket, "ticket_number", None)
+            
         if ticket_number:
             action_url = f"/tickets/{ticket_number}"
         else:

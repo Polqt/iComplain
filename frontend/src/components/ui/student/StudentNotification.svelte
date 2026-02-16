@@ -239,8 +239,10 @@
               : ''}"
             onclick={() => handleCardClick(notification)}
             onkeydown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
                 handleCardClick(notification);
+              }
             }}
           >
             <div class="card-body p-4">
