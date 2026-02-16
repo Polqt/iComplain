@@ -342,6 +342,23 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
         )
         
     comment.save()
+    
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_comment_update",
+            "data": {
+                "type": "comment_created",
+                "ticket_id": ticket.id,
+                "comment": {
+                    "id": comment.id,
+                    "user": {"id": comment.user.id, "name": comment.user.name, "email": comment.user.email},
+                    "message": comment.message,
+                    "created_at": comment.created_at.isoformat(),
+                }
+            }
+        }
+    )
     return TicketCommentSchema.from_orm(comment)
 
 
@@ -359,6 +376,23 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
     
     comment.save()
     
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_comment_update",
+            "data": {
+                "type": "comment_created",
+                "ticket_id": ticket.id,
+                "comment": {
+                    "id": comment.id,
+                    "user": {"id": comment.user.id, "name": comment.user.name, "email": comment.user.email},
+                    "message": comment.message,
+                    "created_at": comment.created_at.isoformat(),
+                }
+            }
+        }
+    )
+    
     return TicketCommentSchema.from_orm(comment)
 
 
@@ -369,6 +403,23 @@ def delete_comment(request, id: int, comment_id: int):
     
     if comment.user != request.user:
         return {"detail": "You do not have permission to delete this comment."}, 403
+    
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_comment_update",
+            "data": {
+                "type": "comment_created",
+                "ticket_id": ticket.id,
+                "comment": {
+                    "id": comment.id,
+                    "user": {"id": comment.user.id, "name": comment.user.name, "email": comment.user.email},
+                    "message": comment.message,
+                    "created_at": comment.created_at.isoformat(),
+                }
+            }
+        }
+    )
     
     comment.delete()
     return 204, None
