@@ -4,6 +4,16 @@ from .models import InAppNotification
 
 def serialize_inapp_notification(n: InAppNotification) -> dict:
     ts = timezone.localtime(n.created_at).isoformat() if n.created_at else ""
+    action_url = None
+    if n.ticket_id:
+        ticket_number = getattr(n.ticket, "ticket_number", None) if n.ticket else None
+        if ticket_number is None and getattr(n, "ticket", None) is not None:
+            ticket_number = getattr(n.ticket, "ticket_number", None)
+            
+        if ticket_number:
+            action_url = f"/tickets/{ticket_number}"
+        else:
+            action_url = n.action_url or None
     return {
         "id": str(n.id),
         "type": n.notification_type,
@@ -11,7 +21,7 @@ def serialize_inapp_notification(n: InAppNotification) -> dict:
         "message": n.message,
         "timestamp": ts,
         "read": n.read,
-        "actionUrl": n.action_url or None,
+        "actionUrl": action_url,
         "actionLabel": None,
     }
 
@@ -25,7 +35,6 @@ def create_in_app_notification(
     notification_type: str = "info",
     action_url: str = "",
 ):
-    """Create an in-app notification. Set ticket_id to associate with a ticket."""
     InAppNotification.objects.create(
         user=user,
         ticket_id=ticket_id,
