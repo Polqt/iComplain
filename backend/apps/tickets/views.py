@@ -57,6 +57,13 @@ def get_categories(request):
 def get_priorities(request):
     return TicketPriority.objects.all()
 
+@router.get("/community", response=list[TicketSchema])
+def community_tickets(request):
+    qs = Ticket.objects.select_related("category", "priority", "student") \
+            .prefetch_related('attachments_tickets') \
+            .order_by('-created_at')
+    return [TicketSchema.from_orm(ticket) for ticket in qs]
+
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
 def ticket_list(request):
@@ -146,9 +153,12 @@ def ticket_history(request):
         ))
     return out
 
-@router.get("/{id}", response={200: TicketSchema, 404: dict})
-def ticket_detail(request, id: int):
-    ticket = get_object_or_404(Ticket, id=id)
+@router.get("/{ticket_id}", response={200: TicketSchema, 404: dict})
+def ticket_detail(request, ticket_id: str):
+    if ticket_id.isdigit():
+        ticket = get_object_or_404(Ticket, id=int(ticket_id))
+    else:
+        ticket = get_object_or_404(Ticket, ticket_number=ticket_id)
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "Not found."}, 404
     return 200, TicketSchema.from_orm(ticket, request)
@@ -226,7 +236,6 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
-            notify_ticket_status_change(ticket.student, ticket.id, ticket.ticket_number, ticket.title, payload.status)
             notify_ticket_status_change(student=ticket.student, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, new_status=payload.status)
         ticket.status = payload.status
 
@@ -270,7 +279,6 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
-            notify_ticket_status_change(ticket.student, ticket.id, ticket.ticket_number, ticket.title, payload.status)
             notify_ticket_status_change(student=ticket.student, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, new_status=payload.status)
         ticket.status = payload.status
         
@@ -456,11 +464,3 @@ def delete_feedback(request, id: int, feedback_id: int):
 
     feedback.delete()
     return 204, None
-
-@router.get("/community", response=list[TicketSchema])
-def community_tickets(request):
-    qs = Ticket.objects.select_related("category", "priority", "student") \
-            .prefetch_related('attachments_tickets') \
-            .order_by('-created_at')
-    
-    return [TicketSchema.from_orm(ticket) for ticket in qs]

@@ -25,7 +25,6 @@ def create_in_app_notification(
     notification_type: str = "info",
     action_url: str = "",
 ):
-    """Create an in-app notification. Set ticket_id to associate with a ticket."""
     InAppNotification.objects.create(
         user=user,
         ticket_id=ticket_id,

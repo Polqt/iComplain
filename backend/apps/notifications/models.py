@@ -12,7 +12,6 @@ class EmailNotification(models.Model):
 
 
 class InAppNotification(models.Model):
-    """In-app notification for ticket events (status change, comment, etc.)."""
     TYPE_CHOICES = [
         ("info", "Info"),
         ("success", "Success"),
