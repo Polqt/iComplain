@@ -34,12 +34,11 @@
     editText = "";
   }
 
-  async function savedEdit() {
+  async function saveEdit() {
     if (!editText.trim() || editText.trim() === comment.message) {
       cancelEdit();
       return;
     }
-
     saving = true;
     await onUpdate(comment.id, editText.trim());
     saving = false;
@@ -47,16 +46,15 @@
   }
 
   async function handleDelete() {
-    if (confirm("Are you sure you want to delete this comment?")) {
-      await onDelete(comment.id);
-    }
+    await onDelete(comment.id);
   }
 </script>
 
 <div class="flex gap-3 group">
   <div class="avatar placeholder shrink-0 mt-0.5">
     <div
-      class="w-7 h-7 rounded-full ring-1 ring-primary/20 flex items-center justify-center bg-primary/15"
+      class="w-7 h-7 rounded-full ring-1 ring-primary/20
+             flex items-center justify-center bg-primary/15"
     >
       {#if comment.user.avatar}
         <img src={comment.user.avatar} alt={displayName} class="rounded-full" />
@@ -80,17 +78,20 @@
           class="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <button
+            type="button"
             onclick={startEdit}
             class="btn btn-ghost btn-xs btn-circle"
             aria-label="Edit comment"
-            ><Icon
+          >
+            <Icon
               icon="mdi:pencil-outline"
               width="12"
               height="12"
               class="text-base-content/40"
-            /></button
-          >
+            />
+          </button>
           <button
+            type="button"
             onclick={handleDelete}
             class="btn btn-ghost btn-xs btn-circle"
             aria-label="Delete comment"
@@ -110,20 +111,24 @@
       <div class="flex flex-col gap-2">
         <textarea
           bind:value={editText}
-          class="textarea textarea-bordered textarea-xs w-full resize-none rounded-lg text-sm leading-relaxed"
+          class="textarea textarea-bordered textarea-xs w-full resize-none rounded-lg
+                 text-sm leading-relaxed"
           rows="2"
           disabled={saving}
         ></textarea>
         <div class="flex items-center gap-1.5 justify-end">
           <button
+            type="button"
             onclick={cancelEdit}
             class="btn btn-ghost btn-xs rounded-lg"
             disabled={saving}
-            >Cancel
+          >
+            Cancel
           </button>
           <button
-            onclick={savedEdit}
-            class="btn btn-ghost btn-xs rounded-lg"
+            type="button"
+            onclick={saveEdit}
+            class="btn btn-primary btn-xs rounded-lg"
             disabled={saving || !editText.trim()}
           >
             {#if saving}

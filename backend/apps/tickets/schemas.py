@@ -7,6 +7,8 @@ from ninja import Schema
 class UserSchema(BaseModel):
     id: int
     email: str
+    name: str | None = None
+    avatar: str | None = None
     class Config:
         from_attributes = True
 

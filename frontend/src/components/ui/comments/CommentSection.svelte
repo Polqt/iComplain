@@ -73,7 +73,7 @@
 >
   <div class="flex items-center justify-between mb-4">
     <h3
-      class="text-[10px] font-bold uppercase tracking=widest text-base-content/35"
+      class="text-[10px] font-bold uppercase tracking-widest text-base-content/35"
     >
       Comments
       {#if comments.length > 0}
@@ -99,11 +99,10 @@
       <div class="flex flex-col gap-3 py-4">
         {#each [1, 2, 3] as _}
           <div class="flex gap-3">
-            <div class="skeleton w-7 h-7 rounded-full shrink-0">
-              <div class="flex-1 space-y-1.5">
-                <div class="skeleton w-24 h-3 rounded"></div>
-                <div class="skeleton w-full h-3 rounded"></div>
-              </div>
+            <div class="skeleton w-7 h-7 rounded-full shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="skeleton w-24 h-3 rounded"></div>
+              <div class="skeleton w-full h-3 rounded"></div>
             </div>
           </div>
         {/each}
@@ -118,10 +117,12 @@
         />
         <p class="text-xs text-error/70">{error}</p>
         <button
-          class="btn btn-ghost btn-xl rounded-lg"
+          type="button"
+          class="btn btn-ghost btn-sm rounded-lg"
           onclick={() => commentsStore.loadCommentsForTicket(ticketId)}
-          >Retry</button
         >
+          Retry
+        </button>
       </div>
     {:else if comments.length === 0}
       <div class="flex flex-col items-center gap-2 py-8 text-center">
@@ -137,12 +138,14 @@
       </div>
     {:else}
       <div class="flex flex-col gap-4">
-        {#each comments as comment (comment.id)}<CommentItem
+        {#each comments as comment (comment.id)}
+          <CommentItem
             {comment}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
             disabled={isClosed}
-          />{/each}
+          />
+        {/each}
       </div>
     {/if}
   </div>
@@ -156,11 +159,19 @@
           bind:value={newMessage}
           onkeydown={handleKeyDown}
           rows="1"
-          placeholder="Say something about this ticket..."
-          class="textarea textarea-bordered flex-1 resize-none rounded-xl text-sm leading-relaxed min-h-10 max-h-24"
-          disabled={isLoading}
+          placeholder="Say something about this ticket…"
+          class="textarea textarea-bordered flex-1 resize-none rounded-xl text-sm
+                 leading-relaxed min-h-10 max-h-24"
+          disabled={isLoading || sending}
         ></textarea>
-        <button>
+
+        <button
+          type="button"
+          onclick={handleSend}
+          disabled={sending || !newMessage.trim() || isLoading}
+          class="btn btn-primary btn-sm btn-circle shrink-0"
+          aria-label="Send comment"
+        >
           {#if sending}
             <span class="loading loading-spinner loading-xs"></span>
           {:else}
