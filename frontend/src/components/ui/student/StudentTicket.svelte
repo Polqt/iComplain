@@ -21,7 +21,7 @@
   import TicketCard from "../../../components/ui/tickets/TicketCard.svelte";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { onMount } from "svelte";
-  
+
   let viewMode: ViewMode = "grid";
   let modalMode: ModalMode = null;
   let selectedReport: Ticket | null = null;

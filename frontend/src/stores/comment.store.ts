@@ -1,6 +1,6 @@
 import { PUBLIC_API_URL } from "$env/static/public";
 import { get, writable, type Readable } from "svelte/store";
-import { createComment as apiCreateComment, deleteComment as apiDeleteComment, editComment as apiEditComment } from "../lib/api/comment.ts";
+import { fetchComments as apiGetComment, createComment as apiCreateComment, deleteComment as apiDeleteComment, editComment as apiEditComment } from "../lib/api/comment.ts";
 import type { CommentCreatePayload, CommentsState, CommentUpdatePayload, TicketComment } from "../types/comments.ts";
 
 interface CommentsStore extends Readable<CommentsState> {
@@ -47,24 +47,14 @@ function createCommentsStore(): CommentsStore {
             update((state) => ({ ...state, isLoading: true, error: null }));
 
             try {
-                const res = await fetch(`${BASE}/${ticketId}/comments`, {
-                    method: "GET",
-                    credentials: "include",
-                });
-
-                if (!res.ok) {
-                    const body = await res.json().catch(() => ({}));
-                    throw new Error(body.message || body.detail || `Failed to load comments for ticket ${ticketId}`);
-                }
-
-                const comments = (await res.json()) as TicketComment[];
-
+                const comments = await apiGetComment(ticketId);
                 update((state) => ({
                     ...state,
                     comments,
                     isLoading: false,
                     error: null,
                 }));
+                
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error";
                 update((state) => ({
