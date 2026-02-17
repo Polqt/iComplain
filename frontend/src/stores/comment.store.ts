@@ -1,5 +1,4 @@
-import { PUBLIC_API_URL } from "$env/static/public";
-import { get, writable, type Readable } from "svelte/store";
+import { writable, type Readable } from "svelte/store";
 import { fetchComments as apiGetComment, createComment as apiCreateComment, deleteComment as apiDeleteComment, editComment as apiEditComment } from "../lib/api/comment.ts";
 import type { CommentCreatePayload, CommentsState, CommentUpdatePayload, TicketComment } from "../types/comments.ts";
 
@@ -18,8 +17,6 @@ interface CommentsStore extends Readable<CommentsState> {
     removeCommentFromStore: (commentId: number) => void;
     clearComments: () => void;
 }
-
-const BASE = `${PUBLIC_API_URL}/tickets`;
 
 function createCommentsStore(): CommentsStore {
     const { subscribe, update, set } = writable<CommentsState>({
@@ -167,8 +164,3 @@ function createCommentsStore(): CommentsStore {
 }
 
 export const commentsStore = createCommentsStore();
-
-export function getCommentsByTicketId(ticketId: number): TicketComment[] {
-    const store = get(commentsStore);
-    return store.comments.filter((comment) => comment.ticket.id === ticketId);
-}

@@ -105,7 +105,7 @@ class TicketAttachmentSchema(Schema):
      
 class TicketCommentSchema(BaseModel):
     id: int
-    ticket: TicketSchema
+    ticket_id: int
     user: UserSchema
     message: str
     created_at: datetime
