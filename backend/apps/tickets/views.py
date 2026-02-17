@@ -398,7 +398,7 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
         {
             "type": "send_comment_update",
             "data": {
-                "type": "comment_created",
+                "type": "comment_updated",
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
@@ -426,7 +426,7 @@ def delete_comment(request, id: int, comment_id: int):
         {
             "type": "send_comment_update",
             "data": {
-                "type": "comment_created",
+                "type": "comment_deleted",
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
