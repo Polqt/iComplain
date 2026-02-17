@@ -12,6 +12,22 @@ const BASE = `${PUBLIC_API_URL}/tickets`;
     return res.json() as Promise<T>;
 }
 
+export async function fetchComments(ticketId: number): Promise<TicketComment[]> {
+    try {
+        const res = await fetch(`${BASE}/${ticketId}/comments`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+        })
+        return await handleRes<TicketComment[]>(res);
+    } catch (error) {
+        console.error(`Error fetching comments for ticket ${ticketId}:`, error);
+        throw error;
+    }
+}
+
 export async function createComment(
     ticketId: number,
     payload: CommentCreatePayload,
@@ -45,7 +61,7 @@ export async function editComment(
 ): Promise<TicketComment> {
     try {
         const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
-            method: "POST",
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },

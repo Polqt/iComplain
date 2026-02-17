@@ -1,6 +1,6 @@
 
 from django.urls import re_path
-from consumers import TicketNotificationConsumer
+from .consumers import TicketNotificationConsumer
 
 
 websocket_urlpatterns = [
