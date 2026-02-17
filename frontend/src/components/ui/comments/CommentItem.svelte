@@ -40,13 +40,20 @@
       return;
     }
     saving = true;
-    await onUpdate(comment.id, editText.trim());
-    saving = false;
-    editing = false;
+    try {
+      await onUpdate(comment.id, editText.trim());
+      editing = false;
+    } finally {
+      saving = false;
+    }
   }
 
   async function handleDelete() {
-    await onDelete(comment.id);
+    try {
+      await onDelete(comment.id);
+    } catch (error) {
+      console.error("Failed to delete comment", error);
+    }
   }
 </script>
 

@@ -290,6 +290,20 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
     ticket.updated_at = timezone.now()
     ticket.save()
     
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_ticket_update",
+            "data": {
+                "action": "updated",
+                "ticket_id": ticket.id,
+                "name": getattr(ticket.user, "name", None),
+                "avatar": getattr(ticket.user, "avatar", None),
+                "message": f"A ticket was updated to {payload.status}",
+            }
+        }
+    )
+    
     ticket = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket.id)
     return 200, TicketSchema.from_orm(ticket, request)
     
