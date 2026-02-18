@@ -73,7 +73,6 @@ def ticket_list(request):
     if request.user.is_staff:
         return [TicketSchema.from_orm(ticket, request) for ticket in qs]
     return [TicketSchema.from_orm(ticket, request) for ticket in qs.filter(student=request.user)]
-    
 
 @router.get("/history", response=list[TicketHistoryItemSchema])
 def ticket_history(request):
@@ -260,6 +259,20 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
                 file_path=attachment,
                 file_type=attachment.content_type,
             )
+    
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_ticket_update",
+            "data": {
+                "action": "updated",
+                "ticket_id": ticket.id,
+                "name": getattr(ticket.user, "name", None),
+                "avatar": getattr(ticket.user, "avatar", None),
+                "message": f"A ticket was updated by {request.user.name}",
+            }
+        }
+    )
         
     ticket = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket.id)
     return TicketSchema.from_orm(ticket, request)
@@ -307,7 +320,6 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
     ticket = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket.id)
     return 200, TicketSchema.from_orm(ticket, request)
     
-
 @router.delete("/{id}", response={204: None})
 def delete_ticket(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
@@ -321,7 +333,22 @@ def delete_ticket(request, id: int):
         return {"detail": "You cannot delete tickets that are being processed by admin."}, 400
 
     ticket.delete()
+    
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_ticket_update",
+            "data": {
+                "action": "deleted",
+                "ticket_id": ticket.id,
+                "name": getattr(ticket.user, "name", None),
+                "avatar": getattr(ticket.user, "avatar", None),
+                "message": f"A ticket was deleted by {request.user.name}",
+            }
+        }
+    )
     return 204, None
+
 
 # Ticket Comments Views
 @router.get("/{id}/comments", response=list[TicketCommentSchema])
@@ -376,6 +403,7 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
             }
         }
     )
+
     return 200, TicketCommentSchema.model_validate(comment)
 
 

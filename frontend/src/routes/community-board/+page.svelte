@@ -8,13 +8,7 @@
   import KanbanColumn from "../../components/ui/tickets/KanbanColumn.svelte";
   import KanbanSkeleton from "../../components/ui/tickets/KanbanSkeleton.svelte";
   import ErrorState from "../../components/ui/ErrorState.svelte";
-  import {
-    COMMUNITY_PAGE_SIZE,
-    COMMUNITY_STATUSES,
-    createInitialPageState,
-    getPageSlice,
-    getTotalPages,
-  } from "../../utils/paginationConfig.ts";
+  import { COMMUNITY_STATUSES } from "../../utils/paginationConfig.ts";
 
   $: ({ tickets, isLoading, error } = $ticketsStore);
 
@@ -25,7 +19,8 @@
   let search = "";
   let activeStatus: TicketStatus | "all" = "all";
   let priorityFilter = "all";
-  let currentPageByStatus = createInitialPageState();
+  let currentPage = 1;
+  const pageSize = 10;
 
   $: filtered = tickets.filter((t) => {
     const q = search.trim().toLowerCase();
@@ -61,46 +56,38 @@
     ),
   };
 
-  $: totalPagesByStatus = COMMUNITY_STATUSES.reduce(
-    (acc, status) => {
-      acc[status] = getTotalPages(
-        ticketsByStatus[status]?.length ?? 0,
-        COMMUNITY_PAGE_SIZE,
-      );
-      return acc;
-    },
-    {} as Record<TicketStatus, number>,
-  );
-
+  $: totalPages = Math.ceil(filtered.length / pageSize);
   $: {
-    const updated = { ...currentPageByStatus };
-    let changed = false;
-    COMMUNITY_STATUSES.forEach((status) => {
-      const max = totalPagesByStatus[status] ?? 1;
-      if (updated[status] > max) {
-        updated[status] = max;
-        changed = true;
-      }
-    });
-    if (changed) currentPageByStatus = updated;
+    if (currentPage > totalPages && totalPages > 0) {
+      currentPage = totalPages;
+    }
   }
+  $: paginatedTickets = filtered.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   function handleFilterChange<T>(setter: (value: T) => void) {
     return (value: T) => {
       setter(value);
-      currentPageByStatus = createInitialPageState();
+      currentPage = 1;
     };
   }
 
-  function handlePageChange(status: TicketStatus, page: number) {
-    currentPageByStatus = { ...currentPageByStatus, [status]: page };
+  function handlePageChange(page: number) {
+    currentPage = page;
   }
 
   function handleClearFilters() {
     search = "";
     activeStatus = "all";
     priorityFilter = "all";
-    currentPageByStatus = createInitialPageState();
+    currentPage = 1;
+  }
+
+  function handleStatusClick(status: TicketStatus) {
+    activeStatus = status;
+    currentPage = 1;
   }
 </script>
 
@@ -132,33 +119,52 @@
     {#if isLoading}
       <KanbanSkeleton />
     {:else if error}
-      <ErrorState
-        error={error}
-        onRetry={() => ticketsStore.loadCommunityTickets()}
-      />
+      <ErrorState {error} onRetry={() => ticketsStore.loadCommunityTickets()} />
     {:else}
-      <div class="grid grid-cols-4 gap-3 flex-1 min-h-0">
-        {#each columns as col}
-          {@const status = col.id}
-          {@const allTickets = ticketsByStatus[status] ?? []}
-          {@const currentPage = currentPageByStatus[status] ?? 1}
-          {@const pageTickets = getPageSlice(
-            allTickets,
-            currentPage,
-            COMMUNITY_PAGE_SIZE,
-          )}
-          {@const totalPages = totalPagesByStatus[status] ?? 1}
+      <div class="flex gap-6 flex-1 min-h-0">
+        <KanbanColumn
+          tickets={paginatedTickets}
+          {totalPages}
+          {currentPage}
+          onPageChange={handlePageChange}
+        />
 
-          <KanbanColumn
-            column={col}
-            {status}
-            tickets={allTickets}
-            {pageTickets}
-            {totalPages}
-            {currentPage}
-            onPageChange={(page) => handlePageChange(status, page)}
-          />
-        {/each}
+        <div class="w-64 shrink-0">
+          <div class="sticky top-0 space-y-2">
+            {#each columns as col}
+              {@const count = statusCounts[col.id] ?? 0}
+              {@const percentage =
+                statusCounts.all > 0 ? (count / statusCounts.all) * 100 : 0}
+              <button
+                on:click={() => handleStatusClick(col.id)}
+                class="w-full card border hover:border-opacity-100 transition-all cursor-pointer
+                       {col.headerTint.replace('bg-base-200', 'bg-base-100')}"
+                class:ring-2={activeStatus === col.id}
+                class:ring-offset-2={activeStatus === col.id}
+                style="--tw-ring-color: {col.dot.replace('bg-', '')}"
+              >
+                <div class="card-body p-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <span
+                      class="text-sm font-bold uppercase tracking-wide {col.countText}"
+                    >
+                      {col.label}
+                    </span>
+                    <span class="text-2xl font-black {col.countText}">
+                      {count}
+                    </span>
+                  </div>
+                  <div class="w-full bg-base-200 rounded-full h-2">
+                    <div
+                      class="h-2 rounded-full transition-all duration-300 {col.dot}"
+                      style="width: {percentage}%"
+                    ></div>
+                  </div>
+                </div>
+              </button>
+            {/each}
+          </div>
+        </div>
       </div>
     {/if}
   </div>

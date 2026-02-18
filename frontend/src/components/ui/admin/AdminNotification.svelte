@@ -9,6 +9,7 @@
     markAsRead as apiMarkAsRead,
     markAllAsRead as apiMarkAllAsRead,
   } from "../../../lib/api/notifications.ts";
+  import { goto } from "$app/navigation";
 
   const typeConfig = {
     success: { icon: "lucide:check-circle", color: "text-success" },
@@ -85,20 +86,24 @@
       loading = false;
     }
   });
+
+  function navigateToTicket(ticketnumber: string) {
+    goto(`/tickets/${ticketnumber}`);
+  }
 </script>
 
 <AdminLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
     {#if markError}
-      <div class="toast toast-top toast-end z-[9999]">
+      <div class="toast toast-top toast-end z-9999">
         <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
           <span>{markError}</span>
           <button
             type="button"
             class="btn btn-ghost btn-xs rounded-lg ml-1"
-            onclick={() => (markError = '')}
-            aria-label="Dismiss"
-          >✕</button>
+            onclick={() => (markError = "")}
+            aria-label="Dismiss">✕</button
+          >
         </div>
       </div>
     {/if}
@@ -125,7 +130,7 @@
         <div class="card-body p-4">
           <div class="flex flex-wrap items-center gap-3">
             <label
-              class="input input-bordered flex items-center gap-2 flex-1 min-w-[220px]"
+              class="input input-bordered flex items-center gap-2 flex-1 min-w-55"
             >
               <Icon icon="mdi:magnify" width="16" height="16" />
               <input
@@ -187,21 +192,13 @@
                           <span class="badge badge-primary badge-xs">New</span>
                         {/if}
                       </div>
-                      <p class="text-sm text-base-content/70">{notice.message}</p>
+                      <p class="text-sm text-base-content/70">
+                        {notice.message}
+                      </p>
                       <div
                         class="flex items-center gap-2 text-xs text-base-content/50"
                       >
                         <span>{notice.timestamp}</span>
-                        {#if notice.actionUrl}
-                          <a
-                            class="badge badge-ghost badge-xs"
-                            href={safeActionUrl(notice.actionUrl)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {notice.actionUrl}
-                          </a>
-                        {/if}
                       </div>
                     </div>
                   </div>

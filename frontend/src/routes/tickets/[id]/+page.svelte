@@ -81,11 +81,12 @@
           : []),
       ]
     : [];
+
 </script>
 
 <svelte:component this={role === "admin" ? AdminLayout : StudentLayout}>
   {#if isLoading && !ticket}
-    <div class="flex flex-col h-[calc(100vh-8rem)] gap-5">
+  <div class="flex flex-col h-[calc(100vh-8rem)] gap-5">
       <div class="flex items-center gap-3 shrink-0">
         <div class="skeleton w-8 h-8 rounded-lg"></div>
         <div class="skeleton h-6 w-48 rounded-lg"></div>

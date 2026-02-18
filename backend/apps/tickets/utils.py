@@ -1,6 +1,5 @@
 from django.utils import timezone
 
-
 def format_date(dt):
     return timezone.localtime(dt).strftime("%d %b %Y")
 
