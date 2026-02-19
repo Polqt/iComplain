@@ -57,14 +57,16 @@
 <AdminLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
     <div class="shrink-0 mb-6">
-      <h1 class="text-3xl font-black text-base-content mb-2">Settings</h1>
-      <p class="text-sm text-base-content/60">
-        Manage your preferences and account settings
-      </p>
+      <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-black text-base-content mb-2">Settings</h1>
+        <p class="text-sm text-base-content/60">
+          Manage your preferences and account settings
+        </p>
+      </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto pr-2">
-      <div class="max-w-3xl space-y-6">
+    <div class="flex-1 overflow-y-auto px-2">
+      <div class="max-w-3xl mx-auto space-y-6">
         <!-- Appearance -->
         <div class="card bg-base-100 shadow-sm border border-base-content/5">
           <div class="card-body p-6">

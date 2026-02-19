@@ -85,6 +85,13 @@
 
     (async () => {
       try {
+        const inAppEnabled =
+          localStorage.getItem("settings.inAppNotifications") !== "false";
+        if (!inAppEnabled) {
+          notifications = [];
+          unreadCount = 0;
+          return;
+        }
         const list = await fetchNotifications(10);
         notifications = list.map((n) => ({
           ...n,
