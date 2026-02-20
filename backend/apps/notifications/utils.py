@@ -1,6 +1,12 @@
+import logging
 from django.utils import timezone
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from .models import InAppNotification
+
+logger = logging.getLogger(__name__)
+
 
 def serialize_inapp_notification(n: InAppNotification) -> dict:
     ts = timezone.localtime(n.created_at).isoformat() if n.created_at else ""
@@ -35,7 +41,7 @@ def create_in_app_notification(
     notification_type: str = "info",
     action_url: str = "",
 ):
-    InAppNotification.objects.create(
+    notification = InAppNotification.objects.create(
         user=user,
         ticket_id=ticket_id,
         event=event,
@@ -44,6 +50,23 @@ def create_in_app_notification(
         notification_type=notification_type,
         action_url=action_url or "",
     )
+
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            notification_data = serialize_inapp_notification(notification)
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user.id}",
+                {
+                    "type": "send_notification",
+                    "data": {
+                        "type": "new_notification",
+                        "notification": notification_data,
+                    },
+                },
+            )
+    except Exception as e:
+        logger.warning(f"WebSocket broadcast failed: {e}")
 
 STATUS_LABELS = {
     "pending": ("Ticket updated", "Your ticket status was set to Pending.", "info"),

@@ -1,7 +1,9 @@
 import logging
+import os
 from django_ratelimit.decorators import ratelimit
 from django.conf import settings
-from ninja import Router
+from ninja import Router, File
+from ninja.files import UploadedFile
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import HttpRequest
 from .utils import (
@@ -9,8 +11,12 @@ from .utils import (
     is_allowed_domain,
     get_or_create_google_user,
     derive_name_from_email,
+    MAX_AVATAR_SIZE,
+    ALLOWED_IMAGE_TYPES,
+    get_invalid_type_message,
+    get_file_too_large_message,
 )
-from .schemas import LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
+from .schemas import LoginRequest, GoogleLoginRequest, ProfileUpdateRequest, UserResponse, AuthResponse
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +129,106 @@ def get_current_user(request: HttpRequest):
     return AuthResponse(
         success=True,
         message="Authenticated.",
+        user=UserResponse.model_validate(user, from_attributes=True),
+    )
+
+
+@router.patch("/profile", response=AuthResponse)
+def update_profile(request: HttpRequest, data: ProfileUpdateRequest):
+    user = request.user
+    if not user.is_authenticated:
+        return AuthResponse(
+            success=False,
+            message="Not authenticated.",
+            user=None,
+        )
+
+    update_fields = []
+
+    if data.name is not None:
+        name = data.name.strip()
+        if len(name) > 150:
+            return AuthResponse(
+                success=False,
+                message="Name must be 150 characters or fewer.",
+                user=None,
+            )
+        user.full_name = name
+        update_fields.append("full_name")
+
+    if update_fields:
+        user.save(update_fields=update_fields)
+
+    return AuthResponse(
+        success=True,
+        message="Profile updated successfully.",
+        user=UserResponse.model_validate(user, from_attributes=True),
+    )
+
+
+@router.post("/profile/avatar", response=AuthResponse)
+def upload_avatar(request: HttpRequest, file: UploadedFile = File(...)):
+    user = request.user
+    if not user.is_authenticated:
+        return AuthResponse(
+            success=False,
+            message="Not authenticated.",
+            user=None,
+        )
+
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        return AuthResponse(
+            success=False,
+            message=get_invalid_type_message(),
+            user=None,
+        )
+
+    if file.size > MAX_AVATAR_SIZE:
+        return AuthResponse(
+            success=False,
+            message=get_file_too_large_message(),
+            user=None,
+        )
+
+    old_avatar = user.avatar_file
+    if old_avatar:
+        old_path = old_avatar.path
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    user.avatar_file = file
+    user.avatar_url = ""
+    user.save(update_fields=["avatar_file", "avatar_url"])
+
+    return AuthResponse(
+        success=True,
+        message="Avatar uploaded successfully.",
+        user=UserResponse.model_validate(user, from_attributes=True),
+    )
+
+
+@router.delete("/profile/avatar", response=AuthResponse)
+def delete_avatar(request: HttpRequest):
+    user = request.user
+    if not user.is_authenticated:
+        return AuthResponse(
+            success=False,
+            message="Not authenticated.",
+            user=None,
+        )
+
+    if user.avatar_file:
+        old_path = user.avatar_file.path
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        user.avatar_file = None
+
+    user.avatar_url = ""
+    user.save(update_fields=["avatar_file", "avatar_url"])
+
+    return AuthResponse(
+        success=True,
+        message="Avatar removed.",
         user=UserResponse.model_validate(user, from_attributes=True),
     )
 

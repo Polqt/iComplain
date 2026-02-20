@@ -2,6 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -9,6 +10,10 @@ class LoginRequest(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     id_token: str
+
+
+class ProfileUpdateRequest(BaseModel):
+    name: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -20,6 +25,7 @@ class UserResponse(BaseModel):
     role: Literal["student", "admin"]
     name: str | None = None
     avatar: str | None = None
+
 
 class AuthResponse(BaseModel):
     success: bool

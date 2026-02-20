@@ -108,3 +108,57 @@ export async function logout(): Promise<void> {
         throw new Error((body as { message?: string }).message || res.statusText);
     }
 }
+
+export interface ProfileUpdate {
+    name?: string;
+}
+
+export async function updateProfile(profileData: ProfileUpdate): Promise<User> {
+    const res = await fetch(`${BASE}/profile`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(profileData),
+    });
+
+    const data = await handleRes<RawAuthResponse>(res);
+    if (!data.success || !data.user) {
+        throw new Error(data.message || 'Failed to update profile.');
+    }
+
+    return mapUser(data.user);
+}
+
+export async function uploadAvatar(file: File): Promise<User> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${BASE}/profile/avatar`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+    });
+
+    const data = await handleRes<RawAuthResponse>(res);
+    if (!data.success || !data.user) {
+        throw new Error(data.message || 'Failed to upload avatar.');
+    }
+
+    return mapUser(data.user);
+}
+
+export async function deleteAvatar(): Promise<User> {
+    const res = await fetch(`${BASE}/profile/avatar`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+
+    const data = await handleRes<RawAuthResponse>(res);
+    if (!data.success || !data.user) {
+        throw new Error(data.message || 'Failed to remove avatar.');
+    }
+
+    return mapUser(data.user);
+}

@@ -42,3 +42,18 @@ def get_or_create_google_user(User, email: str, name: str | None = None, avatar_
         user.avatar_url = avatar_url
     user.save()
     return user
+
+
+# Avatar upload config
+MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
+ALLOWED_IMAGE_TYPES_DISPLAY = 'JPEG, PNG, GIF, or WebP'
+
+
+def get_invalid_type_message() -> str:
+    return f"Invalid file type. Please upload a {ALLOWED_IMAGE_TYPES_DISPLAY} image."
+
+
+def get_file_too_large_message() -> str:
+    size_mb = MAX_AVATAR_SIZE // (1024 * 1024)
+    return f"File too large. Maximum size is {size_mb}MB."
