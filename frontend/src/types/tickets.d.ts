@@ -1,4 +1,8 @@
 import type { User } from "./user.ts";
+export type RawTicket = Omit<Ticket, "category" | "priority"> & {
+    category?: Category | null;
+    priority?: TicketPriority | null;
+};
 export type Category = {
     id: number;
     name: string;
@@ -11,7 +15,8 @@ export type TicketPriority = {
     color_code: string;
 };
 export type Ticket = {
-    id: string;
+    id: number;
+    ticket_number: string;
     title: string;
     description: string;
     student: User;
@@ -20,11 +25,25 @@ export type Ticket = {
     building: string;
     room_name: string;
     status: TicketStatus;
+    attachment?: string;
     created_at: string;
     updated_at: string;
-    ticket_number: string;
-    attachments: string;
-    comments: number;
+};
+export type TicketCreatePayload = {
+    title: string;
+    description: string;
+    category: number;
+    building: string;
+    room_name: string;
+};
+export type TicketUpdatePayload = {
+    title?: string;
+    description?: string;
+    category?: number;
+    priority?: number;
+    building?: string;
+    room_name?: string;
+    status?: TicketStatus;
 };
 export type TicketColumn = {
     id: TicketStatus;
@@ -39,5 +58,16 @@ export type Column = {
     color: string;
     dotColor: string;
 };
+export type TicketsState = {
+    tickets: Ticket[];
+    isLoading: boolean;
+    error: string | null;
+};
+export type PipelineStep = {
+    id: TicketStatus;
+    label: string;
+    icon: string;
+};
 export type ViewMode = "grid" | "list";
 export type ModalMode = "create" | "edit" | "delete" | null;
+export type AdminTicketEdit = "status" | "priority" | null;

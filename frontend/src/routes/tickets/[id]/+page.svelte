@@ -26,15 +26,24 @@
   import AdminLayout from "../../../components/layout/AdminLayout.svelte";
   import AdminTicketControl from "../../../components/ui/tickets/AdminTicketControl.svelte";
   import TicketEdit from "../../../components/ui/tickets/TicketEdit.svelte";
+  import CommentSection from "../../../components/ui/comments/CommentSection.svelte";
 
-  $: ticketNumber = $page.params.id;
+  $: idParam = $page.params.id;
+  $: isNumericId = /^\d+$/.test(idParam ?? "");
   $: ({ tickets, isLoading, error } = $ticketsStore);
   $: ({ role, user } = $authStore);
-  $: ticket = tickets.find((t) => t.ticket_number === ticketNumber) ?? null;
+  $: ticket = isNumericId
+    ? (tickets.find((t) => t.id === Number(idParam)) ?? null)
+    : (tickets.find((t) => t.ticket_number === idParam) ?? null);
 
   onMount(async () => {
-    if (tickets.length === 0) {
-      await ticketsStore.loadTickets();
+    if (isNumericId) {
+      const id = Number(idParam);
+      const inStore = tickets.find((t) => t.id === id);
+      if (!inStore) await ticketsStore.loadTicketById(id);
+    } else {
+      const inStore = tickets.find((t) => t.ticket_number === idParam);
+      if (!inStore) await ticketsStore.loadTickets();
     }
   });
 
@@ -305,29 +314,12 @@
                     </div>
                   </div>
                 {/each}
-
-                <!-- Comments placeholder -->
-                <div class="flex items-start gap-3">
-                  <div
-                    class="w-7.5 h-7.5 rounded-full bg-base-200 shrink-0
-                              flex items-center justify-center relative z-10"
-                  >
-                    <Icon
-                      icon="mdi:message-outline"
-                      width="13"
-                      height="13"
-                      class="text-base-content/25"
-                    />
-                  </div>
-                  <div class="pt-1">
-                    <p class="text-xs text-base-content/25 italic">
-                      Comments coming soon...
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
+          {#if ticket.id}
+            <CommentSection ticketId={ticket.id} ticketStatus={ticket.status} />
+          {/if}
         </div>
 
         <div class="flex flex-col gap-3 overflow-y-auto min-h-0">

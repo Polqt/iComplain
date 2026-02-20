@@ -1,7 +1,3 @@
-<svelte:head>
-  <title>iComplain</title>
-</svelte:head>
-
 <script>
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
@@ -15,6 +11,10 @@
     goto("/learn-more");
   }
 </script>
+
+<svelte:head>
+  <title>iComplain</title>
+</svelte:head>
 
 <div class="flex flex-col items-center bg-base-100 h-screen overflow-hidden">
   <div class="w-full max-w-7xl px-4 sm:px-6 lg:px-8">

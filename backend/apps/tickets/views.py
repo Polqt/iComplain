@@ -1,12 +1,13 @@
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
-
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from .utils import (
     format_date,
     format_timestamp,
@@ -15,6 +16,7 @@ from .utils import (
     map_status_for_history,
 )
 from .validation import validate_file
+from apps.notifications.utils import notify_ticket_status_change, notify_ticket_comment
 
 from .schemas import (
     CategorySchema,
@@ -34,6 +36,9 @@ from .schemas import (
 from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback, TicketStatusHistory
 
 router = Router(auth=SessionAuth())
+User = get_user_model()
+channel_layer = get_channel_layer()
+
 
 @router.get("/expensive-data", response=dict)
 def expensive_data(request):
@@ -51,6 +56,13 @@ def get_categories(request):
 @router.get("/priorities", response=list[TicketPrioritySchema])
 def get_priorities(request):
     return TicketPriority.objects.all()
+
+@router.get("/community", response=list[TicketSchema])
+def community_tickets(request):
+    qs = Ticket.objects.select_related("category", "priority", "student") \
+            .prefetch_related('attachments_tickets') \
+            .order_by('-created_at')
+    return [TicketSchema.from_orm(ticket) for ticket in qs]
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
@@ -141,9 +153,12 @@ def ticket_history(request):
         ))
     return out
 
-@router.get("/{id}", response={200: TicketSchema, 404: dict})
-def ticket_detail(request, id: int):
-    ticket = get_object_or_404(Ticket, id=id)
+@router.get("/{ticket_id}", response={200: TicketSchema, 404: dict})
+def ticket_detail(request, ticket_id: str):
+    if ticket_id.isdigit():
+        ticket = get_object_or_404(Ticket, id=int(ticket_id))
+    else:
+        ticket = get_object_or_404(Ticket, ticket_number=ticket_id)
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "Not found."}, 404
     return 200, TicketSchema.from_orm(ticket, request)
@@ -171,6 +186,19 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
             file_path=attachment,
             file_type=attachment.content_type,
         )
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_ticket_update",
+            "data": {
+                "action": "created",  # or "updated", "commented", etc.
+                "ticket_id": ticket_obj.id,
+                "name": getattr(ticket_obj.user, "name", None),
+                "avatar": getattr(ticket_obj.user, "avatar", None),
+                "message": "A ticket was created",
+            }
+        }
+    )
     
     ticket_obj.refresh_from_db()
     ticket_obj = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket_obj.id)
@@ -210,6 +238,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
+            notify_ticket_status_change(student=ticket.student, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, new_status=payload.status)
         ticket.status = payload.status
 
     ticket.updated_at = timezone.now()
@@ -252,6 +281,7 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
                 changed_by=request.user,
                 changed_at=timezone.now(),
             )
+            notify_ticket_status_change(student=ticket.student, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, new_status=payload.status)
         ticket.status = payload.status
         
     if payload.priority is not None:
@@ -259,6 +289,20 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
     
     ticket.updated_at = timezone.now()
     ticket.save()
+    
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_ticket_update",
+            "data": {
+                "action": "updated",
+                "ticket_id": ticket.id,
+                "name": getattr(ticket.user, "name", None),
+                "avatar": getattr(ticket.user, "avatar", None),
+                "message": f"A ticket was updated to {payload.status}",
+            }
+        }
+    )
     
     ticket = Ticket.objects.prefetch_related('attachments_tickets').get(pk=ticket.id)
     return 200, TicketSchema.from_orm(ticket, request)
@@ -287,7 +331,7 @@ def get_comments(request, id: int):
     return [TicketCommentSchema.from_orm(comment) for comment in comments]
 
 @router.post("/{id}/comments", response=TicketCommentSchema)
-def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachment: UploadedFile = File(None)):
+def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(...), attachment: UploadedFile = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     if ticket.status == 'closed':
@@ -299,6 +343,13 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
         message=payload.message
     )
     
+    preview = (payload.message or "")[:80] + ("…" if len(payload.message or "") > 80 else "")
+    if ticket.student != request.user:
+        notify_ticket_comment(recipient_user=ticket.student, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, message_preview=preview)
+    else:
+        for staff_user in User.objects.filter(is_staff=True).exclude(pk=request.user.pk):
+            notify_ticket_comment(recipient_user=staff_user, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, message_preview=preview)
+            
     if attachment:
         validate_file(attachment)
         TicketAttachment.objects.create(
@@ -307,13 +358,29 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema, attachm
             file_path=attachment,
             file_type=attachment.content_type,
         )
-        
-    comment.save()
-    return TicketCommentSchema.from_orm(comment)
+    
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_comment_update",
+            "data": {
+                "type": "comment_created",
+                "ticket_id": ticket.id,
+                "comment": {
+                    "id": comment.id,
+                    "name": getattr(comment.user, "name", None),
+                    "avatar": getattr(comment.user, "avatar", None),
+                    "message": comment.message,
+                    "created_at": comment.created_at.isoformat(),
+                }
+            }
+        }
+    )
+    return 200, TicketCommentSchema.model_validate(comment)
 
 
-@router.post("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
-def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema):
+@router.put("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
+def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema = Form(...)):
     ticket = get_object_or_404(Ticket, id=id)
     comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
@@ -326,6 +393,23 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
     
     comment.save()
     
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_comment_update",
+            "data": {
+                "type": "comment_updated",
+                "ticket_id": ticket.id,
+                "comment": {
+                    "id": comment.id,
+                    "user": {"id": comment.user.id, "name": comment.user.name, "email": comment.user.email},
+                    "message": comment.message,
+                    "created_at": comment.created_at.isoformat(),
+                }
+            }
+        }
+    )
+    
     return TicketCommentSchema.from_orm(comment)
 
 
@@ -337,8 +421,26 @@ def delete_comment(request, id: int, comment_id: int):
     if comment.user != request.user:
         return {"detail": "You do not have permission to delete this comment."}, 403
     
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_comment_update",
+            "data": {
+                "type": "comment_deleted",
+                "ticket_id": ticket.id,
+                "comment": {
+                    "id": comment.id,
+                    "name": getattr(comment.user, "name", None),
+                    "avatar": getattr(comment.user, "avatar", None),
+                    "message": comment.message,
+                    "created_at": comment.created_at.isoformat(),
+                }
+            }
+        }
+    )
+    
     comment.delete()
-    return redirect('ticket_list')
+    return 204, None
 
     
 # Ticket Feedback Views
@@ -430,5 +532,4 @@ def delete_feedback(request, id: int, feedback_id: int):
         return {"detail": "Feedback can only be deleted within 24 hours of submission."}, 400
 
     feedback.delete()
-    return redirect('ticket_list')
-
+    return 204, None

@@ -10,30 +10,12 @@ from .utils import (
     get_or_create_google_user,
     derive_name_from_email,
 )
-from .schemas import SignupRequest, LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
+from .schemas import LoginRequest, GoogleLoginRequest, UserResponse, AuthResponse
 
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
 router = Router(tags=["User"])
-
-@router.post("/register", response=AuthResponse)
-def register(request: HttpRequest, data: SignupRequest):
-    if User.objects.filter(email=data.email).exists():
-        return AuthResponse(success=False, message="Email already registered.", user=None)
-
-    derived_name = derive_name_from_email(str(data.email))
-    user = User.objects.create_user(
-        email=data.email,
-        password=data.password,
-        full_name=derived_name,
-    )
-    return AuthResponse(
-        success=True,
-        message="Student account created successfully.",
-        user=UserResponse.model_validate(user, from_attributes=True),
-    )
-
 
 @ratelimit(key='ip', rate='5/m', method='POST', block=True)
 @router.post("/login", response=AuthResponse)

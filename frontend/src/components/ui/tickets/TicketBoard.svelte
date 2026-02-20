@@ -14,7 +14,7 @@
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-
+  
   let viewMode: ViewMode = "grid";
 
   $: ({ tickets, isLoading } = $ticketsStore);

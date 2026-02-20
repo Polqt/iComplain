@@ -1,22 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
-
-class SignupRequest(BaseModel):
-    email: EmailStr
-    password: str
-    
-    @field_validator('email')
-    def validate_usls_email(cls, v):
-        if not v.endswith('@usls.edu.ph'):
-            raise ValueError('Email must be a valid USLS email address (@usls.edu.ph)')
-        return v
-    
-    @field_validator('password')
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
-        return v
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 class LoginRequest(BaseModel):
     email: str
