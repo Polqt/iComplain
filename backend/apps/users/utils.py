@@ -46,7 +46,8 @@ def get_or_create_google_user(User, email: str, name: str | None = None, avatar_
 
 # Avatar upload config
 MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5MB
-ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
+ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}  # MIME types
+ALLOWED_IMAGE_FORMATS = {'JPEG', 'PNG', 'GIF', 'WEBP'}  # Pillow format names
 ALLOWED_IMAGE_TYPES_DISPLAY = 'JPEG, PNG, GIF, or WebP'
 
 

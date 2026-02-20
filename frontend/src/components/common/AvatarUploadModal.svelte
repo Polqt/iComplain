@@ -35,6 +35,7 @@
     const validation = validateImageFile(file);
     if (!validation.valid) {
       errorMessage = validation.error!;
+      input.value = "";
       return;
     }
 
@@ -45,6 +46,7 @@
       URL.revokeObjectURL(previewUrl);
     }
     previewUrl = URL.createObjectURL(file);
+    input.value = "";
   }
 
   function triggerFileInput() {

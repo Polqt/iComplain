@@ -14,13 +14,11 @@ from .utils import (
     get_or_create_google_user,
     derive_name_from_email,
     MAX_AVATAR_SIZE,
-    ALLOWED_IMAGE_TYPES,
+    ALLOWED_IMAGE_FORMATS,
     get_invalid_type_message,
     get_file_too_large_message,
 )
 from .schemas import LoginRequest, GoogleLoginRequest, ProfileUpdateRequest, UserResponse, AuthResponse
-
-ALLOWED_IMAGE_FORMATS = {'JPEG', 'PNG', 'GIF', 'WEBP'}
 
 logger = logging.getLogger(__name__)
 

@@ -51,7 +51,17 @@ def create_in_app_notification(
     try:
         channel_layer = get_channel_layer()
         if channel_layer:
-            notification_data = serialize_inapp_notification(notification)
+            ts = timezone.localtime(notification.created_at).isoformat() if notification.created_at else ""
+            notification_data = {
+                "id": str(notification.id),
+                "type": notification.notification_type,
+                "title": notification.title,
+                "message": notification.message,
+                "timestamp": ts,
+                "read": notification.read,
+                "actionUrl": action_url or None,
+                "actionLabel": None,
+            }
             async_to_sync(channel_layer.group_send)(
                 f"user_{user.id}",
                 {
@@ -62,7 +72,7 @@ def create_in_app_notification(
                     },
                 },
             )
-    except (OSError, RuntimeError) as e:
+    except Exception as e:
         logger.warning("WebSocket broadcast failed: %s", e)
 
 STATUS_LABELS = {
