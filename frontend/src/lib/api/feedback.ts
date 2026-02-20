@@ -1,75 +1,87 @@
 import type { Ticket } from "../../types/tickets.ts";
 import type { User } from "../../types/user.ts";
+import type { TicketFeedback, FeedbackCreatePayload, FeedbackUpdatePayload } from "../../types/feedback.ts";
 import { PUBLIC_API_URL } from "$env/static/public";
 
 
-export type TicketFeedback = {
-    id: number;
-    ticket: Ticket;
-    student: User;
-    rating: number;
-    comments: string | null;
-    created_at: string;
-    updated_at: string;
-}
 
-export type FeedbackCreatePayload = {
-    rating: number;
-    comments: string | null;
-}
+const BASE = `${PUBLIC_API_URL}/tickets`;
 
-export type FeedbackUpdatePayload = {
-    rating?: number;
-    comments?: string | null;
-}
+async function handleRes<T>(res: Response): Promise<T> {
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || res.statusText);
+    }
 
+    return res.json() as Promise<T>;
+}
 
 export async function getFeedback(ticketId: number): Promise<TicketFeedback> {
-    const res = await fetch(`${PUBLIC_API_URL}/tickets/${ticketId}/feedback`, {
-        credentials: 'include',
-    });
-    if (!res.ok) {
-        throw new Error(`Failed to fetch feedback: ${res.statusText}`);
+    try {
+        const res = await fetch(`${BASE}/${ticketId}/feedback`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        return await handleRes<TicketFeedback>(res);
+    } catch (error) {
+        console.error(`Error fetching feedback for ticket ${ticketId}:`, error);
+        throw error;
     }
-    return res.json() as Promise<TicketFeedback>;
 }
 
 export async function createFeedback(ticketId: number, payload: FeedbackCreatePayload): Promise<TicketFeedback> {
-    const res = await fetch(`${PUBLIC_API_URL}/tickets/${ticketId}/feedback`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include',
-    });
-    if (!res.ok) {
-        throw new Error(`Failed to create feedback: ${res.statusText}`);
+    try {
+        const res = await fetch(`${BASE}/${ticketId}/feedback`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            credentials: 'include',
+        });
+
+        return await handleRes<TicketFeedback>(res);
+    } catch (error) {
+        console.error(`Error creating feedback for ticket ${ticketId}:`, error);
+        throw error;
     }
-    return res.json() as Promise<TicketFeedback>;
 }
 
 export async function updateFeedback(ticketId: number, feedbackId: number, payload: FeedbackUpdatePayload): Promise<TicketFeedback> {
-    const res = await fetch(`${PUBLIC_API_URL}/tickets/${ticketId}/feedback/${feedbackId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include',
-    });
-    if (!res.ok) {
-        throw new Error(`Failed to update feedback: ${res.statusText}`);
+    try {
+        const res = await fetch(`${BASE}/${ticketId}/feedback/${feedbackId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            credentials: 'include',
+        });
+
+        return await handleRes<TicketFeedback>(res);
+    } catch (error) {
+        console.error(`Error updating feedback ${feedbackId} for ticket ${ticketId}:`, error);
+        throw error;
     }
-    return res.json() as Promise<TicketFeedback>;
 }
 
 export async function deleteFeedback(ticketId: number, feedbackId: number): Promise<void> {
-    const res = await fetch(`${PUBLIC_API_URL}/tickets/${ticketId}/feedback/${feedbackId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-    }); 
-    if (!res.ok) {
-        throw new Error(`Failed to delete feedback: ${res.statusText}`);
+    try {
+        const res = await fetch(`${BASE}/${ticketId}/feedback/${feedbackId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.message || 'Failed to delete feedback');
+        }
+    } catch (error) {
+        console.error(`Error deleting feedback ${feedbackId} for ticket ${ticketId}:`, error);
+        throw error;
     }
 }
