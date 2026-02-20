@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
@@ -13,7 +13,7 @@ class GoogleLoginRequest(BaseModel):
 
 
 class ProfileUpdateRequest(BaseModel):
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=150)
 
 
 class UserResponse(BaseModel):

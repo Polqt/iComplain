@@ -29,9 +29,12 @@ class CustomUserManager(BaseUserManager): #custom user model since intended to u
         return user
     
 def user_avatar_path(instance, filename):
+    import os
     import uuid
-    ext = filename.split('.')[-1]
-    return f'avatars/{instance.id}_{uuid.uuid4().hex[:8]}.{ext}'
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower() if ext else '.bin'
+    identifier = instance.pk if instance.pk else uuid.uuid4().hex[:12]
+    return f'avatars/{identifier}_{uuid.uuid4().hex[:8]}{ext}'
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):

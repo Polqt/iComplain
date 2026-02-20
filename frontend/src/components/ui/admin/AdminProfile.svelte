@@ -40,6 +40,8 @@
       authStore.updateUser(updatedUser);
       successMessage = "Avatar updated!";
       setTimeout(() => (successMessage = ""), 3000);
+    } catch (error) {
+      throw error;
     } finally {
       isSaving = false;
     }
@@ -52,6 +54,8 @@
       authStore.updateUser(updatedUser);
       successMessage = "Avatar removed!";
       setTimeout(() => (successMessage = ""), 3000);
+    } catch (error) {
+      throw error;
     } finally {
       isSaving = false;
     }

@@ -112,7 +112,7 @@
 
       <input
         type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp"
+        accept={AVATAR_UPLOAD.allowedTypes.join(',')}
         class="hidden"
         bind:this={fileInputRef}
         onchange={handleFileSelect}

@@ -13,11 +13,11 @@ dnspython==2.8.0
 email-validator==2.3.0
 google-auth==2.48.0
 idna==3.11
+Pillow==11.1.0
 psycopg2-binary==2.9.11
 pyasn1==0.6.2
 pyasn1_modules==0.4.2
 pycparser==3.0
-Pillow==11.1.0
 pydantic==2.12.5
 pydantic_core==2.41.5
 python-dotenv==1.2.1

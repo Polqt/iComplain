@@ -13,9 +13,6 @@ def serialize_inapp_notification(n: InAppNotification) -> dict:
     action_url = None
     if n.ticket_id:
         ticket_number = getattr(n.ticket, "ticket_number", None) if n.ticket else None
-        if ticket_number is None and getattr(n, "ticket", None) is not None:
-            ticket_number = getattr(n.ticket, "ticket_number", None)
-            
         if ticket_number:
             action_url = f"/tickets/{ticket_number}"
         else:
@@ -65,12 +62,12 @@ def create_in_app_notification(
                     },
                 },
             )
-    except Exception as e:
-        logger.warning(f"WebSocket broadcast failed: {e}")
+    except (OSError, RuntimeError) as e:
+        logger.warning("WebSocket broadcast failed: %s", e)
 
 STATUS_LABELS = {
-    "pending": ("Ticket updated", "Your ticket status was set to Pending.", "info"),
-    "in_progress": ("Ticket in progress", "Your ticket is now being worked on.", "info"),
+    "pending": ("Ticket updated", 'Your ticket "{title}" status was set to Pending.', "info"),
+    "in_progress": ("Ticket in progress", 'Your ticket "{title}" is now being worked on.', "info"),
     "resolved": ("Ticket resolved", 'Your ticket "{title}" has been marked as resolved.', "success"),
     "closed": ("Ticket closed", 'Your ticket "{title}" has been closed.', "success"),
 }
