@@ -2,6 +2,16 @@
   import Icon from "@iconify/svelte";
   import AdminLayout from "../../../components/layout/AdminLayout.svelte";
 
+  import {
+    fetchTickets,
+    fetchTicketById,
+    createTicket,
+    updateTicket as updateTicketAPI,
+    deleteTicket,
+  } from "../../../lib/api/ticket.js";
+
+  import { onMount } from "svelte";
+
   type Status = "open" | "pending" | "resolved" | "closed";
   type Priority = "low" | "medium" | "high";
 
