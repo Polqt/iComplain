@@ -40,6 +40,8 @@
       authStore.updateUser(updatedUser);
       successMessage = "Avatar updated!";
       setTimeout(() => (successMessage = ""), 3000);
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : "Failed to upload avatar.";
     } finally {
       isSaving = false;
     }
@@ -52,6 +54,8 @@
       authStore.updateUser(updatedUser);
       successMessage = "Avatar removed!";
       setTimeout(() => (successMessage = ""), 3000);
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : "Failed to remove avatar.";
     } finally {
       isSaving = false;
     }
