@@ -28,11 +28,21 @@ class CustomUserManager(BaseUserManager): #custom user model since intended to u
         user = self.create_user(email=email, password=password, **extra_fields)
         return user
     
+def user_avatar_path(instance, filename):
+    import os
+    import uuid
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower() if ext else '.bin'
+    identifier = instance.pk if instance.pk else uuid.uuid4().hex[:12]
+    return f'avatars/{identifier}_{uuid.uuid4().hex[:8]}{ext}'
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
 
     full_name = models.CharField(max_length=150, blank=True, default="")
     avatar_url = models.URLField(blank=True, default="")
+    avatar_file = models.ImageField(upload_to=user_avatar_path, blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -44,8 +54,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     @property
     def role(self) -> str:
-        # Keep role logic centralized for API serialization.
-        # "admin" covers staff and superusers.
         return "admin" if (self.is_staff or getattr(self, "is_superuser", False)) else "student"
 
     @property
@@ -54,6 +62,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     @property
     def avatar(self) -> str | None:
+        if self.avatar_file:
+            return self.avatar_file.url
         return self.avatar_url or None
 
     def __str__(self):

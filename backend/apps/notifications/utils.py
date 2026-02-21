@@ -1,15 +1,18 @@
+import logging
 from django.utils import timezone
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from .models import InAppNotification
+
+logger = logging.getLogger(__name__)
+
 
 def serialize_inapp_notification(n: InAppNotification) -> dict:
     ts = timezone.localtime(n.created_at).isoformat() if n.created_at else ""
     action_url = None
     if n.ticket_id:
         ticket_number = getattr(n.ticket, "ticket_number", None) if n.ticket else None
-        if ticket_number is None and getattr(n, "ticket", None) is not None:
-            ticket_number = getattr(n.ticket, "ticket_number", None)
-            
         if ticket_number:
             action_url = f"/tickets/{ticket_number}"
         else:
@@ -35,7 +38,7 @@ def create_in_app_notification(
     notification_type: str = "info",
     action_url: str = "",
 ):
-    InAppNotification.objects.create(
+    notification = InAppNotification.objects.create(
         user=user,
         ticket_id=ticket_id,
         event=event,
@@ -45,9 +48,36 @@ def create_in_app_notification(
         action_url=action_url or "",
     )
 
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            ts = timezone.localtime(notification.created_at).isoformat() if notification.created_at else ""
+            notification_data = {
+                "id": str(notification.id),
+                "type": notification.notification_type,
+                "title": notification.title,
+                "message": notification.message,
+                "timestamp": ts,
+                "read": notification.read,
+                "actionUrl": action_url or None,
+                "actionLabel": None,
+            }
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user.id}",
+                {
+                    "type": "send_notification",
+                    "data": {
+                        "type": "new_notification",
+                        "notification": notification_data,
+                    },
+                },
+            )
+    except Exception as e:
+        logger.warning("WebSocket broadcast failed: %s", e)
+
 STATUS_LABELS = {
-    "pending": ("Ticket updated", "Your ticket status was set to Pending.", "info"),
-    "in_progress": ("Ticket in progress", "Your ticket is now being worked on.", "info"),
+    "pending": ("Ticket updated", 'Your ticket "{title}" status was set to Pending.', "info"),
+    "in_progress": ("Ticket in progress", 'Your ticket "{title}" is now being worked on.', "info"),
     "resolved": ("Ticket resolved", 'Your ticket "{title}" has been marked as resolved.', "success"),
     "closed": ("Ticket closed", 'Your ticket "{title}" has been closed.', "success"),
 }
