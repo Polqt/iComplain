@@ -107,6 +107,13 @@
         </div>
       {/if}
 
+      {#if errorMessage && !isEditing}
+        <div class="alert alert-error shadow-sm">
+          <Icon icon="mdi:alert-circle" width="20" height="20" />
+          <span>{errorMessage}</span>
+        </div>
+      {/if}
+
       <div class="card bg-base-100 shadow-sm border border-base-content/5">
         <div class="card-body p-6">
           <div class="flex items-center justify-between mb-4">
