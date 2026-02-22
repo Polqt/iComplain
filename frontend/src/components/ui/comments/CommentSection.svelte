@@ -72,14 +72,6 @@
     : 'bg-base-100 rounded-2xl border border-base-content/8 p-5 flex-1'}"
 >
   <div class="flex items-center justify-between mb-4">
-    <h3
-      class="text-[10px] font-bold uppercase tracking-widest text-base-content/35"
-    >
-      Comments
-      {#if comments.length > 0}
-        <span class="text-base-content/20 ml-1">({comments.length})</span>
-      {/if}
-    </h3>
     {#if $wsStore === "connected"}
       <div class="tooltip tooltip-left" data-tip="Live updates active">
         <span

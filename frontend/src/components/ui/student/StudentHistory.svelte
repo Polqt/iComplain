@@ -7,6 +7,5 @@
 <StudentLayout>
   <TicketHistoryView
     fetchItems={fetchTicketHistory}
-    ticketUrlPrefix="/tickets"
   />
 </StudentLayout>
