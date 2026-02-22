@@ -42,19 +42,22 @@ class TicketSchema(BaseModel):
     updated_at: datetime
     ticket_number: str
     attachment: Optional[str] = None
+    comments_count: int = 0
     class Config:
         from_attributes = True
-        
+
     @classmethod
     def from_orm(cls, ticket, request=None):
         attachment_url = None
-        first = ticket.attachments_tickets.first()
-        if first:
-            relative = first.file_path.url
-            if request is not None:
-                attachment_url = request.build_absolute_uri(relative)
-            else:
-                attachment_url = relative
+        first = getattr(ticket, 'attachments_tickets', None)
+        if first and hasattr(first, 'first'):
+            first_attachment = first.first()
+            if first_attachment:
+                relative = first_attachment.file_path.url
+                if request is not None:
+                    attachment_url = request.build_absolute_uri(relative)
+                else:
+                    attachment_url = relative
         data = {
             "id":            ticket.id,
             "title":         ticket.title,
@@ -68,7 +71,8 @@ class TicketSchema(BaseModel):
             "created_at":    ticket.created_at,
             "updated_at":    ticket.updated_at,
             "ticket_number": ticket.ticket_number,
-            "attachment":    attachment_url
+            "attachment":    attachment_url,
+            "comments_count": getattr(ticket, 'comments_count', 0)
         }
         return cls.model_validate(data)
 

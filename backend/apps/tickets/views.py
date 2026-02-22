@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from datetime import timedelta
@@ -59,17 +59,18 @@ def get_priorities(request):
 
 @router.get("/community", response=list[TicketSchema])
 def community_tickets(request):
-    qs = Ticket.objects.select_related("category", "priority", "student") \
+        qs = Ticket.objects.select_related("category", "priority", "student") \
             .prefetch_related('attachments_tickets') \
-            .order_by('-created_at')
-    return [TicketSchema.from_orm(ticket) for ticket in qs]
+            .annotate(comments_count=Count('comments')) \
+            .order_by('-created_at') 
+        return [TicketSchema.from_orm(ticket) for ticket in qs]
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
 def ticket_list(request):
     qs = Ticket.objects.select_related(
         'category', 'priority', 'student'
-    ).prefetch_related('attachments_tickets')
+    ).prefetch_related('attachments_tickets').annotate(comments_count=Count('comments'))
     if request.user.is_staff:
         return [TicketSchema.from_orm(ticket, request) for ticket in qs]
     return [TicketSchema.from_orm(ticket, request) for ticket in qs.filter(student=request.user)]
@@ -155,9 +156,9 @@ def ticket_history(request):
 @router.get("/{ticket_id}", response={200: TicketSchema, 404: dict})
 def ticket_detail(request, ticket_id: str):
     if ticket_id.isdigit():
-        ticket = get_object_or_404(Ticket, id=int(ticket_id))
+        ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), id=int(ticket_id))
     else:
-        ticket = get_object_or_404(Ticket, ticket_number=ticket_id)
+        ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), ticket_number=ticket_id)
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "Not found."}, 404
     return 200, TicketSchema.from_orm(ticket, request)

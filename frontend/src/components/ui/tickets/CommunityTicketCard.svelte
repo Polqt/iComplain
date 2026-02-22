@@ -8,35 +8,46 @@
   } from "../../../utils/ticketConfig.ts";
   import { formatDate } from "../../../utils/date.ts";
   import { goto } from "$app/navigation";
+  import { commentsStore } from "../../../stores/comment.store.ts";
 
   export let ticket: Ticket;
+  export let onClick: () => void = () => {};
+  export let isActive = false;
 
-  function navigateToTicket() {
-    goto(`/tickets/${ticket.ticket_number}`);
+  let clickTimer: NodeJS.Timeout | null = null;
+  let clickCount = 0;
+
+  function handleClick() {
+    clickCount++;
+
+    if (clickCount === 1) {
+      clickTimer = setTimeout(() => {
+        onClick();
+        clickCount = 0;
+      }, 250);
+    } else if (clickCount === 2) {
+      if (clickTimer) clearTimeout(clickTimer);
+      goto(`/tickets/${ticket.ticket_number}`);
+      clickCount = 0;
+    }
   }
 
-  $: commentCount = (ticket as any).comments_count ?? 0;
-
+  $: commentCount = ticket.comments_count ?? 0;
   $: priorityKey = getPriorityKey(ticket.priority);
   $: priorityColor = priorityDot[priorityKey] ?? priorityDot.low;
-
   $: statusConfig = columns.find((c) => c.id === ticket.status);
   $: statusColor = statusConfig?.dot ?? "bg-base-content/25";
 </script>
 
-<div
-  class="card bg-base-100 border border-base-300 hover:border-primary/30
-         transition-all duration-200 cursor-pointer hover:shadow-md"
-  role="button"
-  tabindex="0"
-  aria-label={`Open ticket ${ticket.title}`}
-  onclick={navigateToTicket}
-  onkeydown={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      navigateToTicket();
-    }
-  }}
+<button
+  type="button"
+  class="card bg-base-100 border transition-all duration-200 cursor-pointer text-left w-full
+         {isActive
+    ? 'border-primary shadow-md'
+    : 'border-base-300 hover:border-primary/30 hover:shadow-md'}"
+  aria-label="Ticket: {ticket.title}"
+  aria-current={isActive ? "true" : undefined}
+  onclick={handleClick}
 >
   <div class="card-body p-4">
     <div class="flex items-start gap-4">
@@ -61,7 +72,7 @@
         >
           <div class="flex items-center gap-1.5">
             <Icon icon="mdi:map-marker" width="16" height="16" />
-            <span class="text-xs">{ticket.building} - {ticket.room_name}</span>
+            <span class="text-xs">{ticket.building} · {ticket.room_name}</span>
           </div>
 
           <div class="flex items-center gap-1.5">
@@ -81,16 +92,16 @@
           {formatDate(ticket.created_at)}
         </div>
         <div
-          class="badge badge-sm gap-1.5 border-0"
-          style="background-color: {statusColor.replace('bg-', '')}20; 
-                 color: {statusColor.replace('bg-', '')}"
+          class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-base-200/60"
         >
           <span class="w-1.5 h-1.5 rounded-full {statusColor}"></span>
-          <span class="text-[10px] font-bold uppercase tracking-wide">
+          <span
+            class="text-[10px] font-bold uppercase tracking-wide text-base-content/60"
+          >
             {statusConfig?.label ?? ticket.status}
           </span>
         </div>
       </div>
     </div>
   </div>
-</div>
+</button>
