@@ -95,20 +95,9 @@
   const items = [
     { name: "Dashboard", icon: "lucide:home", href: "/dashboard" },
     { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
-    {
-      name: "Notifications",
-      icon: "lucide:bell",
-      href: "/notifications",
-    },
     { name: "History", icon: "lucide:clock", href: "/history" },
     { name: "Help", icon: "lucide:help-circle", href: "/help" },
   ];
-
-  const profileItem = {
-    name: "Profile",
-    icon: "lucide:user-circle",
-    href: "/profile",
-  };
 
   const settingItem = {
     name: "Settings",
@@ -209,7 +198,7 @@
               {notifications}
               {unreadCount}
               {notificationsConfig}
-              viewAllHref="/admin/notifications"
+              viewAllHref="/notifications"
               on:markAsRead={handleMarkAsRead}
               on:notificationClick={handleNotificationClick}
               on:viewAll={handleViewAllNotifications}
@@ -255,13 +244,6 @@
             data-tip={settingItem.name}
           >
             <Icon icon={settingItem.icon} width="24" height="24" />
-          </a>
-          <a
-            href={profileItem.href}
-            class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-base-200 transition tooltip tooltip-right"
-            data-tip={profileItem.name}
-          >
-            <Icon icon={profileItem.icon} width="24" height="24" />
           </a>
         </li>
       </ul>
