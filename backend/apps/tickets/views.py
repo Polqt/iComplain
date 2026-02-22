@@ -59,11 +59,11 @@ def get_priorities(request):
 
 @router.get("/community", response=list[TicketSchema])
 def community_tickets(request):
-        qs = Ticket.objects.select_related("category", "priority", "student") \
-            .prefetch_related('attachments_tickets') \
-            .annotate(comments_count=Count('comments')) \
-            .order_by('-created_at') 
-        return [TicketSchema.from_orm(ticket) for ticket in qs]
+    qs = Ticket.objects.select_related("category", "priority", "student") \
+        .prefetch_related('attachments_tickets') \
+        .annotate(comments_count=Count('comments')) \
+        .order_by('-created_at') 
+    return [TicketSchema.from_orm(ticket) for ticket in qs]
 
 # Ticket Views
 @router.get("/", response=list[TicketSchema])
