@@ -118,20 +118,9 @@
     },
     { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
     { name: "Community Board", icon: "lucide:globe", href: "/community-board" },
-    {
-      name: "Notifications",
-      icon: "lucide:bell",
-      href: "/notifications",
-    },
     { name: "History", icon: "lucide:clock", href: "/history" },
     { name: "Help", icon: "lucide:help-circle", href: "/help" },
   ];
-
-  const profileItem = {
-    name: "Profile",
-    icon: "lucide:user-circle",
-    href: "/profile",
-  };
 
   const settingItem = {
     name: "Settings",
@@ -278,13 +267,6 @@
             data-tip={settingItem.name}
           >
             <Icon icon={settingItem.icon} width="24" height="24" />
-          </a>
-          <a
-            href={profileItem.href}
-            class="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-gray-100 transition tooltip tooltip-right"
-            data-tip={profileItem.name}
-          >
-            <Icon icon={profileItem.icon} width="24" height="24" />
           </a>
         </li>
       </ul>
