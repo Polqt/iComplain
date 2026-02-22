@@ -227,6 +227,9 @@ export let statusCounts: Record<TicketStatus | "all", number> = {
   closed: 0,
 };
 
+
+// ----------------- Ticket Filters -----------------
+
 export const statusFilters: { id: TicketStatus | "all"; label: string; dot: string }[] = [
   { id: "all",         label: "All",         dot: "bg-base-content/30" },
   { id: "pending",     label: "Pending",     dot: "bg-amber-400"       },
@@ -242,3 +245,18 @@ export const priorityFilters: { id: string; label: string }[] = [
   { id: "medium", label: "Medium" },
   { id: "low",    label: "Low"    },
 ];
+
+export const categoriesFilters: { id: string; name: string }[] = [
+  { id: "all", name: "All" },
+  { id: "air conditioning & ventilation", name: "Air Conditioning & Ventilation" },
+  { id: "campus equipment", name: "Campus Equipment" },
+  { id: "classroom facilities", name: "Classroom Facilities" },
+  { id: "cleanliness & waste management", name: "Cleanliness & Waste Management" },
+  { id: "infrastructure & building maintenance", name: "Infrastructure & Building Maintenance" },
+  { id: "internet & connectivity", name: "Internet & Connectivity" },
+  { id: "lighting & electrical", name: "Lighting & Electrical" }, 
+  { id: "outdoor facilities & grounds", name: "Outdoor Facilities & Grounds" },
+  { id: "restroom & sanitation", name: "Restroom & Sanitation" },
+  { id: "safety & security concerns", name: "Safety & Security Concerns" },
+  { id: "other", name: "Other" },
+]

@@ -4,11 +4,12 @@
   import {
     statusFilters,
     priorityFilters,
+    categoriesFilters,
   } from "../../../utils/ticketConfig.ts";
 
-  export let search = "";
   export let activeStatus: TicketStatus | "all" = "all";
   export let priorityFilter: string = "all";
+  export let categoryFilter: string = "all";
   export let totalCount = 0;
   export let statusCounts: Record<TicketStatus | "all", number> = {
     all: 0,
@@ -18,13 +19,17 @@
     closed: 0,
   };
 
-  export let onSearchChange: (value: string) => void = () => {};
+  let search = "";
+
   export let onStatusChange: (value: TicketStatus | "all") => void = () => {};
   export let onPriorityChange: (value: string) => void = () => {};
+  export let onCategoryChange: (value: string) => void = () => {};
   export let onClear: () => void = () => {};
 
   $: hasActiveFilters =
-    !!search || activeStatus !== "all" || priorityFilter !== "all";
+    activeStatus !== "all" ||
+    priorityFilter !== "all" ||
+    categoryFilter !== "all";
 
   $: activeStatusLabel =
     statusFilters.find((f) => f.id === activeStatus)?.label ?? "All";
@@ -45,49 +50,51 @@
             ? "bg-base-content/20"
             : null;
 
+  $: activeCategoryLabel =
+    categoriesFilters.find((c) => c.id === categoryFilter)?.name ?? "All";
+
   function closeDropdown() {
     (document.activeElement as HTMLElement)?.blur();
   }
 
   function clearAll() {
-    onSearchChange("");
     onStatusChange("all");
     onPriorityChange("all");
+    onCategoryChange("all");
     onClear();
   }
 </script>
 
 <div class="flex items-center gap-2 shrink-0">
   <label
-    class="input input-sm flex items-center gap-2 flex-1 rounded-lg
-                bg-base-200/60 border-base-content/10 focus-within:border-base-content/25
-                focus-within:bg-base-100 transition-all duration-150"
+    class="input input-sm flex items-center gap-2 w-80 rounded-lg
+               bg-base-200/60 border-base-content/10 focus-within:border-base-content/25
+               focus-within:bg-base-100 transition-all duration-150"
   >
     <Icon
       icon="mdi:magnify"
-      width="13"
-      height="13"
+      width="14"
+      height="14"
       class="text-base-content/35 shrink-0"
     />
     <input
       type="text"
-      placeholder="Search issues…"
-      class="grow text-xs bg-transparent outline-none
-             text-base-content placeholder:text-base-content/30"
-      value={search}
-      oninput={(e) => onSearchChange((e.target as HTMLInputElement).value)}
+      placeholder="Search tickets…"
+      class="grow text-sm bg-transparent outline-none
+                 text-base-content placeholder:text-base-content/30"
+      bind:value={search}
     />
     {#if search}
       <button
-        onclick={() => onSearchChange("")}
+        type="button"
+        onclick={() => (search = "")}
         class="text-base-content/30 hover:text-base-content/60 transition-colors shrink-0"
         aria-label="Clear search"
       >
-        <Icon icon="mdi:close" width="11" height="11" />
+        <Icon icon="mdi:close" width="12" height="12" />
       </button>
     {/if}
   </label>
-
   <div class="dropdown dropdown-bottom dropdown-end">
     <button
       tabindex="0"
@@ -143,7 +150,6 @@
     </div>
   </div>
 
-  <!-- Winjan will change the filters (top tickets, new ticket, previous tickets) soon -->
   <div class="dropdown dropdown-bottom dropdown-end">
     <button
       tabindex="0"
@@ -169,7 +175,6 @@
       <Icon icon="mdi:chevron-down" width="11" height="11" class="opacity-40" />
     </button>
 
-    <!-- Winjan will change the filters soon to (monthly ticket, yearly ticket, weekly ticket) -->
     <div
       class="dropdown-content z-50 mt-1 w-36 bg-base-100
                 border border-base-content/10 rounded-xl shadow-xl p-1"
@@ -220,6 +225,53 @@
     </div>
   </div>
 
+  <div class="dropdown dropdown-bottom dropdown-end">
+    <button
+      tabindex="0"
+      class="btn btn-sm btn-ghost border border-base-content/10 rounded-lg h-8 min-h-8
+             gap-1.5 font-medium text-xs px-3
+             hover:border-base-content/20 hover:bg-base-200
+             {categoryFilter !== 'all'
+        ? 'text-primary border-primary/25 bg-primary/5 hover:bg-primary/8'
+        : 'text-base-content/60'}"
+    >
+      <Icon icon="mdi:tag-outline" width="11" height="11" class="opacity-40" />
+      {activeCategoryLabel}
+      <Icon icon="mdi:chevron-down" width="11" height="11" class="opacity-40" />
+    </button>
+
+    <div
+      class="dropdown-content z-50 mt-1 w-64 bg-base-100
+                border border-base-content/10 rounded-xl shadow-xl p-1
+                max-h-72 overflow-y-auto"
+    >
+      {#each categoriesFilters as cf}
+        <button
+          role="menuitem"
+          class="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg
+                 text-xs text-left transition-colors
+                 {categoryFilter === cf.id
+            ? 'bg-primary/8 text-primary font-semibold'
+            : 'text-base-content/65 hover:bg-base-200'}"
+          onclick={() => {
+            onCategoryChange(cf.id);
+            closeDropdown();
+          }}
+        >
+          <span class="flex-1 truncate">{cf.name}</span>
+          {#if categoryFilter === cf.id}
+            <Icon
+              icon="mdi:check"
+              width="10"
+              height="10"
+              class="text-primary shrink-0"
+            />
+          {/if}
+        </button>
+      {/each}
+    </div>
+  </div>
+
   <div
     class="flex items-center gap-1 h-8 px-2.5 rounded-lg border border-base-content/10
               bg-base-200/60 text-[11px] text-base-content/40 font-mono shrink-0"
@@ -228,6 +280,7 @@
     {totalCount}
     {#if hasActiveFilters}
       <button
+        type="button"
         onclick={clearAll}
         class="ml-0.5 text-base-content/30 hover:text-error transition-colors"
         title="Clear all filters"
