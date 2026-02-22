@@ -7,7 +7,7 @@
   import type { TicketStatus, Category } from "../../../types/tickets.ts";
   import { statusConfig } from "../../../utils/ticketConfig.ts";
 
-  $: ({ tickets, isLoading, error } = $ticketsStore);
+  $: ({ tickets, isLoading } = $ticketsStore);
 
   let categories: Category[] = [];
   let selectedTicketId: number | null = null;
@@ -17,8 +17,22 @@
   let priorityFilter = "all";
   let categoryFilter = "all";
   let locationFilter = "all";
+  let pendingStatus: TicketStatus | null = null;
+  let pendingPriority: number | null = null;
+  let isSaving = false;
 
   $: selectedTicket = tickets.find((t) => t.id === selectedTicketId) ?? null;
+
+  $: hasChanges =
+    selectedTicket &&
+    ((pendingStatus != null && pendingStatus !== selectedTicket.status) ||
+      (pendingPriority != null &&
+        pendingPriority !== selectedTicket.priority.id));
+
+  $: if (selectedTicket) {
+    pendingStatus = null;
+    pendingPriority = null;
+  }
 
   $: locations = Array.from(
     new Set(tickets.map((t) => `${t.building} - ${t.room_name}`)),
@@ -65,12 +79,48 @@
     }
   });
 
-  async function handleStatusChange(ticketId: number, newStatus: TicketStatus) {
-    await ticketsStore.adminPatchTicket(ticketId, { status: newStatus });
+  async function handleStatusChange(newStatus: TicketStatus) {
+    pendingStatus = newStatus;
   }
 
-  async function handlePriorityChange(ticketId: number, newPriorityId: number) {
-    await ticketsStore.adminPatchTicket(ticketId, { priority: newPriorityId });
+  async function handlePriorityChange(newPriorityId: number) {
+    pendingPriority = newPriorityId;
+  }
+
+  async function handleSaveChanges() {
+    if (!selectedTicket) return;
+
+    isSaving = true;
+    try {
+      const updates: { status?: TicketStatus; priority?: number } = {};
+
+      if (pendingStatus != null && pendingStatus !== selectedTicket.status) {
+        updates.status = pendingStatus;
+      }
+
+      if (
+        pendingPriority != null &&
+        pendingPriority !== selectedTicket.priority.id
+      ) {
+        updates.priority = pendingPriority;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await ticketsStore.adminPatchTicket(selectedTicket.id, updates);
+      }
+
+      pendingStatus = null;
+      pendingPriority = null;
+    } catch (error) {
+      console.error("Failed to save changes:", error);
+    } finally {
+      isSaving = false;
+    }
+  }
+
+  function handleCancelChanges() {
+    pendingStatus = null;
+    pendingPriority = null;
   }
 </script>
 
@@ -188,7 +238,6 @@
                       </p>
                     </div>
 
-                    <!-- Unread Badge (if comments_count > 0) -->
                     {#if ticket.comments_count && ticket.comments_count > 0}
                       <span class="badge badge-primary badge-sm">
                         {ticket.comments_count}
@@ -206,6 +255,12 @@
         class="card bg-base-100 shadow-sm border border-base-content/5 rounded-lg lg:col-span-2 overflow-hidden"
       >
         <div class="card-body p-4 h-full overflow-y-auto">
+          {#if hasChanges}
+            <div class="alert alert-warning mb-4">
+              <Icon icon="mdi:alert" width="20" height="20" />
+              <span class="text-sm">You have unsaved changes</span>
+            </div>
+          {/if}
           {#if selectedTicket}
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
@@ -267,10 +322,9 @@
                 </p>
                 <select
                   class="select select-bordered select-sm w-full"
-                  value={selectedTicket.status}
+                  value={pendingStatus ?? selectedTicket.status}
                   onchange={(e) =>
                     handleStatusChange(
-                      selectedTicket.id,
                       (e.target as HTMLSelectElement).value as TicketStatus,
                     )}
                 >
@@ -287,10 +341,9 @@
                 </p>
                 <select
                   class="select select-bordered select-sm w-full"
-                  value={selectedTicket.priority.id}
+                  value={pendingPriority ?? selectedTicket.priority.id}
                   onchange={(e) =>
                     handlePriorityChange(
-                      selectedTicket.id,
                       parseInt((e.target as HTMLSelectElement).value),
                     )}
                 >
@@ -314,6 +367,31 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
+              {#if hasChanges}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary gap-2"
+                  onclick={handleSaveChanges}
+                  disabled={isSaving}
+                >
+                  {#if isSaving}
+                    <span class="loading loading-spinner loading-xs"></span>
+                  {:else}
+                    <Icon icon="mdi:content-save" width="18" height="18" />
+                  {/if}
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-ghost gap-2"
+                  onclick={handleCancelChanges}
+                  disabled={isSaving}
+                >
+                  <Icon icon="mdi:close" width="18" height="18" />
+                  Cancel
+                </button>
+              {/if}
+
               <button
                 type="button"
                 class="btn btn-sm btn-outline gap-2"
