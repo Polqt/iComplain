@@ -1,115 +1,107 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import type { Ticket } from "../../../types/tickets.ts";
-  import { getPriorityKey, priorityConfig, priorityDot } from "../../../utils/ticketConfig.ts";
+  import {
+    columns,
+    getPriorityKey,
+    priorityDot,
+  } from "../../../utils/ticketConfig.ts";
   import { formatDate } from "../../../utils/date.ts";
+  import { goto } from "$app/navigation";
+  import { commentsStore } from "../../../stores/comment.store.ts";
 
   export let ticket: Ticket;
+  export let onClick: () => void = () => {};
+  export let isActive = false;
 
-  $: pKey = getPriorityKey(ticket.priority);
+  let clickTimer: NodeJS.Timeout | null = null;
+  let clickCount = 0;
+
+  function handleClick() {
+    clickCount++;
+
+    if (clickCount === 1) {
+      clickTimer = setTimeout(() => {
+        onClick();
+        clickCount = 0;
+      }, 250);
+    } else if (clickCount === 2) {
+      if (clickTimer) clearTimeout(clickTimer);
+      goto(`/tickets/${ticket.ticket_number}`);
+      clickCount = 0;
+    }
+  }
+
+  $: commentCount = ticket.comments_count ?? 0;
+  $: priorityKey = getPriorityKey(ticket.priority);
+  $: priorityColor = priorityDot[priorityKey] ?? priorityDot.low;
+  $: statusConfig = columns.find((c) => c.id === ticket.status);
+  $: statusColor = statusConfig?.dot ?? "bg-base-content/25";
 </script>
 
-<div
-  class="group bg-base-100 rounded-xl border border-base-content/7
-         hover:border-base-content/16
-         hover:shadow-[0_2px_16px_rgba(0,0,0,0.07)]
-         transition-all duration-150"
+<button
+  type="button"
+  class="card bg-base-100 border transition-all duration-200 cursor-pointer text-left w-full
+         {isActive
+    ? 'border-primary shadow-md'
+    : 'border-base-300 hover:border-primary/30 hover:shadow-md'}"
+  aria-label="Ticket: {ticket.title}"
+  aria-current={isActive ? "true" : undefined}
+  onclick={handleClick}
 >
-  <div class="p-3.5">
-    <div class="flex items-center justify-between gap-2 mb-2">
-      <div class="flex items-center gap-1.5 min-w-0">
-        <span
-          class="w-2 h-2 rounded-full shrink-0
-                 {priorityDot[pKey] ?? 'bg-base-content/15'}"
-          title="{priorityConfig[pKey]?.label} priority"
-        ></span>
-        <span
-          class="text-[10px] text-base-content/45 bg-base-200
-                 rounded-full px-2 py-0.5 truncate max-w-32 font-medium"
-        >
-          {ticket.category.name}
-        </span>
-      </div>
-      <span class="text-[10px] font-mono text-base-content/20 shrink-0">
-        {ticket.ticket_number}
-      </span>
-    </div>
+  <div class="card-body p-4">
+    <div class="flex items-start gap-4">
+      <div class="w-1 h-full rounded-full shrink-0 {priorityColor}"></div>
 
-    <p
-      class="text-[13px] font-semibold text-base-content
-               leading-snug line-clamp-2 mb-1.5"
-    >
-      {ticket.title}
-    </p>
-
-    <p
-      class="text-[11px] text-base-content/40 leading-relaxed
-               line-clamp-2 mb-2.5"
-    >
-      {ticket.description}
-    </p>
-
-    <div class="flex items-center gap-1 mb-3">
-      <Icon
-        icon="mdi:map-marker-outline"
-        width="10"
-        height="10"
-        class="text-base-content/25 shrink-0"
-      />
-      <span class="text-[10px] text-base-content/35 truncate">
-        {ticket.building} · {ticket.room_name}
-      </span>
-    </div>
-
-    <div
-      class="flex items-center justify-between gap-2
-             pt-2.5 border-t border-base-content/6"
-    >
-      <div class="flex items-center gap-1.5 min-w-0">
-        <div
-          class="w-5 h-5 rounded-full bg-primary/10 shrink-0
-                 flex items-center justify-center
-                 text-[9px] font-bold text-primary uppercase"
-        >
-          {ticket.student.email[0]}
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <span class="text-xs font-mono text-base-content/60 font-medium">
+            {ticket.ticket_number}
+          </span>
+          <span class="badge badge-sm badge-outline">
+            {ticket.category.name}
+          </span>
         </div>
-        <span
-          class="text-[10px] text-base-content/35 truncate max-w-20"
+
+        <h3 class="font-semibold text-base mb-2 text-base-content line-clamp-2">
+          {ticket.title}
+        </h3>
+
+        <div
+          class="flex items-center gap-4 text-sm text-base-content/60 flex-wrap"
         >
-          {ticket.student.email.split("@")[0]}
-        </span>
+          <div class="flex items-center gap-1.5">
+            <Icon icon="mdi:map-marker" width="16" height="16" />
+            <span class="text-xs">{ticket.building} · {ticket.room_name}</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <Icon icon="mdi:account-circle" width="16" height="16" />
+            <span class="text-xs">{ticket.student.name || "Anonymous"}</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <Icon icon="mdi:comment-outline" width="16" height="16" />
+            <span class="text-xs font-medium">{commentCount}</span>
+          </div>
+        </div>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <span class="text-[10px] text-base-content/25">
+      <div class="text-right shrink-0 flex flex-col items-end gap-2">
+        <div class="text-xs text-base-content/60">
           {formatDate(ticket.created_at)}
-        </span>
-        <button
-          class="flex items-center gap-0.5 text-base-content/25
-                 hover:text-primary transition-colors"
-          title="Comments — coming soon"
-          type="button"
+        </div>
+        <div
+          class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-base-200/60"
         >
-          <Icon
-            icon="mdi:comment-outline"
-            width="12"
-            height="12"
-          />
-          <span class="text-[10px] font-mono">0</span>
-        </button>
-        <button
-          class="text-base-content/25 hover:text-primary transition-colors"
-          title="Support — coming soon"
-          type="button"
-        >
-          <Icon
-            icon="mdi:arrow-up-bold-outline"
-            width="12"
-            height="12"
-          />
-        </button>
+          <span class="w-1.5 h-1.5 rounded-full {statusColor}"></span>
+          <span
+            class="text-[10px] font-bold uppercase tracking-wide text-base-content/60"
+          >
+            {statusConfig?.label ?? ticket.status}
+          </span>
+        </div>
       </div>
     </div>
   </div>
-</div>
-
+</button>

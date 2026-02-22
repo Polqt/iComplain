@@ -12,10 +12,9 @@
     getActivityLabel,
     historyConfig,
   } from "../../../utils/historyConfig.ts";
+  import { authStore } from "../../../stores/auth.store.ts";
 
   export let fetchItems: () => Promise<HistoryItem[]> = async () => [];
-
-  export let ticketUrlPrefix: string = "/tickets";
 
   let activeFilter: HistoryFilterType = "all";
   let sortBy: HistorySortType = "newest";
@@ -23,6 +22,8 @@
   let historyItems: HistoryItem[] = [];
   let loading = true;
   let error: string | null = null;
+
+  $: ({ role } = $authStore);
 
   onMount(async () => {
     try {
@@ -51,58 +52,68 @@
   }
 </script>
 
-<div class="flex flex-col h-[calc(100vh-8rem)]">
-  <div class="shrink-0 mb-6">
-    <h1 class="text-2xl font-black text-base-content mb-1">Ticket History</h1>
-    <p class="text-sm text-base-content/60">
-      View all your ticket activities and status changes.
-    </p>
-  </div>
-
-  <div class="mb-6 shrink-0">
-    <HistoryFilters
-      bind:activeFilter
-      bind:sortBy
-      bind:searchQuery
-      totalCount={historyItems.length}
-      onclear={clearFilters}
-    />
-  </div>
-
-  {#if loading}
-    <div class="flex-1 flex items-center justify-center text-base-content/60">
-      Loading history…
+{#if role === "student"}
+  <div class="flex flex-col h-[calc(100vh-8rem)]">
+    <div class="shrink-0 mb-6">
+      <h1 class="text-2xl font-black text-base-content mb-1">Ticket History</h1>
+      <p class="text-sm text-base-content/60">
+        View all your ticket activities and status changes.
+      </p>
     </div>
-  {:else if error}
-    <div class="flex-1 flex items-center justify-center text-error">
-      {error}
-    </div>
-  {:else}
-    {#if filteredItems.length > 0}
-      <div class="mb-4 shrink-0">
-        <p class="text-sm text-base-content/60">
-          Showing <span class="font-semibold text-primary"
-            >{filteredItems.length}</span
-          >
-          {getActivityLabel(filteredItems.length)}
-          {#if activeFilter !== "all"}
-            in <span class="font-semibold"
-              >{historyConfig[activeFilter].label}</span
-            >
-          {/if}
-        </p>
-      </div>
-    {/if}
 
-    <div class="flex-1 overflow-y-auto pr-2">
-      <HistoryTimeline
-        items={filteredItems}
-        {activeFilter}
-        {searchQuery}
-        sortBy={sortBy}
-        {ticketUrlPrefix}
-        onclearfilters={clearFilters}
+    <div class="mb-6 shrink-0">
+      <HistoryFilters
+        bind:activeFilter
+        bind:sortBy
+        bind:searchQuery
+        totalCount={historyItems.length}
+        onclear={clearFilters}
       />
     </div>
-  {/if}
-</div>
+
+    {#if loading}
+      <div class="flex-1 flex items-center justify-center text-base-content/60">
+        Loading history…
+      </div>
+    {:else if error}
+      <div class="flex-1 flex items-center justify-center text-error">
+        {error}
+      </div>
+    {:else}
+      {#if filteredItems.length > 0}
+        <div class="mb-4 shrink-0">
+          <p class="text-sm text-base-content/60">
+            Showing <span class="font-semibold text-primary"
+              >{filteredItems.length}</span
+            >
+            {getActivityLabel(filteredItems.length)}
+            {#if activeFilter !== "all"}
+              in <span class="font-semibold"
+                >{historyConfig[activeFilter].label}</span
+              >
+            {/if}
+          </p>
+        </div>
+      {/if}
+
+      <div class="flex-1 overflow-y-auto pr-2">
+        <HistoryTimeline
+          items={filteredItems}
+          {activeFilter}
+          {searchQuery}
+          {sortBy}
+          onclearfilters={clearFilters}
+        />
+      </div>
+    {/if}
+  </div>
+{:else if role === "admin"}
+  <div class="flex flex-col h-[calc(100vh-8rem)]">
+    <div class="shrink-0 mb-6">
+      <h1 class="text-2xl font-black text-base-content mb-1">Ticket History</h1>
+      <p class="text-sm text-base-content/60">
+        View all tickets that has been closed.
+      </p>
+    </div>
+  </div>
+{/if}
