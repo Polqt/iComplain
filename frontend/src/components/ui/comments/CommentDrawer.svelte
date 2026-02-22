@@ -12,12 +12,11 @@
 </script>
 
 <div
-  class="w-[380px] shrink-0 bg-base-100 border-l border-base-content/8 flex flex-col"
+  class="w-95 shrink-0 bg-base-100 border-l border-base-content/8 flex flex-col"
 >
   {#if ticket}
     {#key ticket.id}
       <div class="flex flex-col h-full">
-        <!-- Header -->
         <div class="px-5 pt-5 pb-4 border-b border-base-content/8 shrink-0">
           <p
             class="text-[10px] font-semibold uppercase tracking-widest text-base-content/30 mb-2"
@@ -42,7 +41,6 @@
           </div>
         </div>
 
-        <!-- Comment section -->
         <div class="flex-1 min-h-0">
           <CommentSection
             ticketId={ticket.id}
@@ -53,7 +51,6 @@
       </div>
     {/key}
   {:else}
-    <!-- Empty state -->
     <div
       class="flex flex-col items-center justify-center h-full text-center px-8 gap-3"
     >
