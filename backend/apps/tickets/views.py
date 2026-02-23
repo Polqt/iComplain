@@ -193,8 +193,8 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
             "data": {
                 "action": "created",  # or "updated", "commented", etc.
                 "ticket_id": ticket_obj.id,
-                "name": getattr(ticket_obj.user, "name", None),
-                "avatar": getattr(ticket_obj.user, "avatar", None),
+                "name": getattr(ticket_obj.student, "name", None),
+                "avatar": getattr(ticket_obj.student, "avatar", None),
                 "message": "A ticket was created",
             }
         }
@@ -268,8 +268,8 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
             "data": {
                 "action": "updated",
                 "ticket_id": ticket.id,
-                "name": getattr(ticket.user, "name", None),
-                "avatar": getattr(ticket.user, "avatar", None),
+                "name": getattr(ticket.student, "name", None),
+                "avatar": getattr(ticket.student, "avatar", None),
                 "message": f"A ticket was updated by {request.user.name}",
             }
         }
@@ -311,8 +311,8 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
             "data": {
                 "action": "updated",
                 "ticket_id": ticket.id,
-                "name": getattr(ticket.user, "name", None),
-                "avatar": getattr(ticket.user, "avatar", None),
+                "name": getattr(ticket.student, "name", None),
+                "avatar": getattr(ticket.student, "avatar", None),
                 "message": f"A ticket was updated to {payload.status}",
             }
         }
@@ -342,8 +342,8 @@ def delete_ticket(request, id: int):
             "data": {
                 "action": "deleted",
                 "ticket_id": ticket.id,
-                "name": getattr(ticket.user, "name", None),
-                "avatar": getattr(ticket.user, "avatar", None),
+                "name": getattr(ticket.student, "name", None),
+                "avatar": getattr(ticket.student, "avatar", None),
                 "message": f"A ticket was deleted by {request.user.name}",
             }
         }
