@@ -80,6 +80,7 @@
 
     <div class="mb-4 shrink-0">
       <TicketFilters
+        bind:search
         bind:activeStatus
         bind:priorityFilter
         bind:categoryFilter
