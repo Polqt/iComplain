@@ -376,7 +376,7 @@
                       tabindex="-1"
                       role="menu"
                       class="dropdown-content menu bg-base-100 border border-base-content/10
-                             rounded-xl shadow-xl z-[9999] w-40 p-1.5 text-sm"
+                             rounded-xl shadow-xl z-[50] w-40 p-1.5 text-sm"
                     >
                       {#if report.status === "pending"}
                         <li>
