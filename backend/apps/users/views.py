@@ -259,6 +259,8 @@ def delete_avatar(request: HttpRequest):
     )
 
 
+    
+    
 @router.post("/forgot-password", response=AuthResponse)
 def forgot_password(request: HttpRequest, data: LoginRequest):
     return AuthResponse(

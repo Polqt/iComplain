@@ -171,7 +171,6 @@
           </div>
         {/each}
       </div>
-
     {:else if tickets.length === 0}
       <div class="flex flex-col items-center justify-center flex-1 gap-5">
         <div class="relative">

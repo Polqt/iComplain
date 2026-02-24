@@ -1,161 +1,42 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Icon from "@iconify/svelte";
   import AdminLayout from "../../../components/layout/AdminLayout.svelte";
+  import { ticketsStore } from "../../../stores/tickets.store.ts";
+  import { fetchCategories } from "../../../lib/api/ticket.ts";
+  import type { TicketStatus, Category } from "../../../types/tickets.ts";
+  import { statusConfig } from "../../../utils/ticketConfig.ts";
 
-  import {
-    fetchTickets,
-    fetchTicketById,
-    createTicket,
-    updateTicket as updateTicketAPI,
-    deleteTicket,
-  } from "../../../lib/api/ticket.js";
+  $: ({ tickets, isLoading } = $ticketsStore);
 
-  import { onMount } from "svelte";
-
-  type Status = "open" | "pending" | "resolved" | "closed";
-  type Priority = "low" | "medium" | "high";
-
-  type Ticket = {
-    id: string;
-    title: string;
-    description: string;
-    student: string;
-    status: Status;
-    priority: Priority;
-    category: string;
-    building: string;
-    room: string;
-    createdAt: string;
-    updatedAt: string;
-    unread: number;
-  };
-
-  const statusConfig: Record<Status, { label: string; color: string }> = {
-    open: { label: "Open", color: "badge-info" },
-    pending: { label: "Pending", color: "badge-warning" },
-    resolved: { label: "Resolved", color: "badge-success" },
-    closed: { label: "Closed", color: "badge-ghost" },
-  };
-
-  const priorityConfig: Record<Priority, { label: string; color: string }> = {
-    low: { label: "Low", color: "badge-info" },
-    medium: { label: "Medium", color: "badge-warning" },
-    high: { label: "High", color: "badge-error" },
-  };
-
-  const categories = [
-    "Facilities",
-    "IT Support",
-    "Safety",
-    "Cleanliness",
-    "Equipment",
-  ];
-  const locations = [
-    "Building A - 1F",
-    "Building A - 3F",
-    "Building B - 2F",
-    "Building C - 1F",
-    "Gymnasium",
-  ];
+  let categories: Category[] = [];
+  let selectedTicketId: number | null = null;
 
   let searchQuery = "";
-  let statusFilter: "all" | Status = "all";
-  let priorityFilter: "all" | Priority = "all";
+  let statusFilter: TicketStatus | "all" = "all";
+  let priorityFilter = "all";
   let categoryFilter = "all";
   let locationFilter = "all";
+  let pendingStatus: TicketStatus | null = null;
+  let pendingPriority: number | null = null;
+  let isSaving = false;
 
-  let tickets: Ticket[] = [
-    {
-      id: "TC-0004",
-      title: "System Login Failure",
-      description: "Cannot access the portal after password reset.",
-      student: "David Newman",
-      status: "open",
-      priority: "high",
-      category: "IT Support",
-      building: "Building B",
-      room: "Library 2F",
-      createdAt: "Feb 08, 2026",
-      updatedAt: "09:46 AM",
-      unread: 2,
-    },
-    {
-      id: "TC-0001",
-      title: "Request for Additional Storage",
-      description: "Need more storage for project submission files.",
-      student: "Emily Johnson",
-      status: "pending",
-      priority: "medium",
-      category: "IT Support",
-      building: "Building A",
-      room: "301",
-      createdAt: "Feb 07, 2026",
-      updatedAt: "09:10 AM",
-      unread: 0,
-    },
-    {
-      id: "TC-0003",
-      title: "Unable to Access Report",
-      description: "Reports page returns a blank screen on load.",
-      student: "Raihan Fikri",
-      status: "open",
-      priority: "medium",
-      category: "IT Support",
-      building: "Building A",
-      room: "204",
-      createdAt: "Feb 07, 2026",
-      updatedAt: "09:36 AM",
-      unread: 1,
-    },
-    {
-      id: "TC-0007",
-      title: "File Upload Error",
-      description: "Submission fails with file size validation.",
-      student: "Brooklyn Simmons",
-      status: "pending",
-      priority: "low",
-      category: "Equipment",
-      building: "Building C",
-      room: "Cafeteria",
-      createdAt: "Feb 06, 2026",
-      updatedAt: "08:36 AM",
-      unread: 1,
-    },
-    {
-      id: "TC-0008",
-      title: "Unexpected App Crash",
-      description: "Mobile app crashes after login on Android.",
-      student: "Guy Hawkins",
-      status: "open",
-      priority: "high",
-      category: "IT Support",
-      building: "Building B",
-      room: "115",
-      createdAt: "Feb 06, 2026",
-      updatedAt: "08:10 AM",
-      unread: 0,
-    },
-  ];
+  $: selectedTicket = tickets.find((t) => t.id === selectedTicketId) ?? null;
 
-  let selectedId = tickets[0]?.id ?? "";
+  $: hasChanges =
+    selectedTicket &&
+    ((pendingStatus != null && pendingStatus !== selectedTicket.status) ||
+      (pendingPriority != null &&
+        pendingPriority !== selectedTicket.priority.id));
 
-  function updateTicket(id: string, patch: Partial<Ticket>) {
-    tickets = tickets.map((ticket) =>
-      ticket.id === id ? { ...ticket, ...patch } : ticket,
-    );
+  $: if (selectedTicket) {
+    pendingStatus = null;
+    pendingPriority = null;
   }
 
-  function handleStatusChange(id: string, e: Event) {
-    const target = e.currentTarget as HTMLSelectElement | null;
-    if (!target) return;
-    updateTicket(id, { status: target.value as Status });
-  }
-
-  function handlePriorityChange(id: string, e: Event) {
-    const target = e.currentTarget as HTMLSelectElement | null;
-    if (!target) return;
-    updateTicket(id, { priority: target.value as Priority });
-  }
+  $: locations = Array.from(
+    new Set(tickets.map((t) => `${t.building} - ${t.room_name}`)),
+  ).sort();
 
   $: filteredTickets = tickets.filter((ticket) => {
     const query = searchQuery.trim().toLowerCase();
@@ -163,16 +44,18 @@
       !query ||
       ticket.title.toLowerCase().includes(query) ||
       ticket.description.toLowerCase().includes(query) ||
-      ticket.id.toLowerCase().includes(query) ||
-      ticket.student.toLowerCase().includes(query);
+      ticket.ticket_number.toLowerCase().includes(query) ||
+      ticket.student.name?.toLowerCase().includes(query);
 
     const matchesStatus =
       statusFilter === "all" || ticket.status === statusFilter;
     const matchesPriority =
-      priorityFilter === "all" || ticket.priority === priorityFilter;
+      priorityFilter === "all" ||
+      ticket.priority.name.toLowerCase() === priorityFilter;
     const matchesCategory =
-      categoryFilter === "all" || ticket.category === categoryFilter;
-    const locationLabel = `${ticket.building} - ${ticket.room}`;
+      categoryFilter === "all" || ticket.category.name === categoryFilter;
+
+    const locationLabel = `${ticket.building} - ${ticket.room_name}`;
     const matchesLocation =
       locationFilter === "all" || locationLabel === locationFilter;
 
@@ -185,8 +68,60 @@
     );
   });
 
-  $: selectedTicket =
-    tickets.find((ticket) => ticket.id === selectedId) ?? null;
+  onMount(async () => {
+    await Promise.all([
+      ticketsStore.loadTickets(),
+      fetchCategories().then((cats) => (categories = cats)),
+    ]);
+
+    if (filteredTickets.length > 0) {
+      selectedTicketId = filteredTickets[0].id;
+    }
+  });
+
+  async function handleStatusChange(newStatus: TicketStatus) {
+    pendingStatus = newStatus;
+  }
+
+  async function handlePriorityChange(newPriorityId: number) {
+    pendingPriority = newPriorityId;
+  }
+
+  async function handleSaveChanges() {
+    if (!selectedTicket) return;
+
+    isSaving = true;
+    try {
+      const updates: { status?: TicketStatus; priority?: number } = {};
+
+      if (pendingStatus != null && pendingStatus !== selectedTicket.status) {
+        updates.status = pendingStatus;
+      }
+
+      if (
+        pendingPriority != null &&
+        pendingPriority !== selectedTicket.priority.id
+      ) {
+        updates.priority = pendingPriority;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await ticketsStore.adminPatchTicket(selectedTicket.id, updates);
+      }
+
+      pendingStatus = null;
+      pendingPriority = null;
+    } catch (error) {
+      console.error("Failed to save changes:", error);
+    } finally {
+      isSaving = false;
+    }
+  }
+
+  function handleCancelChanges() {
+    pendingStatus = null;
+    pendingPriority = null;
+  }
 </script>
 
 <AdminLayout>
@@ -198,20 +133,10 @@
           View and manage support tickets in one place.
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <button class="btn btn-sm btn-outline gap-2">
-          <Icon icon="mdi:refresh" width="18" height="18" />
-          Refresh
-        </button>
-        <button class="btn btn-sm btn-primary gap-2">
-          <Icon icon="mdi:export-variant" width="18" height="18" />
-          Export
-        </button>
-      </div>
     </div>
 
     <section
-      class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
+      class="card bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
     >
       <div class="card-body p-4">
         <div class="grid grid-cols-1 lg:grid-cols-6 gap-3">
@@ -226,29 +151,34 @@
               bind:value={searchQuery}
             />
           </label>
+
           <select class="select select-bordered" bind:value={statusFilter}>
             <option value="all">All Status</option>
-            <option value="open">Open</option>
             <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
           </select>
+
           <select class="select select-bordered" bind:value={priorityFilter}>
             <option value="all">All Priority</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
+            <option value="urgent">Urgent</option>
           </select>
+
           <select class="select select-bordered" bind:value={locationFilter}>
             <option value="all">All Locations</option>
             {#each locations as location}
               <option value={location}>{location}</option>
             {/each}
           </select>
+
           <select class="select select-bordered" bind:value={categoryFilter}>
             <option value="all">All Categories</option>
             {#each categories as category}
-              <option value={category}>{category}</option>
+              <option value={category.name}>{category.name}</option>
             {/each}
           </select>
         </div>
@@ -257,10 +187,10 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
       <section
-        class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg overflow-hidden"
+        class="card bg-base-100 shadow-sm border border-base-content/5 rounded-lg overflow-hidden"
       >
-        <div class="card-body p-0 h-full">
-          <div class="p-4 border-b border-base-content/5">
+        <div class="card-body p-0 h-full flex flex-col">
+          <div class="p-4 border-b border-base-content/5 shrink-0">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <h2 class="text-sm font-semibold">Total tickets</h2>
@@ -268,63 +198,76 @@
                   >{filteredTickets.length}</span
                 >
               </div>
-              <select class="select select-bordered select-sm">
-                <option>Newest</option>
-                <option>Oldest</option>
-              </select>
             </div>
           </div>
 
-          <div class="flex flex-col overflow-y-auto h-full">
-            {#each filteredTickets as ticket}
-              <button
-                type="button"
-                class="w-full text-left px-4 py-3 border-b border-base-content/5 hover:bg-base-200 transition-colors {ticket.id ===
-                selectedId
-                  ? 'bg-base-200'
-                  : ''}"
-                onclick={() => (selectedId = ticket.id)}
-              >
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-semibold">{ticket.id}</span>
-                  <span class="text-xs text-base-content/50"
-                    >{ticket.updatedAt}</span
-                  >
-                </div>
-                <div class="flex items-center justify-between gap-2">
-                  <div>
-                    <p class="text-sm font-medium">{ticket.student}</p>
-                    <p class="text-xs text-base-content/60 line-clamp-1">
-                      {ticket.title}
-                    </p>
-                  </div>
-                  {#if ticket.unread > 0}
-                    <span class="badge badge-error badge-sm"
-                      >{ticket.unread}</span
-                    >
-                  {/if}
-                </div>
-              </button>
-            {/each}
-            {#if filteredTickets.length === 0}
+          <div class="flex-1 overflow-y-auto">
+            {#if isLoading}
+              <div class="p-6 text-center">
+                <span class="loading loading-spinner loading-md"></span>
+              </div>
+            {:else if filteredTickets.length === 0}
               <div class="p-6 text-center text-sm text-base-content/60">
                 No tickets found.
               </div>
+            {:else}
+              {#each filteredTickets as ticket (ticket.id)}
+                <button
+                  type="button"
+                  class="w-full text-left px-4 py-3 border-b border-base-content/5
+                         hover:bg-base-200 transition-colors
+                         {ticket.id === selectedTicketId ? 'bg-base-200' : ''}"
+                  onclick={() => (selectedTicketId = ticket.id)}
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold font-mono"
+                      >{ticket.ticket_number}</span
+                    >
+                    <span class="text-xs text-base-content/50">
+                      {new Date(ticket.updated_at).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium truncate">
+                        {ticket.student.name || "Anonymous"}
+                      </p>
+                      <p class="text-xs text-base-content/60 line-clamp-1">
+                        {ticket.title}
+                      </p>
+                    </div>
+
+                    {#if ticket.comments_count && ticket.comments_count > 0}
+                      <span class="badge badge-primary badge-sm">
+                        {ticket.comments_count}
+                      </span>
+                    {/if}
+                  </div>
+                </button>
+              {/each}
             {/if}
           </div>
         </div>
       </section>
 
       <section
-        class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg lg:col-span-2 overflow-hidden"
+        class="card bg-base-100 shadow-sm border border-base-content/5 rounded-lg lg:col-span-2 overflow-hidden"
       >
-        <div class="card-body p-4 h-full">
+        <div class="card-body p-4 h-full overflow-y-auto">
+          {#if hasChanges}
+            <div class="alert alert-warning mb-4">
+              <Icon icon="mdi:alert" width="20" height="20" />
+              <span class="text-sm">You have unsaved changes</span>
+            </div>
+          {/if}
           {#if selectedTicket}
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 class="text-lg font-semibold">{selectedTicket.title}</h2>
                 <p class="text-xs text-base-content/60">
-                  {selectedTicket.id} • {selectedTicket.student}
+                  {selectedTicket.ticket_number} • {selectedTicket.student
+                    .name || "Anonymous"}
                 </p>
               </div>
               <div class="flex items-center gap-2">
@@ -334,81 +277,127 @@
                 >
                   {statusConfig[selectedTicket.status].label}
                 </span>
-                <span
-                  class="badge badge-sm {priorityConfig[selectedTicket.priority]
-                    .color}"
-                >
-                  {priorityConfig[selectedTicket.priority].label}
+                <span class="badge badge-sm badge-outline">
+                  {selectedTicket.priority.name}
                 </span>
               </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div class="space-y-2">
-                <p class="text-xs text-base-content/60">Description</p>
+                <p class="text-xs text-base-content/60 font-semibold">
+                  Description
+                </p>
                 <p class="text-sm">{selectedTicket.description}</p>
               </div>
               <div class="space-y-3">
-                <p class="text-xs text-base-content/60">Location</p>
-                <div class="flex flex-wrap gap-2">
+                <div>
+                  <p class="text-xs text-base-content/60 font-semibold mb-2">
+                    Location
+                  </p>
+                  <div class="flex flex-wrap gap-2">
+                    <span class="badge badge-outline badge-sm">
+                      {selectedTicket.building}
+                    </span>
+                    <span class="badge badge-outline badge-sm">
+                      {selectedTicket.room_name}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-xs text-base-content/60 font-semibold mb-2">
+                    Category
+                  </p>
                   <span class="badge badge-outline badge-sm">
-                    Building: {selectedTicket.building}
-                  </span>
-                  <span class="badge badge-outline badge-sm">
-                    Room: {selectedTicket.room}
+                    {selectedTicket.category.name}
                   </span>
                 </div>
-                <p class="text-xs text-base-content/60">Category</p>
-                <span class="badge badge-outline badge-sm">
-                  {selectedTicket.category}
-                </span>
               </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <div>
-                <p class="text-xs text-base-content/60 mb-1">Status</p>
+                <p class="text-xs text-base-content/60 font-semibold mb-1">
+                  Status
+                </p>
                 <select
-                  class="select select-bordered w-full"
-                  value={selectedTicket.status}
-                  onchange={(e) => handleStatusChange(selectedTicket.id, e)}
+                  class="select select-bordered select-sm w-full"
+                  value={pendingStatus ?? selectedTicket.status}
+                  onchange={(e) =>
+                    handleStatusChange(
+                      (e.target as HTMLSelectElement).value as TicketStatus,
+                    )}
                 >
-                  <option value="open">Open</option>
                   <option value="pending">Pending</option>
+                  <option value="in_progress">In Progress</option>
                   <option value="resolved">Resolved</option>
                   <option value="closed">Closed</option>
                 </select>
               </div>
+
               <div>
-                <p class="text-xs text-base-content/60 mb-1">Priority</p>
+                <p class="text-xs text-base-content/60 font-semibold mb-1">
+                  Priority
+                </p>
                 <select
-                  class="select select-bordered w-full"
-                  value={selectedTicket.priority}
-                  onchange={(e) => handlePriorityChange(selectedTicket.id, e)}
+                  class="select select-bordered select-sm w-full"
+                  value={pendingPriority ?? selectedTicket.priority.id}
+                  onchange={(e) =>
+                    handlePriorityChange(
+                      parseInt((e.target as HTMLSelectElement).value),
+                    )}
                 >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
+                  <option value="1">Low</option>
+                  <option value="2">Medium</option>
+                  <option value="3">High</option>
+                  <option value="4">Urgent</option>
                 </select>
               </div>
+
               <div>
-                <p class="text-xs text-base-content/60 mb-1">Updated</p>
-                <div class="input input-bordered w-full">
-                  <span class="text-sm">{selectedTicket.updatedAt}</span>
+                <p class="text-xs text-base-content/60 font-semibold mb-1">
+                  Updated
+                </p>
+                <div
+                  class="px-3 py-2 rounded-lg border border-base-content/10 bg-base-200 text-sm"
+                >
+                  {new Date(selectedTicket.updated_at).toLocaleString()}
                 </div>
               </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-              <button class="btn btn-sm btn-primary gap-2">
-                <Icon icon="mdi:check-circle-outline" width="18" height="18" />
-                Save Changes
-              </button>
-              <button class="btn btn-sm btn-outline gap-2">
-                <Icon icon="mdi:eye-outline" width="18" height="18" />
-                View Ticket
-              </button>
-              <button class="btn btn-sm btn-ghost gap-2">
+              {#if hasChanges}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary gap-2"
+                  onclick={handleSaveChanges}
+                  disabled={isSaving}
+                >
+                  {#if isSaving}
+                    <span class="loading loading-spinner loading-xs"></span>
+                  {:else}
+                    <Icon icon="mdi:content-save" width="18" height="18" />
+                  {/if}
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-ghost gap-2"
+                  onclick={handleCancelChanges}
+                  disabled={isSaving}
+                >
+                  <Icon icon="mdi:close" width="18" height="18" />
+                  Cancel
+                </button>
+              {/if}
+
+              <button
+                type="button"
+                class="btn btn-sm btn-outline gap-2"
+                onclick={() =>
+                  (window.location.href = `/history?ticket=${selectedTicket.id}`)}
+              >
                 <Icon icon="mdi:history" width="18" height="18" />
                 View History
               </button>
@@ -417,8 +406,13 @@
             <div
               class="flex flex-col items-center justify-center h-full text-base-content/60"
             >
-              <Icon icon="mdi:ticket-outline" width="36" height="36" />
-              <p class="mt-2">Select a ticket to view details.</p>
+              <Icon
+                icon="mdi:ticket-outline"
+                width="48"
+                height="48"
+                class="mb-3"
+              />
+              <p class="text-sm">Select a ticket to view details</p>
             </div>
           {/if}
         </div>
