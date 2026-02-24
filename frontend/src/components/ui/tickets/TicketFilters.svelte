@@ -11,6 +11,7 @@
   export let priorityFilter: string = "all";
   export let categoryFilter: string = "all";
   export let totalCount = 0;
+  export let search: string = "";
   export let statusCounts: Record<TicketStatus | "all", number> = {
     all: 0,
     pending: 0,
@@ -18,8 +19,6 @@
     resolved: 0,
     closed: 0,
   };
-
-  let search = "";
 
   export let onStatusChange: (value: TicketStatus | "all") => void = () => {};
   export let onPriorityChange: (value: string) => void = () => {};

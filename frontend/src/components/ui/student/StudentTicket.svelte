@@ -291,13 +291,13 @@
           <span class="text-right">Date</span>
         </div>
 
-        <div class="space-y-1.5">
+        <div class="space-y-1.5 relative">
           {#each columns as column}
             {#each column.reports as report (report.id)}
               <div
                 class="group relative bg-base-100 rounded-xl border border-base-content/6
                        hover:border-base-content/18 hover:shadow-sm
-                       transition-all duration-150 cursor-pointer"
+                       transition-all duration-150 cursor-pointer z-0 hover:z-10"
                 role="button"
                 tabindex="0"
                 aria-label={`Open ticket ${report.title}`}
@@ -360,11 +360,11 @@
 
                 <div
                   class="absolute top-1/2 -translate-y-1/2 right-3
-                         opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                         opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50"
                   onclick={(e) => e.stopPropagation()}
                   role="none"
                 >
-                  <div class="dropdown dropdown-end">
+                  <div class="dropdown dropdown-end ">
                     <button
                       type="button"
                       tabindex="0"
@@ -376,7 +376,7 @@
                       tabindex="-1"
                       role="menu"
                       class="dropdown-content menu bg-base-100 border border-base-content/10
-                             rounded-xl shadow-xl z-50 w-40 p-1.5 text-sm"
+                             rounded-xl shadow-xl z-[50] w-40 p-1.5 text-sm"
                     >
                       {#if report.status === "pending"}
                         <li>
@@ -399,23 +399,6 @@
                           <button
                             type="button"
                             class="flex items-center gap-2 rounded-lg px-3 py-2 text-error hover:bg-error/10"
-                            onclick={(e) => {
-                              e.stopPropagation();
-                              openModal("delete", report);
-                            }}
-                          >
-                            <Icon
-                              icon="mdi:delete-outline"
-                              width="14"
-                              height="14"
-                            /> Delete
-                          </button>
-                        </li>
-                      {:else}
-                        <li>
-                          <button
-                            type="button"
-                            class="flex items-center gap-2 rounded-lg px-3 py-2 text-error hover:bg-error/10 btn-disabled cursor-not-allowed"
                             onclick={(e) => {
                               e.stopPropagation();
                               openModal("delete", report);
