@@ -28,6 +28,7 @@ export type Ticket = {
     attachment?: string;
     created_at: string;
     updated_at: string;
+    comments_count?: number;
 };
 export type TicketCreatePayload = {
     title: string;

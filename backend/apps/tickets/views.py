@@ -8,6 +8,7 @@ from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from venv import logger
 from .utils import (
     format_date,
     format_timestamp,
@@ -16,7 +17,7 @@ from .utils import (
     map_status_for_history,
 )
 from .validation import validate_file
-from apps.notifications.utils import notify_ticket_status_change, notify_ticket_comment
+from apps.notifications.utils import notify_ticket_created, notify_ticket_status_change, notify_ticket_comment
 
 from .schemas import (
     CategorySchema,
@@ -186,12 +187,23 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
             file_path=attachment,
             file_type=attachment.content_type,
         )
+    # Notify admin users about the new ticket
+    try:
+        notify_ticket_created(
+            ticket_id=ticket_obj.id,
+            ticket_number=ticket_obj.ticket_number,
+            ticket_title=ticket_obj.title,
+            student_name=getattr(request.user, "name", None) or request.user.email,
+        )
+    except Exception:
+        logger.exception("notify_ticket_created failed", extra={"ticket_id": ticket_obj.id})
+
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
         {
             "type": "send_ticket_update",
             "data": {
-                "action": "created",  # or "updated", "commented", etc.
+                "action": "created",
                 "ticket_id": ticket_obj.id,
                 "name": getattr(ticket_obj.student, "name", None),
                 "avatar": getattr(ticket_obj.student, "avatar", None),
@@ -396,8 +408,12 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
-                    "name": getattr(comment.user, "name", None),
-                    "avatar": getattr(comment.user, "avatar", None),
+                    "ticket_id": ticket.id,
+                    "user": {
+                        "id": comment.user.id,
+                        "name": getattr(comment.user, "name", None),
+                        "avatar": getattr(comment.user, "avatar", None),
+                    },
                     "message": comment.message,
                     "created_at": comment.created_at.isoformat(),
                 }
@@ -431,7 +447,13 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
-                    "user": {"id": comment.user.id, "name": comment.user.name, "email": comment.user.email},
+                    "ticket_id": ticket.id,
+                    "user": {
+                        "id": comment.user.id,
+                        "email": comment.user.email,
+                        "name": getattr(comment.user, "name", None),
+                        "avatar": getattr(comment.user, "avatar", None),
+                    },
                     "message": comment.message,
                     "created_at": comment.created_at.isoformat(),
                 }
@@ -459,8 +481,13 @@ def delete_comment(request, id: int, comment_id: int):
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
-                    "name": getattr(comment.user, "name", None),
-                    "avatar": getattr(comment.user, "avatar", None),
+                    "ticket_id": ticket.id,
+                    "user": {
+                        "id": comment.user.id,
+                        "email": comment.user.email,
+                        "name": getattr(comment.user, "name", None),
+                        "avatar": getattr(comment.user, "avatar", None),
+                    },
                     "message": comment.message,
                     "created_at": comment.created_at.isoformat(),
                 }

@@ -69,12 +69,14 @@ function createCommentsStore(): CommentsStore {
                 const newComment = await apiCreateComment(ticketId, payload, attachment);
 
                 if (newComment) {
-                    update((state) => ({
-                        ...state,
-                        comments: [...state.comments, newComment],
-                        isLoading: false,
-                        error: null,
-                    }));
+                    update((state) => {
+                        const exists = state.comments.some((c) => c.id === newComment.id);
+                        return {
+                            ...state,
+                            comments: exists ? state.comments : [...state.comments, newComment],
+                            error: null,
+                        };
+                    });
                 }
 
                 return newComment;
@@ -82,10 +84,11 @@ function createCommentsStore(): CommentsStore {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error";
                 update((state) => ({
                     ...state,
-                    isLoading: false,
                     error: `Failed to create comment: ${errorMessage}`,
                 }));
                 return null;
+            } finally {
+                update((state) => ({ ...state, isLoading: false }));
             }
         },
 
@@ -99,7 +102,6 @@ function createCommentsStore(): CommentsStore {
                     update((state) => ({
                         ...state,
                         comments: state.comments.map((comment) => (comment.id === commentId ? updatedComment : comment)),
-                        isLoading: false,
                         error: null,
                     }));
                 }
@@ -109,10 +111,11 @@ function createCommentsStore(): CommentsStore {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error";
                 update((state) => ({
                     ...state,
-                    isLoading: false,
                     error: `Failed to update comment: ${errorMessage}`,
                 }));
                 return null;
+            } finally {
+                update((state) => ({ ...state, isLoading: false }));
             }
         },
 
@@ -143,7 +146,11 @@ function createCommentsStore(): CommentsStore {
         },
 
         addCommentToStore(comment: TicketComment) {
-            update((state) => ({ ...state, comments: [...state.comments, comment] }));
+            update((state) => {
+                const exists = state.comments.some((c) => c.id === comment.id);
+                if (exists) return state;
+                return { ...state, comments: [...state.comments, comment] };
+            });
         },
 
         updateCommentInStore(commentId: number, updates: Partial<TicketComment>) {

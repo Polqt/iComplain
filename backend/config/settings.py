@@ -32,6 +32,7 @@ if not ALLOWED_EMAIL_DOMAINS and GOOGLE_OAUTH2_CLIENT_ID:
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

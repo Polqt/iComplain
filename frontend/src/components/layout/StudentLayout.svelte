@@ -9,15 +9,18 @@
   import type { Notification } from "../../types/notifications.js";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
   import { authStore } from "../../stores/auth.store.ts";
-  import { fetchNotifications, markAsRead as apiMarkAsRead } from "../../lib/api/notifications.ts";
+  import { notificationStore } from "../../stores/notification.store.ts";
   import { formatNotificationTimestamp } from "../../utils/notificationConfig.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
 
-  let notifications: Notification[] = [];
-  let unreadCount: number = 0;
+  $: notifications = $notificationStore.notifications.map((n) => ({
+    ...n,
+    timestamp: formatNotificationTimestamp(n.timestamp),
+  }));
+  $: unreadCount = $notificationStore.unreadCount;
   let markReadError = "";
 
   function openModal() {
@@ -45,18 +48,9 @@
   async function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
     const { id } = event.detail;
     markReadError = "";
-    const previousNotifications = notifications.map((n) => ({ ...n }));
-    const previousUnreadCount = unreadCount;
-    notifications = notifications.map((n) =>
-      n.id === id ? { ...n, read: true } : n,
-    );
-    unreadCount = notifications.filter((n) => !n.read).length;
     try {
-      await apiMarkAsRead(id);
+      await notificationStore.markAsRead(id);
     } catch (e) {
-      console.error("Failed to mark notification as read", e);
-      notifications = previousNotifications;
-      unreadCount = previousUnreadCount;
       markReadError = "Could not mark as read. Please try again.";
       setTimeout(() => (markReadError = ""), 4000);
     }
@@ -83,27 +77,11 @@
     window.addEventListener("resize", checkMobile);
     checkMobile();
 
-    (async () => {
-      try {
-        const inAppEnabled =
-          localStorage.getItem("settings.inAppNotifications") !== "false";
-        if (!inAppEnabled) {
-          notifications = [];
-          unreadCount = 0;
-          return;
-        }
-        const list = await fetchNotifications(10);
-        notifications = list.map((n) => ({
-          ...n,
-          timestamp: formatNotificationTimestamp(n.timestamp),
-        }));
-        unreadCount = notifications.filter((n) => !n.read).length;
-      } catch (e) {
-        console.error("Failed to load notifications", e);
-        notifications = [];
-        unreadCount = 0;
-      }
-    })();
+    const inAppEnabled =
+      localStorage.getItem("settings.inAppNotifications") !== "false";
+    if (inAppEnabled) {
+      notificationStore.loadNotifications(10);
+    }
 
     return () => {
       window.removeEventListener("resize", checkMobile);
@@ -275,13 +253,13 @@
   {#if markReadError}
     <div class="toast toast-top toast-end z-9999">
       <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">
-      <span>{markReadError}</span>
+        <span>{markReadError}</span>
         <button
           type="button"
           class="btn btn-ghost btn-xs rounded-lg ml-1"
-          onclick={() => (markReadError = '')}
-          aria-label="Dismiss"
-        >✕</button>
+          onclick={() => (markReadError = "")}
+          aria-label="Dismiss">✕</button
+        >
       </div>
     </div>
   {/if}
