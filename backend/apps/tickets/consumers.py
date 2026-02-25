@@ -4,6 +4,12 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class TicketNotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        user = self.scope.get("user")
+        if not user or not user.is_authenticated:
+            await self.close()
+            return
+
+        
         # Join the global ticket updates group
         await self.channel_layer.group_add("ticket_updates", self.channel_name)
         await self.channel_layer.group_add("comment_updates", self.channel_name)
@@ -16,6 +22,8 @@ class TicketNotificationConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_add(self.user_group, self.channel_name)
         else:
             self.user_group = None
+        
+        await self.channel_layer.group_add(self.user_group, self.channel_name)
 
         await self.accept()
 
@@ -23,7 +31,7 @@ class TicketNotificationConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard("ticket_updates", self.channel_name)
         await self.channel_layer.group_discard("comment_updates", self.channel_name)
         await self.channel_layer.group_discard("feedback_updates", self.channel_name)
-        if self.user_group:
+        if getattr(self, "user_group", None):
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
 
     async def send_ticket_update(self, event):
