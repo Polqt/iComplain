@@ -187,12 +187,15 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
             file_type=attachment.content_type,
         )
     # Notify admin users about the new ticket
-    notify_ticket_created(
-        ticket_id=ticket_obj.id,
-        ticket_number=ticket_obj.ticket_number,
-        ticket_title=ticket_obj.title,
-        student_name=getattr(request.user, "name", None) or request.user.email,
-    )
+    try:
+        notify_ticket_created(
+            ticket_id=ticket_obj.id,
+            ticket_number=ticket_obj.ticket_number,
+            ticket_title=ticket_obj.title,
+            student_name=getattr(request.user, "name", None) or request.user.email,
+        )
+    except Exception:
+        logger.exception("notify_ticket_created failed", extra={"ticket_id": ticket_obj.id})
 
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
