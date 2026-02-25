@@ -74,11 +74,9 @@ function createWebSocketStore() {
 
             // Handle ticket updates
             if (data.action === "created") {
-                ticketsStore.loadTickets();
+                ticketsStore.reloadTickets();
             } else if (data.action === "updated") {
-                if (data.ticket_id) {
-                    ticketsStore.loadTicketById(data.ticket_id)
-                }
+                ticketsStore.reloadTickets();
             } else if (data.action === "deleted") {
                 if (data.ticket_id) {
                     ticketsStore.removeTicketFromStore(data.ticket_id);
@@ -89,6 +87,7 @@ function createWebSocketStore() {
             if (data.type === "comment_created") {
                 if (data.ticket_id && data.comment) {
                     commentsStore.addCommentToStore(data.comment);
+                    ticketsStore.adjustCommentCount(data.ticket_id, 1);
                 }
             } else if (data.type === "comment_updated") {
                 if (data.comment) {
@@ -97,12 +96,15 @@ function createWebSocketStore() {
             } else if (data.type === "comment_deleted") {
                 if (data.comment) {
                     commentsStore.removeCommentFromStore(data.comment.id);
+                    if (data.ticket_id) {
+                        ticketsStore.adjustCommentCount(data.ticket_id, -1);
+                    }
                 }
             }
 
             // Handle feedbacks updates
             if (data.type === "feedback_created") {
-                
+
             }
 
             // Handle real-time notifications (per-user, pushed via WebSocket)
