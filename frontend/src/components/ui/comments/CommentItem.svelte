@@ -76,7 +76,7 @@
   <div class="min-w-0 max-w-[82%] flex flex-col {isOwner ? 'order-1 items-end' : 'items-start'}">
     <div class="flex items-center gap-2 mb-1 {isOwner ? 'justify-end' : ''}">
       {#if !isOwner}
-        <span class="text-xs font-semibold text-base-content/85 truncate max-w-[10rem]">
+        <span class="text-xs font-semibold text-base-content/85 truncate max-w-40">
           {displayName}
         </span>
       {/if}
@@ -149,7 +149,7 @@
       </div>
     {:else}
       <p
-        class="inline-block w-fit max-w-full text-sm leading-relaxed whitespace-pre-wrap break-words rounded-2xl px-3 py-2
+        class="inline-block w-fit max-w-full text-sm leading-relaxed whitespace-pre-wrap wrap-break-word rounded-2xl px-3 py-2
                {isOwner
           ? 'bg-primary text-primary-content text-left'
           : 'bg-base-200/70 text-base-content/75'}"
