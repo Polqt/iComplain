@@ -3,6 +3,7 @@ import { writable } from "svelte/store";
 import type { WSMessage, WSStatus } from "../types/websocket.ts";
 import { ticketsStore } from "./tickets.store.ts";
 import { commentsStore } from "./comment.store.ts";
+import { notificationStore } from "./notification.store.ts";
 
 function createWebSocketStore() {
     const { subscribe, set } = writable<WSStatus>("disconnected");
@@ -100,6 +101,14 @@ function createWebSocketStore() {
             }
 
             // Handle feedbacks updates
+            if (data.type === "feedback_created") {
+                
+            }
+
+            // Handle real-time notifications (per-user, pushed via WebSocket)
+            if (data.type === "new_notification" && data.notification) {
+                notificationStore.addNotification(data.notification);
+            }
 
         } catch (error) {
             console.error("Failed to parse WebSocket message:", error);

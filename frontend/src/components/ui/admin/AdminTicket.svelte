@@ -7,6 +7,8 @@
   import type { TicketStatus, Category } from "../../../types/tickets.ts";
   import { statusConfig } from "../../../utils/ticketConfig.ts";
   import { getFileName, isImageFile } from "../../../utils/attachment.ts";
+  import AttachmentModal from "./AttachmentModal.svelte";
+  import CommentSection from "../comments/CommentSection.svelte";
 
   $: ({ tickets, isLoading } = $ticketsStore);
 
@@ -331,45 +333,10 @@
                 <p class="text-xs text-base-content/60 font-semibold mb-2">
                   Attachment
                 </p>
-                <div
-                  class="card bg-base-200 border border-base-content/10 rounded-lg overflow-hidden"
-                >
-                  {#if isImageFile(selectedTicket.attachment)}
-                    <figure class="bg-base-300">
-                      <img
-                        src={selectedTicket.attachment}
-                        alt="Ticket attachment"
-                        class="w-full h-48 object-contain"
-                      />
-                    </figure>
-                  {/if}
-                  <div class="card-body p-3">
-                    <div class="flex items-center justify-between gap-2">
-                      <div class="flex items-center gap-2 flex-1 min-w-0">
-                        <Icon
-                          icon={isImageFile(selectedTicket.attachment)
-                            ? "mdi:image"
-                            : "mdi:file-document"}
-                          width="20"
-                          height="20"
-                          class="text-base-content/60 shrink-0"
-                        />
-                        <span class="text-sm font-medium truncate">
-                          {getFileName(selectedTicket.attachment)}
-                        </span>
-                      </div>
-                      <a
-                        href={selectedTicket.attachment}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="btn btn-sm btn-ghost gap-1"
-                      >
-                        <Icon icon="mdi:download" width="16" height="16" />
-                        Download
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                <AttachmentModal
+                  attachment={selectedTicket.attachment}
+                  ticketNumber={selectedTicket.ticket_number}
+                />
               </div>
             {/if}
 
@@ -459,6 +426,18 @@
                 <Icon icon="mdi:history" width="18" height="18" />
                 View History
               </button>
+            </div>
+
+            <div class="divider my-2"></div>
+
+            <div class="flex-1 min-h-0">
+              {#key selectedTicket.id}
+                <CommentSection
+                  ticketId={selectedTicket.id}
+                  ticketStatus={selectedTicket.status}
+                  compact={true}
+                />
+              {/key}
             </div>
           {:else}
             <div

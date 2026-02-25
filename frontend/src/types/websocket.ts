@@ -6,4 +6,5 @@ export type WSMessage = {
     ticket_id?: number;
     comment?: any;
     message?: string;
+    notification?: any;
 };

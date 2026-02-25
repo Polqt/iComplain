@@ -9,14 +9,18 @@
   import type { Notification } from "../../types/notifications.js";
   import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
   import { authStore } from "../../stores/auth.store.ts";
-  import { fetchNotifications, markAsRead as apiMarkAsRead } from "../../lib/api/notifications.ts";
+  import { notificationStore } from "../../stores/notification.store.ts";
   import { formatNotificationTimestamp } from "../../utils/notificationConfig.ts";
 
   let showModal: boolean = false;
   let theme: string = "lofi";
   let isMobile: boolean = false;
-  let notifications: Notification[] = [];
-  let unreadCount: number = 0;
+
+  $: notifications = $notificationStore.notifications.map((n) => ({
+    ...n,
+    timestamp: formatNotificationTimestamp(n.timestamp),
+  }));
+  $: unreadCount = $notificationStore.unreadCount;
 
   function openModal() {
     showModal = true;
@@ -42,15 +46,7 @@
 
   async function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
     const { id } = event.detail;
-    try {
-      await apiMarkAsRead(id);
-      notifications = notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n,
-      );
-      unreadCount = notifications.filter((n) => !n.read).length;
-    } catch (e) {
-      console.error("Failed to mark notification as read", e);
-    }
+    await notificationStore.markAsRead(id);
   }
 
   function handleNotificationClick(
@@ -72,20 +68,7 @@
     window.addEventListener("resize", checkMobile);
     checkMobile();
 
-    (async () => {
-      try {
-        const list = await fetchNotifications(10);
-        notifications = list.map((n) => ({
-          ...n,
-          timestamp: formatNotificationTimestamp(n.timestamp),
-        }));
-        unreadCount = notifications.filter((n) => !n.read).length;
-      } catch (e) {
-        console.error("Failed to load notifications", e);
-        notifications = [];
-        unreadCount = 0;
-      }
-    })();
+    notificationStore.loadNotifications(10);
 
     return () => {
       window.removeEventListener("resize", checkMobile);
