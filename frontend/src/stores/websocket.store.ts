@@ -20,8 +20,8 @@ function createWebSocketStore() {
     }
 
     function connect() {
-        if (socket?.readyState === WebSocket.OPEN) {
-            console.log("WebSocket already connected");
+        if (socket?.readyState === WebSocket.OPEN || socket?.readyState === WebSocket.CONNECTING) {
+            console.log("WebSocket already connected or connecting");
             return;
         }
 
