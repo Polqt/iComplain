@@ -17,3 +17,9 @@ class TicketNotificationConsumer(AsyncWebsocketConsumer):
         
     async def send_feedback_update(self, event):
         await self.send(text_data=json.dumps(event["data"]))
+        
+    async def send_notification(self, event):
+        await self.send(text_data=json.dumps(event["data"]))
+    
+    async def send_status_update(self, event):
+        await self.send(text_data=json.dumps(event["data"]))

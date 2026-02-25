@@ -6,6 +6,7 @@
   import { fetchCategories } from "../../../lib/api/ticket.ts";
   import type { TicketStatus, Category } from "../../../types/tickets.ts";
   import { statusConfig } from "../../../utils/ticketConfig.ts";
+  import { getFileName, isImageFile } from "../../../utils/attachment.ts";
 
   $: ({ tickets, isLoading } = $ticketsStore);
 
@@ -79,11 +80,11 @@
     }
   });
 
-  async function handleStatusChange(newStatus: TicketStatus) {
+  function handleStatusChange(newStatus: TicketStatus) {
     pendingStatus = newStatus;
   }
 
-  async function handlePriorityChange(newPriorityId: number) {
+  function handlePriorityChange(newPriorityId: number) {
     pendingPriority = newPriorityId;
   }
 
@@ -220,9 +221,19 @@
                   onclick={() => (selectedTicketId = ticket.id)}
                 >
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-semibold font-mono"
-                      >{ticket.ticket_number}</span
-                    >
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-semibold font-mono"
+                        >{ticket.ticket_number}</span
+                      >
+                      {#if ticket.attachment}
+                        <Icon
+                          icon="mdi:paperclip"
+                          width="14"
+                          height="14"
+                          class="text-base-content/40"
+                        />
+                      {/if}
+                    </div>
                     <span class="text-xs text-base-content/50">
                       {new Date(ticket.updated_at).toLocaleDateString()}
                     </span>
@@ -314,6 +325,53 @@
                 </div>
               </div>
             </div>
+
+            {#if selectedTicket.attachment}
+              <div class="mb-4">
+                <p class="text-xs text-base-content/60 font-semibold mb-2">
+                  Attachment
+                </p>
+                <div
+                  class="card bg-base-200 border border-base-content/10 rounded-lg overflow-hidden"
+                >
+                  {#if isImageFile(selectedTicket.attachment)}
+                    <figure class="bg-base-300">
+                      <img
+                        src={selectedTicket.attachment}
+                        alt="Ticket attachment"
+                        class="w-full h-48 object-contain"
+                      />
+                    </figure>
+                  {/if}
+                  <div class="card-body p-3">
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <Icon
+                          icon={isImageFile(selectedTicket.attachment)
+                            ? "mdi:image"
+                            : "mdi:file-document"}
+                          width="20"
+                          height="20"
+                          class="text-base-content/60 shrink-0"
+                        />
+                        <span class="text-sm font-medium truncate">
+                          {getFileName(selectedTicket.attachment)}
+                        </span>
+                      </div>
+                      <a
+                        href={selectedTicket.attachment}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-sm btn-ghost gap-1"
+                      >
+                        <Icon icon="mdi:download" width="16" height="16" />
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {/if}
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <div>

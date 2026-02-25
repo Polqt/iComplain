@@ -8,8 +8,7 @@
   } from "../../../utils/ticketConfig.ts";
   import { formatDate } from "../../../utils/date.ts";
   import { goto } from "$app/navigation";
-  import { commentsStore } from "../../../stores/comment.store.ts";
-
+  
   export let ticket: Ticket;
   export let onClick: () => void = () => {};
   export let isActive = false;

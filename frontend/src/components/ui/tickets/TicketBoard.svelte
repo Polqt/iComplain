@@ -14,10 +14,12 @@
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-  
+  import { authStore } from "../../../stores/auth.store.ts";
+
   let viewMode: ViewMode = "grid";
 
   $: ({ tickets, isLoading } = $ticketsStore);
+  $: ({ role } = $authStore);
 
   onMount(async () => {
     if ($ticketsStore.tickets.length === 0) {
@@ -33,7 +35,11 @@
   );
 
   function navigate(t: Ticket) {
-    goto(`/tickets/${t.ticket_number}`);
+    if (role === "admin") {
+      goto(`/tickets`);
+    } else if (role === "student") {
+      goto(`/tickets/${t.ticket_number}`);
+    }
   }
 </script>
 
@@ -145,52 +151,107 @@
   <div class="flex-1 overflow-y-auto space-y-2 pr-2">
     {#each columns as column}
       {#each column.reports as report}
-        <div
-          role="button"
-          tabindex="0"
-          aria-label={`Open ticket ${report.title}`}
-          onclick={() => navigate(report)}
-          onkeydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              navigate(report);
-            }
-          }}
-          class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 cursor-pointer hover:border-primary/20"
-        >
-          <div class="card-body p-4">
-            <div class="flex items-center gap-4">
-              <div
-                class="badge badge-sm whitespace-nowrap {statusConfig[
-                  report.status
-                ].color}"
-              >
-                {statusConfig[report.status].label}
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <h3
-                  class="font-semibold text-sm text-base-content truncate mb-1"
+        {#if role === "student"}
+          <div
+            role="button"
+            tabindex="0"
+            aria-label={`Open ticket ${report.title}`}
+            onclick={() => navigate(report)}
+            onkeydown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate(report);
+              }
+            }}
+            class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 cursor-pointer hover:border-primary/20"
+          >
+            <div class="card-body p-4">
+              <div class="flex items-center gap-4">
+                <div
+                  class="badge badge-sm whitespace-nowrap {statusConfig[
+                    report.status
+                  ].color}"
                 >
-                  {report.title}
-                </h3>
-                <p class="text-xs text-base-content/60">{report.description}</p>
-              </div>
+                  {statusConfig[report.status].label}
+                </div>
 
-              <span class="text-[10px] font-mono text-base-content/30 shrink-0"
-                >{report.ticket_number}</span
-              >
+                <div class="flex-1 min-w-0">
+                  <h3
+                    class="font-semibold text-sm text-base-content truncate mb-1"
+                  >
+                    {report.title}
+                  </h3>
+                  <p class="text-xs text-base-content/60">
+                    {report.description}
+                  </p>
+                </div>
 
-              <div
-                class="badge badge-sm {priorityConfig[
-                  getPriorityKey(report.priority)
-                ].color}"
-              >
-                {priorityConfig[getPriorityKey(report.priority)].label}
+                <span
+                  class="text-[10px] font-mono text-base-content/30 shrink-0"
+                  >{report.ticket_number}</span
+                >
+
+                <div
+                  class="badge badge-sm {priorityConfig[
+                    getPriorityKey(report.priority)
+                  ].color}"
+                >
+                  {priorityConfig[getPriorityKey(report.priority)].label}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        {:else if role === "admin"}
+          <div
+            role="button"
+            tabindex="0"
+            aria-label={`Open ticket ${report.title}`}
+            onclick={() => navigate(report)}
+            onkeydown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate(report);
+              }
+            }}
+            class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 cursor-pointer hover:border-primary/20"
+          >
+            <div class="card-body p-4">
+              <div class="flex items-center gap-4">
+                <div
+                  class="badge badge-sm whitespace-nowrap {statusConfig[
+                    report.status
+                  ].color}"
+                >
+                  {statusConfig[report.status].label}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                  <h3
+                    class="font-semibold text-sm text-base-content truncate mb-1"
+                  >
+                    {report.title}
+                  </h3>
+                  <p class="text-xs text-base-content/60">
+                    {report.description}
+                  </p>
+                </div>
+
+                <span
+                  class="text-[10px] font-mono text-base-content/30 shrink-0"
+                  >{report.ticket_number}</span
+                >
+
+                <div
+                  class="badge badge-sm {priorityConfig[
+                    getPriorityKey(report.priority)
+                  ].color}"
+                >
+                  {priorityConfig[getPriorityKey(report.priority)].label}
+                </div>
+              </div>
+            </div>
+          </div>
+        {/if}
       {/each}
     {/each}
   </div>
