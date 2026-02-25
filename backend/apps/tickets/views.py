@@ -16,7 +16,7 @@ from .utils import (
     map_status_for_history,
 )
 from .validation import validate_file
-from apps.notifications.utils import notify_ticket_status_change, notify_ticket_comment
+from apps.notifications.utils import notify_ticket_created, notify_ticket_status_change, notify_ticket_comment
 
 from .schemas import (
     CategorySchema,
@@ -186,12 +186,20 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
             file_path=attachment,
             file_type=attachment.content_type,
         )
+    # Notify admin users about the new ticket
+    notify_ticket_created(
+        ticket_id=ticket_obj.id,
+        ticket_number=ticket_obj.ticket_number,
+        ticket_title=ticket_obj.title,
+        student_name=getattr(request.user, "name", None) or request.user.email,
+    )
+
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
         {
             "type": "send_ticket_update",
             "data": {
-                "action": "created",  # or "updated", "commented", etc.
+                "action": "created",
                 "ticket_id": ticket_obj.id,
                 "name": getattr(ticket_obj.student, "name", None),
                 "avatar": getattr(ticket_obj.student, "avatar", None),
