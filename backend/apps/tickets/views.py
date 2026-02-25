@@ -404,8 +404,13 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
-                    "name": getattr(comment.user, "name", None),
-                    "avatar": getattr(comment.user, "avatar", None),
+                    "ticket_id": ticket.id,
+                    "user": {
+                        "id": comment.user.id,
+                        "email": comment.user.email,
+                        "name": getattr(comment.user, "name", None),
+                        "avatar": getattr(comment.user, "avatar", None),
+                    },
                     "message": comment.message,
                     "created_at": comment.created_at.isoformat(),
                 }
@@ -439,7 +444,13 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
-                    "user": {"id": comment.user.id, "name": comment.user.name, "email": comment.user.email},
+                    "ticket_id": ticket.id,
+                    "user": {
+                        "id": comment.user.id,
+                        "email": comment.user.email,
+                        "name": getattr(comment.user, "name", None),
+                        "avatar": getattr(comment.user, "avatar", None),
+                    },
                     "message": comment.message,
                     "created_at": comment.created_at.isoformat(),
                 }
@@ -467,8 +478,13 @@ def delete_comment(request, id: int, comment_id: int):
                 "ticket_id": ticket.id,
                 "comment": {
                     "id": comment.id,
-                    "name": getattr(comment.user, "name", None),
-                    "avatar": getattr(comment.user, "avatar", None),
+                    "ticket_id": ticket.id,
+                    "user": {
+                        "id": comment.user.id,
+                        "email": comment.user.email,
+                        "name": getattr(comment.user, "name", None),
+                        "avatar": getattr(comment.user, "avatar", None),
+                    },
                     "message": comment.message,
                     "created_at": comment.created_at.isoformat(),
                 }
