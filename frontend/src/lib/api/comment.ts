@@ -31,15 +31,10 @@ export async function fetchComments(ticketId: number): Promise<TicketComment[]> 
 export async function createComment(
     ticketId: number,
     payload: CommentCreatePayload,
-    attachment?: File
 ): Promise<TicketComment> {
     try {
         const formData = new FormData();
         formData.append("message", payload.message || "");
-
-        if (attachment) {
-            formData.append("attachment", attachment);
-        }
 
         const res = await fetch(`${BASE}/${ticketId}/comments`, {
             method: "POST",
@@ -60,12 +55,14 @@ export async function editComment(
     payload: CommentUpdatePayload
 ): Promise<TicketComment> {
     try {
+        const formData = new FormData();
+        if (payload.message !== undefined) {
+            formData.append("message", payload.message);
+        }
+
         const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ...payload }),
+            body: formData,
             credentials: "include",
         });
 

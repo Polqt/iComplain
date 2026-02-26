@@ -1,9 +1,5 @@
-import type { Ticket } from "../../types/tickets.ts";
-import type { User } from "../../types/user.ts";
 import type { TicketFeedback, FeedbackCreatePayload, FeedbackUpdatePayload } from "../../types/feedback.ts";
 import { PUBLIC_API_URL } from "$env/static/public";
-
-
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
 
@@ -18,7 +14,7 @@ async function handleRes<T>(res: Response): Promise<T> {
 
 export async function getFeedback(ticketId: number): Promise<TicketFeedback> {
     try {
-        const res = await fetch(`${BASE}/${ticketId}/feedback`, {
+        const res = await fetch(`${BASE}/${ticketId}/feedback/`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -35,7 +31,7 @@ export async function getFeedback(ticketId: number): Promise<TicketFeedback> {
 
 export async function createFeedback(ticketId: number, payload: FeedbackCreatePayload): Promise<TicketFeedback> {
     try {
-        const res = await fetch(`${BASE}/${ticketId}/feedback`, {
+        const res = await fetch(`${BASE}/${ticketId}/feedback/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

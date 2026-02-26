@@ -8,7 +8,7 @@ from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from venv import logger
+from asyncio.log import logger
 from .utils import (
     format_date,
     format_timestamp,
@@ -411,6 +411,7 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
                     "ticket_id": ticket.id,
                     "user": {
                         "id": comment.user.id,
+                        "email": comment.user.email,
                         "name": getattr(comment.user, "name", None),
                         "avatar": getattr(comment.user, "avatar", None),
                     },
