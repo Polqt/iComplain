@@ -30,18 +30,13 @@ def validate_file(file):
     is_valid = False
     content_type = file.content_type
     
-    if content_type in MAGIC_BYTES:
-        magic_bytes_list = MAGIC_BYTES[content_type]
-        
-        for magic in magic_bytes_list:
-            if content_type == 'image/webp':
-                if header.startwith(b'RIFF') and header[8:12] == b'WEBP':
-                    is_valid = True
-                    break
-                else:
-                    if header.startswith(magic):
-                        is_valid = True
-                        break
+    if content_type == "image/webp":
+        is_valid = header.startswith(b"RIFF") and header[8:12] == b'WEBP'
+    else: 
+        is_valid = any(
+            header.startswith(magic)
+            for magic in MAGIC_BYTES.get(content_type, [])
+        )
         
     if not is_valid:
         raise ValueError("File content does not match its declared type.")

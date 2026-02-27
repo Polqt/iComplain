@@ -33,7 +33,6 @@ if not ALLOWED_EMAIL_DOMAINS and GOOGLE_OAUTH2_CLIENT_ID:
 
 INSTALLED_APPS = [
     'daphne',
-    'celery',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
