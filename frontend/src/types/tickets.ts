@@ -34,6 +34,7 @@ export type Ticket = {
     created_at: string;
     updated_at: string;
     comments_count?: number;
+    has_feedback?: boolean;
 }
 
 export type TicketCreatePayload = {
@@ -73,6 +74,7 @@ export type TicketsState = {
     tickets: Ticket[];
     isLoading: boolean;
     error: string | null;
+    currentView: "personal" | "community";
 };
 
 export type PipelineStep = {

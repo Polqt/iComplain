@@ -57,7 +57,9 @@
   }
 </script>
 
-<div class="flex w-full gap-3 group {isOwner ? 'justify-end' : 'justify-start'}">
+<div
+  class="flex w-full gap-3 group {isOwner ? 'justify-end' : 'justify-start'}"
+>
   {#if !isOwner}
     <div class="avatar placeholder shrink-0 mt-0.5">
       <div
@@ -65,7 +67,11 @@
                flex items-center justify-center bg-primary/15"
       >
         {#if comment.user.avatar}
-          <img src={comment.user.avatar} alt={displayName} class="rounded-full" />
+          <img
+            src={comment.user.avatar}
+            alt={displayName}
+            class="rounded-full"
+          />
         {:else}
           <span class="text-[10px] font-bold text-primary">{initials}</span>
         {/if}
@@ -73,10 +79,16 @@
     </div>
   {/if}
 
-  <div class="min-w-0 max-w-[82%] flex flex-col {isOwner ? 'order-1 items-end' : 'items-start'}">
+  <div
+    class="min-w-0 max-w-[82%] flex flex-col {isOwner
+      ? 'order-1 items-end'
+      : 'items-start'}"
+  >
     <div class="flex items-center gap-2 mb-1 {isOwner ? 'justify-end' : ''}">
       {#if !isOwner}
-        <span class="text-xs font-semibold text-base-content/85 truncate max-w-[10rem]">
+        <span
+          class="text-xs font-semibold text-base-content/85 truncate max-w-40"
+        >
           {displayName}
         </span>
       {/if}
@@ -149,14 +161,18 @@
       </div>
     {:else}
       <p
-        class="inline-block w-fit max-w-full text-sm leading-relaxed whitespace-pre-wrap break-words rounded-2xl px-3 py-2
+        class="inline-block w-fit max-w-full text-sm leading-relaxed whitespace-pre-wrap wrap-break-word rounded-2xl px-3 py-2
                {isOwner
           ? 'bg-primary text-primary-content text-left'
           : 'bg-base-200/70 text-base-content/75'}"
       >
         {comment.message}
       </p>
-      <span class="mt-1 text-[10px] text-base-content/30 {isOwner ? 'text-right' : 'text-left'}">
+      <span
+        class="mt-1 text-[10px] text-base-content/30 {isOwner
+          ? 'text-right'
+          : 'text-left'}"
+      >
         {formatTime(comment.created_at)}
       </span>
     {/if}

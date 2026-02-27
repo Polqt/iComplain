@@ -13,3 +13,9 @@ export function isImage(url: string): boolean {
     const ext = url.split(".").pop()?.toLowerCase() ?? "";
     return ["jpg","jpeg","png","gif","webp"].includes(ext);
 }
+
+
+export function isImageFile(url: string): boolean {
+    const ext = url.split(".").pop()?.toLowerCase();
+    return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "");
+}

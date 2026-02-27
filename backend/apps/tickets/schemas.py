@@ -1,3 +1,4 @@
+from ast import Dict
 from typing import Optional
 from typing import Literal
 from pydantic import BaseModel
@@ -43,6 +44,8 @@ class TicketSchema(BaseModel):
     ticket_number: str
     attachment: Optional[str] = None
     comments_count: int = 0
+    has_feedback: bool = False
+    
     class Config:
         from_attributes = True
 
@@ -58,6 +61,13 @@ class TicketSchema(BaseModel):
                     attachment_url = request.build_absolute_uri(relative)
                 else:
                     attachment_url = relative
+                    
+        has_feedback = False
+        try:
+            has_feedback = bool(ticket.feedback)
+        except AttributeError:
+            has_feedback = False
+        
         data = {
             "id":            ticket.id,
             "title":         ticket.title,
@@ -72,7 +82,8 @@ class TicketSchema(BaseModel):
             "updated_at":    ticket.updated_at,
             "ticket_number": ticket.ticket_number,
             "attachment":    attachment_url,
-            "comments_count": getattr(ticket, 'comments_count', 0)
+            "comments_count": getattr(ticket, 'comments_count', 0),
+            "has_feedback":  has_feedback
         }
         return cls.model_validate(data)
 
@@ -129,11 +140,28 @@ class TicketCommentUpdateSchema(Schema):
 #Feedback Schema
 class TicketFeedbackSchema(Schema):
     id: int
-    ticket: TicketSchema
+    ticket_id: int
     student: UserSchema
     rating: int
     comments: str | None = None
     created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    def from_orm(cls, feedback):
+        data = {
+                "id": feedback.id,
+                "ticket_id": feedback.ticket.id if hasattr(feedback, 'ticket') else None,
+                "student": feedback.student,
+                "rating": feedback.rating,
+                "comments": feedback.comments,
+                "created_at": feedback.created_at,
+                "updated_at": getattr(feedback, 'updated_at', feedback.created_at),
+            }
+        return cls.model_validate(data)
 
 class TicketFeedbackCreateSchema(Schema):
     rating: int
@@ -157,3 +185,20 @@ class TicketHistoryItemSchema(Schema):
     priority: Literal["low", "medium", "high"]
     category: str | None = None
     performedBy: str | None = None
+
+class DashboardMetricsSchema(Schema):
+    title: str
+    value: str
+    change: str
+    subtitle: str
+    trend: str
+    
+class TicketVolumeDataPointSchema(Schema):
+    day: str
+    value: int
+    
+class DashboardStatsSchema(Schema):
+    metrics: list[DashboardMetricsSchema]
+    volume: list[TicketVolumeDataPointSchema]
+    status_breakdown: dict[str, int]
+    category_breakdown: dict[str, int]

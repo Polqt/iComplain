@@ -2,6 +2,7 @@ import logging
 from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.contrib.auth import get_user_model
 
 from .models import InAppNotification
 
@@ -107,6 +108,26 @@ def notify_ticket_status_change(
         notification_type=ntype,
         action_url=action_url,
     )
+
+
+def notify_ticket_created(
+    *,
+    ticket_id: int,
+    ticket_number: str,
+    ticket_title: str,
+    student_name: str,
+):
+    User = get_user_model()
+    for admin_user in User.objects.filter(is_staff=True):
+        create_in_app_notification(
+            user=admin_user,
+            ticket_id=ticket_id,
+            event="ticket_created",
+            title="New ticket submitted",
+            message=f'{student_name} submitted: "{ticket_title}"',
+            notification_type="info",
+            action_url=f"/tickets/{ticket_number}",
+        )
 
 
 def notify_ticket_comment(

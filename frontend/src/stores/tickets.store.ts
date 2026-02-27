@@ -14,10 +14,12 @@ interface TicketsStore extends Readable<TicketsState> {
     deleteTicket: (id: number) => Promise<boolean>;
     adminPatchTicket: (id: number, patch: { status?: string; priority?: number }) => Promise<Ticket | null>;
     loadCommunityTickets: () => Promise<void>;
+    reloadTickets: () => Promise<void>;
 
     addTicketToStore: (ticket: Ticket) => void;
     updateTicketInStore: (id: number, updates: Partial<Ticket>) => void;
     removeTicketFromStore: (id: number) => void;
+    adjustCommentCount: (ticketId: number, delta: number) => void;
 }
 
 
@@ -26,24 +28,25 @@ function createTicketsStore(): TicketsStore {
         tickets: [],
         isLoading: false,
         error: null,
+        currentView: "personal",
     });
 
     return {
         subscribe,
         setTickets(tickets: Ticket[]) {
-            set({ tickets, isLoading: false, error: null });
+            update(s => ({ ...s, tickets, isLoading: false, error: null }));
         },
 
         setLoading(isLoading: boolean) {
-            update((state) => ({ ...state, isLoading }));
+            update((s) => ({ ...s, isLoading }));
         },
 
         setError(error: string | null) {
-            update((State) => ({ ...State, error, isLoading: false }));
+            update((s) => ({ ...s, error, isLoading: false }));
         },
 
         async loadCommunityTickets(): Promise<void> {
-            update((state) => ({ ...state, isLoading: true, error: null }));
+            update((state) => ({ ...state, isLoading: true, error: null, currentView: "community" }));
 
             try {
                 const tickets: RawTicket[] = await apiGetCommunity();
@@ -66,7 +69,7 @@ function createTicketsStore(): TicketsStore {
         },
 
         async loadTickets(): Promise<void> {
-            update((state) => ({ ...state, isLoading: true, error: null }));
+            update((state) => ({ ...state, isLoading: true, error: null, currentView: "personal" }));
 
             try {
                 const tickets: RawTicket[] =  await fetchTickets();
@@ -231,7 +234,27 @@ function createTicketsStore(): TicketsStore {
 
         removeTicketFromStore(id: number) {
             update(s => ({ ...s, tickets: s.tickets.filter(t => t.id !== id) }));
-        }
+        },
+
+        adjustCommentCount(ticketId: number, delta: number) {
+            update(s => ({
+                ...s,
+                tickets: s.tickets.map(t =>
+                    t.id === ticketId
+                        ? { ...t, comments_count: Math.max(0, (t.comments_count ?? 0) + delta) }
+                        : t
+                ),
+            }));
+        },
+
+        async reloadTickets(): Promise<void> {
+            const state = get({ subscribe });
+            if (state.currentView === "community") {
+                await this.loadCommunityTickets();
+            } else {
+                await this.loadTickets();
+            }
+        },
         
     };
 }
