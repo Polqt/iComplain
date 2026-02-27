@@ -103,7 +103,9 @@ function createFeedbackStore(): FeedbackStore {
                 
                 update(s => ({
                     ...s,
-                    feedbacks: s.feedbacks.map(f => f.id === feedbackId ? feedback : f),
+                    feedbacks: s.feedbacks.some(f => f.id === feedbackId)
+                        ? s.feedbacks.map(f => (f.id === feedbackId ? feedback : f))
+                        : [feedback],
                     isLoading: false,
                     error: null
                 }));
