@@ -16,6 +16,14 @@ MAGIC_BYTES = {
     ],
 }
 
+def matches_magic_bytes(header: bytes, content_type: str) -> bool:
+    if content_type == 'image/webp':
+        # WebP: "RIFF" at start and "WEBP" at offset 8
+        return header.startswith(b'RIFF') and header[8:12] == b'WEBP'
+
+    magic_bytes_list = MAGIC_BYTES.get(content_type, ())
+    return any(header.startswith(magic) for magic in magic_bytes_list)
+
 def validate_file(file):
     if file.content_type not in ALLOWED_TYPES:
         raise ValueError("Unsupported file type.")
@@ -27,19 +35,8 @@ def validate_file(file):
     header = file.read(12) # Read first 12 bytes for magic byte validation
     file.seek(0) # Reset file pointer after reading
     
-    is_valid = False
-    content_type = file.content_type
-    
-    if content_type == "image/webp":
-        is_valid = header.startswith(b"RIFF") and header[8:12] == b'WEBP'
-    else: 
-        is_valid = any(
-            header.startswith(magic)
-            for magic in MAGIC_BYTES.get(content_type, [])
-        )
-        
-    if not is_valid:
+    if file.content_type in MAGIC_BYTES and not matches_magic_bytes(header, file.content_type):
         raise ValueError("File content does not match its declared type.")
-    
+
     return True
     

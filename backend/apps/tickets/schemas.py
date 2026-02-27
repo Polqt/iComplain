@@ -64,10 +64,8 @@ class TicketSchema(BaseModel):
                     
         has_feedback = False
         try:
-            if hasattr(ticket, 'feedback'):
-                feedback_obj = getattr(ticket, 'feedback', None)
-                has_feedback = feedback_obj is not None
-        except Exception:
+            has_feedback = bool(ticket.feedback)
+        except AttributeError:
             has_feedback = False
         
         data = {
