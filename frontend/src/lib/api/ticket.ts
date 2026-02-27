@@ -1,4 +1,5 @@
 import { PUBLIC_API_URL } from '$env/static/public';
+import type { DashboardStats } from '../../types/dashboard.ts';
 import type { Category, Ticket, TicketCreatePayload, TicketPriority, TicketUpdatePayload } from '../../types/tickets.ts';
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
@@ -175,6 +176,23 @@ export async function loadCommunityTickets(): Promise<Ticket[]> {
         return await handleRes<Ticket[]>(res);
     } catch (error) {
         console.error(`Error fetching community tickets:`, error);
+        throw error;
+    }
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+    try {
+        const res = await fetch(`${BASE}/stats/dashboard`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        return await handleRes<DashboardStats>(res);
+    } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
         throw error;
     }
 }

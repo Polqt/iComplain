@@ -14,6 +14,7 @@
   } from "../../../utils/ticketConfig.ts";
   import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
+  import { feedbackStore } from "../../../stores/feedback.store.ts"; // NEW
   import { onMount } from "svelte";
   import { formatDate, formatDateTime } from "../../../utils/date.ts";
   import {
@@ -27,14 +28,23 @@
   import AdminTicketControl from "../../../components/ui/tickets/AdminTicketControl.svelte";
   import TicketEdit from "../../../components/ui/tickets/TicketEdit.svelte";
   import CommentSection from "../../../components/ui/comments/CommentSection.svelte";
+  import FeedbackForm from "../../../components/ui/feedback/FeedbackForm.svelte"; 
+  import FeedbackList from "../../../components/ui/feedback/FeedbackList.svelte"; 
 
   $: idParam = $page.params.id;
   $: isNumericId = /^\d+$/.test(idParam ?? "");
   $: ({ tickets, isLoading, error } = $ticketsStore);
+  $: ({ feedbacks } = $feedbackStore); 
   $: ({ role, user } = $authStore);
   $: ticket = isNumericId
     ? (tickets.find((t) => t.id === Number(idParam)) ?? null)
     : (tickets.find((t) => t.ticket_number === idParam) ?? null);
+
+  $: existingFeedback = feedbacks[0] || null;
+  $: canSubmitFeedback = ticket?.status === "resolved" && role === "student";
+  $: canViewFeedback = ticket?.status === "closed" || existingFeedback !== null;
+
+  let showFeedbackForm = false;
 
   onMount(async () => {
     if (isNumericId) {
@@ -45,7 +55,15 @@
       const inStore = tickets.find((t) => t.ticket_number === idParam);
       if (!inStore) await ticketsStore.loadTickets();
     }
+
+    if (ticket?.id) {
+      await feedbackStore.loadFeedbackForTicket(ticket.id);
+    }
   });
+
+  $: if (ticket?.id) {
+    feedbackStore.loadFeedbackForTicket(ticket.id);
+  }
 
   let showEditModal = false;
   let showDeleteModal = false;
@@ -54,6 +72,14 @@
     if (!ticket) return;
     const success = await ticketsStore.deleteTicket(ticket.id);
     if (success) goto("/tickets");
+  }
+
+  async function handleFeedbackSaved() {
+    showFeedbackForm = false;
+    if (ticket?.id) {
+      await feedbackStore.loadFeedbackForTicket(ticket.id);
+      await ticketsStore.loadTicketById(ticket.id); 
+    }
   }
 
   $: pKey = ticket ? getPriorityKey(ticket.priority) : "low";
@@ -81,12 +107,11 @@
           : []),
       ]
     : [];
-
 </script>
 
 <svelte:component this={role === "admin" ? AdminLayout : StudentLayout}>
   {#if isLoading && !ticket}
-  <div class="flex flex-col h-[calc(100vh-8rem)] gap-5">
+    <div class="flex flex-col h-[calc(100vh-8rem)] gap-5">
       <div class="flex items-center gap-3 shrink-0">
         <div class="skeleton w-8 h-8 rounded-lg"></div>
         <div class="skeleton h-6 w-48 rounded-lg"></div>
@@ -166,25 +191,9 @@
           </div>
         {:else if role === "admin"}
           <AdminTicketControl {ticket} />
-        {:else if ticket.status === "pending" && role === "student"}
-          <div class="flex items-center gap-2">
-            <button
-              class="btn btn-ghost btn-sm gap-1.5 rounded-lg text-xs"
-              onclick={() => (showEditModal = true)}
-              disabled={isLoading}
-            >
-              <Icon icon="mdi:pencil-outline" width="14" height="14" /> Edit
-            </button>
-            <button
-              class="btn btn-error btn-outline btn-sm gap-1.5 rounded-lg text-xs"
-              onclick={() => (showDeleteModal = true)}
-              disabled={isLoading}
-            >
-              <Icon icon="mdi:delete-outline" width="14" height="14" /> Delete
-            </button>
-          </div>
         {/if}
       </div>
+
       <div
         class="grid grid-cols-[1fr_272px] gap-4 flex-1 min-h-0 overflow-hidden"
       >
@@ -277,10 +286,7 @@
             </div>
           {/if}
 
-          <!-- Activity timeline -->
-          <div
-            class="bg-base-100 rounded-2xl border border-base-content/8 p-5 flex-1"
-          >
+          <div class="bg-base-100 rounded-2xl border border-base-content/8 p-5">
             <h3
               class="text-[10px] font-bold uppercase tracking-widest text-base-content/35 mb-4"
             >
@@ -318,8 +324,78 @@
               </div>
             </div>
           </div>
+
           {#if ticket.id}
             <CommentSection ticketId={ticket.id} ticketStatus={ticket.status} />
+          {/if}
+
+          {#if role === "student" && (canSubmitFeedback || canViewFeedback)}
+            <div
+              class="bg-base-100 rounded-2xl border border-base-content/8 p-5"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <h3
+                  class="text-[10px] font-bold uppercase tracking-widest text-base-content/35"
+                >
+                  Feedback
+                </h3>
+
+                {#if canSubmitFeedback && !existingFeedback && !showFeedbackForm}
+                  <button
+                    class="btn btn-primary btn-xs gap-1"
+                    onclick={() => (showFeedbackForm = true)}
+                  >
+                    <Icon icon="mdi:star-outline" width="14" height="14" />
+                    Submit Feedback
+                  </button>
+                {/if}
+              </div>
+
+              {#if showFeedbackForm && ticket.id}
+                <FeedbackForm
+                  ticketId={ticket.id}
+                  existing={existingFeedback}
+                  on:saved={handleFeedbackSaved}
+                  on:cancel={() => (showFeedbackForm = false)}
+                />
+              {:else if existingFeedback}
+                <FeedbackList feedbacks={[existingFeedback]} />
+
+                {#if canSubmitFeedback}
+                  <button
+                    class="btn btn-ghost btn-sm gap-1 mt-3"
+                    onclick={() => (showFeedbackForm = true)}
+                  >
+                    <Icon icon="mdi:pencil-outline" width="14" height="14" />
+                    Edit Feedback
+                  </button>
+                {/if}
+              {:else if canSubmitFeedback}
+                <div class="text-center py-8">
+                  <Icon
+                    icon="mdi:star-outline"
+                    width="32"
+                    height="32"
+                    class="text-base-content/20 mx-auto mb-3"
+                  />
+                  <p class="text-sm text-base-content/60 mb-4">
+                    Your ticket has been resolved!<br />
+                    Help us improve by sharing your feedback.
+                  </p>
+                  <button
+                    class="btn btn-primary btn-sm gap-1.5"
+                    onclick={() => (showFeedbackForm = true)}
+                  >
+                    <Icon icon="mdi:star" width="16" height="16" />
+                    Submit Feedback
+                  </button>
+                </div>
+              {:else}
+                <div class="text-sm text-base-content/40 text-center py-4">
+                  No feedback submitted yet.
+                </div>
+              {/if}
+            </div>
           {/if}
         </div>
 
@@ -487,6 +563,7 @@
         </div>
       </div>
     </div>
+
     {#if error}
       <div class="toast toast-top toast-end z-9999">
         <div class="alert alert-error shadow-lg rounded-xl gap-2 text-sm">

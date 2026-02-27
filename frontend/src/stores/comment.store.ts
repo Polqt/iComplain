@@ -8,7 +8,7 @@ interface CommentsStore extends Readable<CommentsState> {
     setError: (error: string | null) => void;
 
     loadCommentsForTicket: (ticketId: number) => Promise<void>;
-    createComment: (ticketId: number, payload: CommentCreatePayload, attachment?: File) => Promise<TicketComment | null>;
+    createComment: (ticketId: number, payload: CommentCreatePayload) => Promise<TicketComment | null>;
     updateComment: (ticketId: number, commentId: number, updates: CommentUpdatePayload) => Promise<TicketComment | null>;
     deleteComment: (ticketId: number, commentId: number) => Promise<boolean>;
 
@@ -62,11 +62,11 @@ function createCommentsStore(): CommentsStore {
             }
         },
 
-        async createComment(ticketId: number, payload: CommentCreatePayload, attachment?: File): Promise<TicketComment | null> {
+        async createComment(ticketId: number, payload: CommentCreatePayload): Promise<TicketComment | null> {
             update((state) => ({ ...state, isLoading: true, error: null }));
 
             try {
-                const newComment = await apiCreateComment(ticketId, payload, attachment);
+                const newComment = await apiCreateComment(ticketId, payload);
 
                 if (newComment) {
                     update((state) => {

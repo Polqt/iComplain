@@ -46,7 +46,7 @@
 <form class="space-y-3" on:submit|preventDefault={handleSubmit}>
   <div class="flex items-center gap-3">
     <label for="rating" class="text-xs text-base-content/60">Rating</label>
-    <select class="input input-sm max-w-[84px]" bind:value={rating} disabled={disabled}>
+    <select class="input input-sm max-w-21" bind:value={rating} disabled={disabled}>
       <option value={5}>5</option>
       <option value={4}>4</option>
       <option value={3}>3</option>
