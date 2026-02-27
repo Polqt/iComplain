@@ -1,14 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db.models import Count, Prefetch
-from django.shortcuts import get_object_or_404, redirect
+from django.db.models import Q, Count, Min, Prefetch
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from venv import logger
+from asyncio.log import logger
 from .utils import (
     format_date,
     format_timestamp,
@@ -21,6 +21,8 @@ from apps.notifications.utils import notify_ticket_created, notify_ticket_status
 
 from .schemas import (
     CategorySchema,
+    DashboardMetricsSchema,
+    DashboardStatsSchema,
     TicketAdminUpdateSchema,
     TicketCommentCreateSchema,
     TicketCommentSchema,
@@ -33,6 +35,7 @@ from .schemas import (
     TicketFeedbackSchema,
     TicketFeedbackCreateSchema,
     TicketFeedbackUpdateSchema,
+    TicketVolumeDataPointSchema,
 )
 from .models import Category, Ticket, TicketAttachment, TicketComment, TicketPriority, TicketFeedback, TicketStatusHistory
 
@@ -411,6 +414,7 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
                     "ticket_id": ticket.id,
                     "user": {
                         "id": comment.user.id,
+                        "email": comment.user.email,
                         "name": getattr(comment.user, "name", None),
                         "avatar": getattr(comment.user, "avatar", None),
                     },
@@ -422,7 +426,6 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
     )
 
     return 200, TicketCommentSchema.model_validate(comment)
-
 
 @router.put("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
 def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema = Form(...)):
@@ -463,7 +466,6 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
     
     return TicketCommentSchema.from_orm(comment)
 
-
 @router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
 def delete_comment(request, id: int, comment_id: int):
     ticket = get_object_or_404(Ticket, id=id)
@@ -500,16 +502,20 @@ def delete_comment(request, id: int, comment_id: int):
 
     
 # Ticket Feedback Views
-@router.get("/{id}/feedback/", response=TicketFeedbackSchema)
+@router.get("/{id}/feedback/", response={200: TicketFeedbackSchema, 403: dict, 404: dict})
 def get_feedback(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
+    
     # Allow owner or staff to view
     if ticket.student != request.user and not request.user.is_staff:
-        return redirect('ticket_list')
-    feedback = get_object_or_404(TicketFeedback, ticket=ticket)
-    return feedback
+        return 403, {"detail": "You do not have permission to view this feedback."}
+    
+    # Check if feedback exists
+    if not hasattr(ticket, 'feedback') or ticket.feedback is None:
+        return 404, {"detail": "No feedback found for this ticket."}
+    return 200, TicketFeedbackSchema.from_orm(ticket.feedback)
 
-@router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict})
+@router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict, 403: dict})
 def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attachment: UploadedFile = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
@@ -553,39 +559,223 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attac
     ticket.status = "closed"
     ticket.save()
 
-    return 201, feedback
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_feedback_update",
+            "data": {
+                "type": "feedback_created",
+                "ticket_id": ticket.id,
+                "feedback_id": feedback.id,
+            }
+        }
+    )
 
-@router.put("/{id}/feedback/{feedback_id}", response=TicketFeedbackSchema)
+    return 201, TicketFeedbackSchema.from_orm(feedback)
+
+@router.put("/{id}/feedback/{feedback_id}", response={200: TicketFeedbackSchema, 400: dict, 403: dict})
 def update_feedback(request, id: int, feedback_id: int, payload: TicketFeedbackUpdateSchema):
     ticket = get_object_or_404(Ticket, id=id)
     feedback = get_object_or_404(TicketFeedback, id=feedback_id, ticket=ticket)
 
-    # Only the student who submitted feedback can edit within 24 hours
+    # Only the student who submitted feedback can edit
     if feedback.student != request.user:
-        return {"detail": "You do not have permission to edit this feedback."}, 403
+        return 403, {"detail": "You do not have permission to edit this feedback."}
 
+    # Must be within 24 hours
     if timezone.now() > feedback.created_at + timedelta(hours=24):
-        return {"detail": "Feedback can only be edited within 24 hours of submission."}, 400
+        return 400, {"detail": "Feedback can only be edited within 24 hours of submission."}
 
+    # Update fields
     if payload.rating is not None:
         feedback.rating = payload.rating
     if payload.comments is not None:
         feedback.comments = payload.comments
 
     feedback.save()
-    return feedback
+    
+    # Send WebSocket update (optional)
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_feedback_update",
+            "data": {
+                "type": "feedback_updated",
+                "ticket_id": ticket.id,
+                "feedback_id": feedback.id,
+            }
+        }
+    )
+    
+    return 200, TicketFeedbackSchema.from_orm(feedback)
 
-@router.delete("/{id}/feedback/{feedback_id}", response={204: None, 400: dict})
+@router.delete("/{id}/feedback/{feedback_id}", response={204: None, 400: dict, 403: dict})
 def delete_feedback(request, id: int, feedback_id: int):
     ticket = get_object_or_404(Ticket, id=id)
     feedback = get_object_or_404(TicketFeedback, id=feedback_id, ticket=ticket)
 
-    # Only the student who submitted feedback can delete within 24 hours
+    # Only the student who submitted feedback can delete
     if feedback.student != request.user:
-        return {"detail": "You do not have permission to delete this feedback."}, 403
+        return 403, {"detail": "You do not have permission to delete this feedback."}
 
+    # Must be within 24 hours
     if timezone.now() > feedback.created_at + timedelta(hours=24):
-        return {"detail": "Feedback can only be deleted within 24 hours of submission."}, 400
+        return 400, {"detail": "Feedback can only be deleted within 24 hours of submission."}
 
+    # Send WebSocket update before deleting
+    async_to_sync(channel_layer.group_send)(
+        "ticket_updates",
+        {
+            "type": "send_feedback_update",
+            "data": {
+                "type": "feedback_deleted",
+                "ticket_id": ticket.id,
+                "feedback_id": feedback.id,
+            }
+        }
+    )
+    
     feedback.delete()
     return 204, None
+
+
+@router.get("/stats/dashboard", response=DashboardStatsSchema)
+def dashboard_stats(request):
+    if not request.user.is_staff:
+        return {"detail": "You do not have permission to view this data."}, 403
+
+    now = timezone.now()
+    today = now.date()
+    last_month_start = (now - timedelta(days=30)).date()
+    this_week_start = (now - timedelta(days=7)).date()
+    
+    # Total Tickets Metrics
+    total_tickets = Ticket.objects.count()
+    last_month_tickets = Ticket.objects.filter(
+        created_at__date__lt = last_month_start
+    ).count()
+    
+    if last_month_tickets > 0:
+        total_change = ((total_tickets - last_month_tickets) / last_month_tickets) * 100
+    else:
+        total_change = 0
+        
+    # Resolved Tickets Metrics
+    resolved_tickets = Ticket.objects.filter(status='resolved').count()
+    last_month_resolved = Ticket.objects.filter(
+        status = 'resolved',
+        updated_at__date__lt = last_month_start
+    ).count()
+    
+    
+    if last_month_resolved > 0:
+        resolved_change = ((resolved_tickets - last_month_resolved) / last_month_resolved) * 100
+    else:
+        resolved_change = 0
+        
+    # Pending Tickets Metrics
+    pending_tickets = Ticket.objects.filter(status='pending').count()
+    last_month_pending = Ticket.objects.filter(
+        status = 'pending',
+        updated_at__date__lt = last_month_start
+    ).count()
+    
+    if last_month_pending > 0:
+        pending_change = ((pending_tickets - last_month_pending) / last_month_pending) * 100
+    else:
+        pending_change = 0
+        
+    # Response time
+    tickets_with_staff_comments = Ticket.objects.filter(
+        comments__user__is_staff=True,
+        created_at__gte=this_week_start
+    ).annotate(
+        first_staff_comment_time=Min('comments__created_at', filter=Q(comments__user__is_staff=True))
+    )
+    
+    response_times = []
+    for ticket in tickets_with_staff_comments:
+        if ticket.first_staff_comment_time:
+            delta = ticket.first_staff_comment_time - ticket.created_at
+            response_times.append(delta.total_seconds() / 3600)
+        
+    avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+    
+    last_month_tickets_with_comments = Ticket.objects.filter(
+        comments__user__is_staff=True,
+        created_at__date__lt=last_month_start,
+        created_at__date__gte=(last_month_start - timedelta(days=30))
+    ).annotate(
+        first_staff_comment_time=Min('comments__created_at', filter=Q(comments__user__is_staff=True))
+    )
+    
+    last_month_response_times = []
+    for ticket in last_month_tickets_with_comments:
+        if ticket.first_staff_comment_time:
+            delta = ticket.first_staff_comment_time - ticket.created_at
+            last_month_response_times.append(delta.total_seconds() / 3600)
+    
+    last_month_avg_response = sum(last_month_response_times) / len(last_month_response_times) if last_month_response_times else avg_response_time
+    
+    metrics = [
+        DashboardMetricsSchema(
+            title="Total Tickets",
+            value=str(total_tickets),
+            change=f"+{abs(total_change):.0f}%" if total_change >= 0 else f"-{abs(total_change):.0f}%",
+            subtitle="vs last month",
+            trend="success" if total_change >= 0 else "error"
+        ),
+        DashboardMetricsSchema(
+            title="Resolved Tickets",
+            value=str(resolved_tickets),
+            change=f"+{abs(resolved_change):.0f}%" if resolved_change >= 0 else f"-{abs(resolved_change):.0f}%",
+            subtitle=f"Last Month {last_month_resolved}",
+            trend="success" if resolved_change >= 0 else "error"
+        ),
+        DashboardMetricsSchema(
+            title="Pending Tickets",
+            value=str(pending_tickets),
+            change=f"+{abs(pending_change):.0f}%" if pending_change >= 0 else f"-{abs(pending_change):.0f}%",
+            subtitle=f"Last Month {last_month_pending}",
+            trend="error" if pending_change >= 0 else "success"  # More pending = bad
+        ),
+        DashboardMetricsSchema(
+            title="Response Time",
+            value=f"{avg_response_time:.1f} hrs" if avg_response_time else "N/A",
+            change=f"{(last_month_avg_response / avg_response_time):.1f}x faster" if avg_response_time and last_month_avg_response else "N/A",
+            subtitle=f"Last Month {last_month_avg_response:.1f} hrs" if last_month_avg_response else "N/A",
+            trend="success" if avg_response_time < last_month_avg_response else "error"
+        ),
+    ]
+    
+    volume_data = []
+    days = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+    
+    for i in range(7):
+        day_date = today - timedelta(days=6-i)
+        count = Ticket.objects.filter(created_at__date=day_date).count()
+        volume_data.append(
+            TicketVolumeDataPointSchema(
+                day=days[(day_date.weekday() + 1) % 7],
+                value=count
+            )
+        )
+    
+    status_breakdown = dict(
+        Ticket.objects.values('status')
+        .annotate(count=Count('id'))
+        .values_list('status', 'count')
+    )
+    
+    category_breakdown = dict(
+        Ticket.objects.values('category__name')
+        .annotate(count=Count('id'))
+        .values_list('category__name', 'count')
+    )
+    
+    return DashboardStatsSchema(
+        metrics=metrics,
+        volume=volume_data,
+        status_breakdown=status_breakdown,
+        category_breakdown=category_breakdown,
+    )

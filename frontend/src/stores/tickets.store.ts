@@ -38,11 +38,11 @@ function createTicketsStore(): TicketsStore {
         },
 
         setLoading(isLoading: boolean) {
-            update((state) => ({ ...state, isLoading }));
+            update((s) => ({ ...s, isLoading }));
         },
 
         setError(error: string | null) {
-            update((State) => ({ ...State, error, isLoading: false }));
+            update((s) => ({ ...s, error, isLoading: false }));
         },
 
         async loadCommunityTickets(): Promise<void> {

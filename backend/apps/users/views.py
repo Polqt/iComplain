@@ -257,14 +257,3 @@ def delete_avatar(request: HttpRequest):
         message="Avatar removed.",
         user=UserResponse.model_validate(user, from_attributes=True),
     )
-
-
-    
-    
-@router.post("/forgot-password", response=AuthResponse)
-def forgot_password(request: HttpRequest, data: LoginRequest):
-    return AuthResponse(
-        success=True,
-        message="Password reset link sent to your email.",
-        user=None
-    )

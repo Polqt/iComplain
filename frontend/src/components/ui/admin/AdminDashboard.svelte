@@ -1,82 +1,29 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { onMount } from "svelte";
   import AdminLayout from "../../layout/AdminLayout.svelte";
-  import { statusConfig } from "../../../utils/ticketConfig.ts";
-  import type { TicketStatus, ViewMode } from "../../../types/tickets.ts";
   import TicketBoard from "../tickets/TicketBoard.svelte";
+  import type { DashboardStats } from "../../../types/dashboard.ts";
+  import { getDashboardStats } from "../../../lib/api/ticket.ts";
 
-  const metrics = [
-    {
-      title: "Total Tickets",
-      value: "245",
-      change: "+12%",
-      subtitle: "vs last month",
-      trend: "text-success",
-    },
-    {
-      title: "Resolved Tickets",
-      value: "180",
-      change: "+15%",
-      subtitle: "Last Month 56",
-      trend: "text-success",
-    },
-    {
-      title: "Pending Tickets",
-      value: "45",
-      change: "-12%",
-      subtitle: "Last Month 49",
-      trend: "text-error",
-    },
-    {
-      title: "Response Time",
-      value: "2.4 hrs",
-      change: "10x faster",
-      subtitle: "Last Month 2.4 hrs",
-      trend: "text-success",
-    },
-  ];
+  let stats: DashboardStats | null = null;
+  let isLoading = true;
+  let error: string | null = null;
 
-  const volume = [
-    { day: "S", value: 14 },
-    { day: "M", value: 24 },
-    { day: "T", value: 18 },
-    { day: "W", value: 30 },
-    { day: "T", value: 22 },
-    { day: "F", value: 26 },
-    { day: "S", value: 16 },
-  ];
+  onMount(async () => {
+    try {
+      stats = await getDashboardStats();
+    } catch (err) {
+      error = err instanceof Error ? err.message : "Failed to load stats";
+      console.error("Dashboard stats error:", err);
+    } finally {
+      isLoading = false;
+    }
+  });
 
-  const activities = [
-    {
-      id: "#4021",
-      title: "Login Issue",
-      status: "resolved" as TicketStatus,
-      description: "Reset credentials and confirmed access restored.",
-      tags: ["Urgent", "Technical"],
-      assignee: "N. Flores",
-      time: "2 hours ago",
-    },
-    {
-      id: "#3987",
-      title: "Billing Error",
-      status: "pending" as TicketStatus,
-      description: "Awaiting invoice verification from finance.",
-      tags: ["Finance", "Follow-up"],
-      assignee: "R. Santos",
-      time: "Yesterday",
-    },
-    {
-      id: "#3964",
-      title: "Access Request",
-      status: "in_progress" as TicketStatus,
-      description: "New faculty access request pending approval.",
-      tags: ["Account", "New"],
-      assignee: "M. Tan",
-      time: "2 days ago",
-    },
-  ];
+  $: metrics = stats?.metrics ?? [];
+  $: volume = stats?.volume ?? [];
 
-  const statusBadge = (status: TicketStatus) => statusConfig[status].color;
 </script>
 
 <AdminLayout>
@@ -112,133 +59,129 @@
     </div>
 
     <div class="flex-1 overflow-y-auto pr-2 space-y-6">
-      <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {#each metrics as metric}
+      {#if isLoading}
+        <div class="flex items-center justify-center py-12">
+          <span class="loading loading-spinner loading-lg"></span>
+        </div>
+      {:else if error}
+        <div class="alert alert-error">
+          <Icon icon="mdi:alert-circle" width="20" height="20" />
+          <span>{error}</span>
+          <button
+            class="btn btn-sm btn-ghost"
+            onclick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        </div>
+      {:else}
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {#each metrics as metric}
+            <div
+              class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
+            >
+              <div class="card-body p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="text-xs text-base-content/60">{metric.title}</p>
+                  <button class="btn btn-ghost btn-xs btn-circle">
+                    <Icon icon="mdi:dots-horizontal" width="16" height="16" />
+                  </button>
+                </div>
+                <div class="flex items-end justify-between">
+                  <div>
+                    <p class="text-2xl font-bold leading-none">
+                      {metric.value}
+                    </p>
+                    <p class="text-xs text-base-content/50 mt-1">
+                      {metric.subtitle}
+                    </p>
+                  </div>
+                  <span
+                    class="text-xs font-semibold {metric.trend === 'success'
+                      ? 'text-success'
+                      : 'text-error'}"
+                  >
+                    {metric.change}
+                  </span>
+                </div>
+              </div>
+            </div>
+          {/each}
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div
+            class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg xl:col-span-2"
+          >
+            <div class="card-body p-4">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h2 class="text-base font-semibold">Ticket Volume Tracker</h2>
+                  <p class="text-xs text-base-content/60">
+                    Track daily ticket flow and monitor workload trends
+                  </p>
+                </div>
+                <select class="select select-bordered select-sm">
+                  <option>Weekly</option>
+                  <option>Monthly</option>
+                  <option>Quarterly</option>
+                </select>
+              </div>
+
+              {#if volume.length > 0}
+                <div class="flex items-end justify-between gap-3 h-40">
+                  {#each volume as bar}
+                    <div class="flex flex-col items-center gap-2 flex-1">
+                      <div
+                        class="w-8 rounded-lg bg-primary/20 relative overflow-hidden"
+                        style={`height: ${Math.max(bar.value * 3, 10)}px`}
+                      >
+                        <div
+                          class="absolute bottom-0 inset-x-0 h-full bg-primary/60"
+                        ></div>
+                      </div>
+                      <span class="text-xs text-base-content/60">{bar.day}</span
+                      >
+                    </div>
+                  {/each}
+                </div>
+
+                <div class="mt-4 text-sm text-base-content/60">
+                  Last 7 days ticket volume
+                </div>
+              {:else}
+                <div
+                  class="flex items-center justify-center h-40 text-base-content/40"
+                >
+                  No volume data available
+                </div>
+              {/if}
+            </div>
+          </div>
+
           <div
             class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
           >
             <div class="card-body p-4">
               <div class="flex items-center justify-between mb-3">
-                <p class="text-xs text-base-content/60">{metric.title}</p>
-                <button class="btn btn-ghost btn-xs btn-circle">
-                  <Icon icon="mdi:dots-horizontal" width="16" height="16" />
-                </button>
-              </div>
-              <div class="flex items-end justify-between">
                 <div>
-                  <p class="text-2xl font-bold leading-none">{metric.value}</p>
-                  <p class="text-xs text-base-content/50 mt-1">
-                    {metric.subtitle}
+                  <h2 class="text-base font-semibold">
+                    Recent Support Activity
+                  </h2>
+                  <p class="text-xs text-base-content/60">
+                    Latest updates from the support team
                   </p>
                 </div>
-                <span class="text-xs font-semibold {metric.trend}"
-                  >{metric.change}</span
-                >
+                <a href="/admin/tickets" class="text-xs text-primary">
+                  See all
+                </a>
               </div>
             </div>
           </div>
-        {/each}
-      </section>
+        </section>
 
-      <section class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div
-          class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg xl:col-span-2"
-        >
-          <div class="card-body p-4">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h2 class="text-base font-semibold">Ticket Volume Tracker</h2>
-                <p class="text-xs text-base-content/60">
-                  Track daily ticket flow and monitor workload trends
-                </p>
-              </div>
-              <select class="select select-bordered select-sm">
-                <option>Weekly</option>
-                <option>Monthly</option>
-                <option>Quarterly</option>
-              </select>
-            </div>
-
-            <div class="flex items-end justify-between gap-3 h-40">
-              {#each volume as bar}
-                <div class="flex flex-col items-center gap-2 flex-1">
-                  <div
-                    class="w-8 rounded-lg bg-primary/20 relative overflow-hidden"
-                    style={`height: ${bar.value * 3}px`}
-                  >
-                    <div
-                      class="absolute bottom-0 inset-x-0 h-full bg-primary/60"
-                    ></div>
-                  </div>
-                  <span class="text-xs text-base-content/60">{bar.day}</span>
-                </div>
-              {/each}
-            </div>
-
-            <div class="mt-4 text-sm text-base-content/60">
-              <span class="text-success font-semibold">+18%</span>
-              This week's ticket volume is higher than last week's
-            </div>
-          </div>
-        </div>
-
-        <div
-          class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
-        >
-          <div class="card-body p-4">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h2 class="text-base font-semibold">Recent Support Activity</h2>
-                <p class="text-xs text-base-content/60">
-                  Latest updates from the support team
-                </p>
-              </div>
-              <a href="/admin/activities" class="text-xs text-primary">
-                See all activities
-              </a>
-            </div>
-
-            <div class="space-y-3">
-              {#each activities as activity}
-                <div
-                  class="card bg-base-200 dark:bg-base-300 border border-base-content/5"
-                >
-                  <div class="card-body p-3">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold">{activity.id}</span>
-                        <span class="text-sm font-medium">{activity.title}</span
-                        >
-                      </div>
-                      <span
-                        class="badge badge-sm {statusBadge(activity.status)}"
-                      >
-                        {activity.status}
-                      </span>
-                    </div>
-                    <p class="text-xs text-base-content/70 mt-2">
-                      {activity.description}
-                    </p>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                      {#each activity.tags as tag}
-                        <span class="badge badge-ghost badge-sm">{tag}</span>
-                      {/each}
-                    </div>
-                    <div
-                      class="flex items-center justify-between text-xs text-base-content/50 mt-2"
-                    >
-                      <span>Assigned to {activity.assignee}</span>
-                      <span>{activity.time}</span>
-                    </div>
-                  </div>
-                </div>
-              {/each}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <TicketBoard />
+        <TicketBoard />
+      {/if}
     </div>
   </div>
 </AdminLayout>
