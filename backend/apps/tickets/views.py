@@ -756,7 +756,7 @@ def dashboard_stats(request):
         count = Ticket.objects.filter(created_at__date=day_date).count()
         volume_data.append(
             TicketVolumeDataPointSchema(
-                day=days[day_date.weekday() if i != 0 and i != 6 else (6 if i == 0 else 0)],
+                day=days[(day_date.weekday() + 1) % 7],
                 value=count
             )
         )
