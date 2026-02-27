@@ -502,7 +502,7 @@ def delete_comment(request, id: int, comment_id: int):
 
     
 # Ticket Feedback Views
-@router.get("/{id}/feedback/", response={200: TicketFeedbackSchema, 404: dict})
+@router.get("/{id}/feedback/", response={200: TicketFeedbackSchema, 403: dict, 404: dict})
 def get_feedback(request, id: int):
     ticket = get_object_or_404(Ticket, id=id)
     
