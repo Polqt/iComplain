@@ -7,7 +7,7 @@ const BASE = `${PUBLIC_API_URL}/tickets`;
 async function handleRes<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || res.statusText);
+        throw new Error(body.message || body.detail || res.statusText);
     }
     return res.json() as Promise<T>;
 }
@@ -137,7 +137,7 @@ export async function deleteTicket(id: number): Promise<void> {
 
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(body.message || `Failed to delete ticket with ID ${id}.`);
+            throw new Error(body.message || body.detail || `Failed to delete ticket with ID ${id}.`);
         }
     } catch (error) {
         console.error('Error deleting ticket:', error);
