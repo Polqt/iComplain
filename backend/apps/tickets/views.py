@@ -102,6 +102,7 @@ def ticket_history(request):
             "action": "created",
             "description": "Ticket created",
             "event_status": "pending",
+            "performed_by": None,
         })
         # Status history
         for h in ticket.status_history.all():
@@ -117,6 +118,7 @@ def ticket_history(request):
                     f"to {map_status_for_history(h.new_status)}"
                 ),
                 "event_status": h.new_status,
+                "performed_by": h.changed_by.full_name if h.changed_by else None,
             })
         # Comments
         for c in ticket.comments.all():
@@ -126,6 +128,7 @@ def ticket_history(request):
                 "ticket": ticket,
                 "action": "commented",
                 "description": f"Comment: {c.message[:100]}{'…' if len(c.message) > 100 else ''}",
+                "performed_by": c.user.full_name if c.user else None,
             })
 
     events.sort(key=lambda e: e["at"], reverse=True)
@@ -154,8 +157,91 @@ def ticket_history(request):
             status=map_status_for_history(event_status),
             priority=map_priority_for_history(priority_name),
             category=category_name,
+            performedBy=e.get("performed_by"),
         ))
     return out
+
+@router.get("/admin/history", response={200: list[TicketHistoryItemSchema], 403: dict})
+def admin_ticket_history(request):
+    """Admin-only endpoint to view all ticket history for accountability tracking."""
+    if not request.user.is_staff:
+        return {"detail": "Not authorized."}, 403
+    
+    status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
+    comments_qs = TicketComment.objects.select_related("user").order_by("created_at")
+    tickets = Ticket.objects.select_related("category", "priority", "student").prefetch_related(
+        Prefetch("status_history", queryset=status_history_qs),
+        Prefetch("comments", queryset=comments_qs),
+    ).all()
+
+    events = []
+    for ticket in tickets:
+        # Created
+        events.append({
+            "at": ticket.created_at,
+            "id": f"created-{ticket.id}-{ticket.created_at.isoformat()}",
+            "ticket": ticket,
+            "action": "created",
+            "description": "Ticket created",
+            "event_status": "pending",
+            "performed_by": None,
+        })
+        # Status history
+        for h in ticket.status_history.all():
+            action = history_action_for_status_change(h.old_status, h.new_status)
+            events.append({
+                "at": h.changed_at,
+                "id": f"status-{h.id}",
+                "ticket": ticket,
+                "action": action,
+                "new_status": h.new_status,
+                "description": (
+                    f"Status changed from {map_status_for_history(h.old_status)} "
+                    f"to {map_status_for_history(h.new_status)}"
+                ),
+                "event_status": h.new_status,
+                "performed_by": h.changed_by.full_name if h.changed_by else None,
+            })
+        # Comments
+        for c in ticket.comments.all():
+            events.append({
+                "at": c.created_at,
+                "id": f"comment-{c.id}",
+                "ticket": ticket,
+                "action": "commented",
+                "description": f"Comment: {c.message[:100]}{'…' if len(c.message) > 100 else ''}",
+                "performed_by": c.user.full_name if c.user else None,
+            })
+
+    events.sort(key=lambda e: e["at"], reverse=True)
+    status_change_actions = ("updated", "resolved", "closed", "reopened")
+    out = []
+    for e in events:
+        t = e["ticket"]
+        priority_name = t.priority.name if t.priority else ""
+        category_name = t.category.name if t.category else None
+        event_status = e.get("event_status", t.status)
+        if e["action"] in status_change_actions:
+            event_status = map_status_for_history(e["new_status"])
+        elif e["action"] == "created":
+            event_status = map_status_for_history("pending")
+        else:
+            event_status = map_status_for_history(t.status)
+        out.append(TicketHistoryItemSchema(
+            id=e["id"],
+            ticketPk=t.id,
+            ticketId=t.ticket_number,
+            title=t.title,
+            action=e["action"],
+            description=e["description"],
+            timestamp=format_timestamp(e["at"]),
+            date=format_date(e["at"]),
+            status=map_status_for_history(event_status),
+            priority=map_priority_for_history(priority_name),
+            category=category_name,
+            performedBy=e.get("performed_by"),
+        ))
+    return 200, out
 
 @router.get("/{ticket_id}", response={200: TicketSchema, 404: dict})
 def ticket_detail(request, ticket_id: str):

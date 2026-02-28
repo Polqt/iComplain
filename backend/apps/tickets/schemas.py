@@ -184,6 +184,7 @@ class TicketHistoryItemSchema(Schema):
     status: Literal["pending", "in-progress", "resolved", "closed"]
     priority: Literal["low", "medium", "high"]
     category: str | None = None
+    performedBy: str | None = None
 
 class DashboardMetricsSchema(Schema):
     title: str
