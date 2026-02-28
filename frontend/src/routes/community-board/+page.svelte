@@ -23,6 +23,7 @@
   let priorityFilter = "all";
   let categoryFilter = "all";
   let selectedTicket: Ticket | null = null;
+  let upvoteByTicketId: Record<number, { count: number; upvoted: boolean }> = {};
 
   $: filtered = tickets.filter((t) => {
     const q = search.trim().toLowerCase();
@@ -62,6 +63,21 @@
 
   function handleTicketClick(ticket: Ticket) {
     selectedTicket = ticket;
+  }
+
+  function handleCommentClick(ticket: Ticket) {
+    selectedTicket = ticket;
+  }
+
+  function handleUpvoteToggle(ticket: Ticket) {
+    const current = upvoteByTicketId[ticket.id] ?? { count: 0, upvoted: false };
+    upvoteByTicketId = {
+      ...upvoteByTicketId,
+      [ticket.id]: {
+        upvoted: !current.upvoted,
+        count: current.upvoted ? Math.max(0, current.count - 1) : current.count + 1,
+      },
+    };
   }
 </script>
 
@@ -124,6 +140,10 @@
                   {ticket}
                   isActive={selectedTicket?.id === ticket.id}
                   onClick={() => handleTicketClick(ticket)}
+                  onCommentClick={handleCommentClick}
+                  upvoteCount={upvoteByTicketId[ticket.id]?.count ?? 0}
+                  isUpvoted={upvoteByTicketId[ticket.id]?.upvoted ?? false}
+                  onUpvoteToggle={handleUpvoteToggle}
                 />
               {/each}
             </div>
