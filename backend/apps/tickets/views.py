@@ -243,12 +243,16 @@ def admin_ticket_history(request):
         ))
     return 200, out
 
-@router.get("/{ticket_id}", response={200: TicketSchema, 404: dict})
-def ticket_detail(request, ticket_id: str):
-    if ticket_id.isdigit():
-        ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), id=int(ticket_id))
-    else:
-        ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), ticket_number=ticket_id)
+@router.get("/{id}", response={200: TicketSchema, 404: dict})
+def ticket_detail(request, id: int):
+    ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), id=id)
+    if ticket.student != request.user and not request.user.is_staff:
+        return {"detail": "Not found."}, 404
+    return 200, TicketSchema.from_orm(ticket, request)
+
+@router.get("/number/{ticket_number}", response={200: TicketSchema, 404: dict})
+def ticket_detail_by_number(request, ticket_number: str):
+    ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), ticket_number=ticket_number)
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "Not found."}, 404
     return 200, TicketSchema.from_orm(ticket, request)
@@ -602,7 +606,7 @@ def get_feedback(request, id: int):
     return 200, TicketFeedbackSchema.from_orm(ticket.feedback)
 
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict, 403: dict})
-def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attachment: UploadedFile = File(None)):
+def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form(...), attachment: UploadedFile = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     # Only owner can submit feedback and only for resolved tickets
