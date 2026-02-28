@@ -4,6 +4,7 @@ from django.db.models import Q, Count, Min, Prefetch
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
+from typing import List
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 from channels.layers import get_channel_layer
@@ -254,7 +255,7 @@ def ticket_detail(request, ticket_id: str):
     return 200, TicketSchema.from_orm(ticket, request)
 
 @router.post("/", response=TicketSchema)
-def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: UploadedFile = File(None)):
+def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: List[UploadedFile] = File(None)):
     category = Category.objects.get(id=ticket.category)
     priority = TicketPriority.objects.get(name="Medium")
     ticket_obj = Ticket.objects.create(
@@ -269,13 +270,14 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
     )
     
     if attachment:
-        validate_file(attachment)
-        TicketAttachment.objects.create(
-        ticket=ticket_obj,
-            uploaded_by=request.user,
-            file_path=attachment,
-            file_type=attachment.content_type,
-        )
+        for f in attachment:
+            validate_file(f)
+            TicketAttachment.objects.create(
+                ticket=ticket_obj,
+                uploaded_by=request.user,
+                file_path=f,
+                file_type=f.content_type,
+            )
     # Notify admin users about the new ticket
     try:
         notify_ticket_created(
@@ -306,7 +308,7 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
     return TicketSchema.from_orm(ticket_obj, request)
 
 @router.put("/{id}", response=TicketSchema)
-def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), attachment: UploadedFile = File(None)):
+def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), attachment: List[UploadedFile] = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     # Permission check
@@ -346,20 +348,18 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
     ticket.save()
     
     if attachment:
-        validate_file(attachment)
-        existing = ticket.attachments_tickets.first()
-        if existing:
-            # Delete old file and replace
+        # remove existing attachments
+        for existing in ticket.attachments_tickets.all():
             existing.file_path.delete(save=False)
-            existing.file_path.save(attachment.name, attachment, save=False)
-            existing.file_type = attachment.content_type
-            existing.save()
-        else:
+            existing.delete()
+        # add new attachments
+        for f in attachment:
+            validate_file(f)
             TicketAttachment.objects.create(
                 ticket=ticket,
                 uploaded_by=request.user,
-                file_path=attachment,
-                file_type=attachment.content_type,
+                file_path=f,
+                file_type=f.content_type,
             )
     
     async_to_sync(channel_layer.group_send)(
@@ -460,7 +460,7 @@ def get_comments(request, id: int):
     return [TicketCommentSchema.from_orm(comment) for comment in comments]
 
 @router.post("/{id}/comments", response=TicketCommentSchema)
-def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(...), attachment: UploadedFile = File(None)):
+def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(...), attachment: List[UploadedFile] = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     if ticket.status == 'closed':
@@ -480,13 +480,14 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
             notify_ticket_comment(recipient_user=staff_user, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, message_preview=preview)
             
     if attachment:
-        validate_file(attachment)
-        TicketAttachment.objects.create(
-            comment=comment,
-            uploaded_by=request.user,
-            file_path=attachment,
-            file_type=attachment.content_type,
-        )
+        for f in attachment:
+            validate_file(f)
+            TicketAttachment.objects.create(
+                comment=comment,
+                uploaded_by=request.user,
+                file_path=f,
+                file_type=f.content_type,
+            )
     
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
@@ -602,7 +603,7 @@ def get_feedback(request, id: int):
     return 200, TicketFeedbackSchema.from_orm(ticket.feedback)
 
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict, 403: dict})
-def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attachment: UploadedFile = File(None)):
+def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attachment: List[UploadedFile] = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     # Only owner can submit feedback and only for resolved tickets
@@ -624,13 +625,14 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attac
     )
     
     if attachment:
-        validate_file(attachment)
-        TicketAttachment.objects.create(
-            feedback=feedback,
-            uploaded_by=request.user,
-            file_path=attachment,
-            file_type=attachment.content_type,
-        )
+        for f in attachment:
+            validate_file(f)
+            TicketAttachment.objects.create(
+                feedback=feedback,
+                uploaded_by=request.user,
+                file_path=f,
+                file_type=f.content_type,
+            )
 
     # Auto-close ticket upon feedback; record status history like update_ticket
     old_status = ticket.status

@@ -10,7 +10,7 @@
 
   $: formData = ticket ? { ...ticket } : {};
 
-  async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
+  async function handleSubmit(data: Partial<Ticket>, files?: File[] | null) {
     if (!ticket) return;
     const categoryId =
       typeof data.category === "number" ? data.category : data.category?.id;
@@ -21,7 +21,7 @@
       room_name: data.room_name,
       category: categoryId,
     };
-    const updated = await ticketsStore.updateTicket(ticket.id, payload, file);
+    const updated = await ticketsStore.updateTicket(ticket.id, payload, files && files.length ? files : undefined);
     if (updated) {
       await ticketsStore.loadTicketById(ticket.id);
       onclose();

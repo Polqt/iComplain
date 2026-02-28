@@ -51,7 +51,7 @@
     ticketsStore.setError(null);
   }
 
-  async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
+  async function handleSubmit(data: Partial<Ticket>, files?: File[] | null) {
     if (modalMode === "create") {
       const categoryId =
         typeof data.category === "number"
@@ -66,7 +66,7 @@
       };
       const created = await ticketsStore.createTicket(
         payload,
-        file || undefined,
+        files && files.length ? files : undefined,
       );
       if (created) closeModal();
     } else if (modalMode === "edit" && selectedReport) {
