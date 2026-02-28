@@ -23,7 +23,6 @@
 
   $: metrics = stats?.metrics ?? [];
   $: volume = stats?.volume ?? [];
-
 </script>
 
 <AdminLayout>
@@ -58,7 +57,7 @@
       </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto pr-2 space-y-6">
+    <div class="flex-1 overflow-y-auto pr-2 space-y-6 min-h-0">
       {#if isLoading}
         <div class="flex items-center justify-center py-12">
           <span class="loading loading-spinner loading-lg"></span>
@@ -130,11 +129,20 @@
 
               {#if volume.length > 0}
                 <div class="flex items-end justify-between gap-3 h-40">
-                  {#each volume as bar}
+                  {#each volume as bar, i}
+                    {@const height = Math.max(bar.value * 3, 10)}
                     <div class="flex flex-col items-center gap-2 flex-1">
                       <div
-                        class="w-8 rounded-lg bg-primary/20 relative overflow-hidden"
-                        style={`height: ${Math.max(bar.value * 3, 10)}px`}
+                        class="w-8 rounded-lg bg-primary/20 relative overflow-hidden transition-all duration-300"
+                        class:h-2={height === 10}
+                        class:h-4={height > 10 && height <= 20}
+                        class:h-8={height > 20 && height <= 30}
+                        class:h-12={height > 30 && height <= 40}
+                        class:h-16={height > 40 && height <= 50}
+                        class:h-20={height > 50 && height <= 60}
+                        class:h-24={height > 60 && height <= 80}
+                        class:h-32={height > 80 && height <= 100}
+                        class:h-40={height > 100}
                       >
                         <div
                           class="absolute bottom-0 inset-x-0 h-full bg-primary/60"
@@ -159,6 +167,7 @@
             </div>
           </div>
 
+          <!-- Recent Activity -->
           <div
             class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
           >
@@ -180,7 +189,9 @@
           </div>
         </section>
 
-        <TicketBoard />
+        <section class="h-150 min-h-0">
+          <TicketBoard />
+        </section>
       {/if}
     </div>
   </div>
