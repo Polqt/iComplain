@@ -1,6 +1,4 @@
-from ast import Dict
-from typing import Optional
-from typing import Literal
+from typing import List, Optional, Literal
 from pydantic import BaseModel
 from datetime import datetime
 from ninja import Schema

@@ -12,18 +12,19 @@ async function handleRes<T>(res: Response): Promise<T> {
     return res.json() as Promise<T>;
 }
 
-// Fetch all tickets
-export async function fetchTickets(): Promise<Ticket[]> {
-    try {
-        const res = await fetch(`${BASE}/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-        })
+/** Paginated response from ticket list and community endpoints. */
+export type TicketListResponse = { items: Ticket[]; total: number; limit: number; offset: number };
 
-        return await handleRes<Ticket[]>(res);
+// Fetch tickets (paginated; defaults to first page of 50)
+export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
+    try {
+        const res = await fetch(`${BASE}/?limit=${limit}&offset=${offset}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        const data = await handleRes<TicketListResponse>(res);
+        return data.items;
     } catch (error) {
         console.error('Error fetching tickets:', error);
         throw error;
@@ -165,15 +166,15 @@ export async function fetchPriorities(): Promise<TicketPriority[]> {
     return res.json() as Promise<TicketPriority[]>;
 }
 
-export async function loadCommunityTickets(): Promise<Ticket[]> {
+export async function loadCommunityTickets(limit = 50, offset = 0): Promise<Ticket[]> {
     try {
-        const res = await fetch(`${BASE}/community`, {
+        const res = await fetch(`${BASE}/community?limit=${limit}&offset=${offset}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-
             credentials: 'include',
         });
-        return await handleRes<Ticket[]>(res);
+        const data = await handleRes<TicketListResponse>(res);
+        return data.items;
     } catch (error) {
         console.error(`Error fetching community tickets:`, error);
         throw error;

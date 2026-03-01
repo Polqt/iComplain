@@ -7,7 +7,6 @@ export type HistoryItem = {
     id: string;
     ticketPk: number;
     ticketId: string;
-    ticket_number: string;
     title: string;
     action: HistoryAction;
     description: string;

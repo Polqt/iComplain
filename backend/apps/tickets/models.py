@@ -57,6 +57,7 @@ class Ticket(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
+    archived_at = models.DateTimeField(null=True, blank=True, help_text="Set when ticket is soft-deleted (archived).")
 
     def save(self, *args, **kwargs):
         if not self.ticket_number:

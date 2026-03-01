@@ -4,19 +4,15 @@
     baseColumns,
     getPriorityKey,
     priorityConfig,
-    statusConfig,
   } from "../../../utils/ticketConfig.ts";
-  import type {
-    Ticket,
-    TicketColumn,
-    ViewMode,
-  } from "../../../types/tickets.ts";
+  import type { Ticket, TicketColumn } from "../../../types/tickets.ts";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { authStore } from "../../../stores/auth.store.ts";
+  import { formatDate } from "../../../utils/date.ts";
 
-  let viewMode: ViewMode = "grid";
+  let expandedTicketId: number | null = null;
 
   $: ({ tickets, isLoading } = $ticketsStore);
   $: ({ role } = $authStore);
@@ -34,225 +30,231 @@
     }),
   );
 
-  function navigate(t: Ticket) {
+  function toggleExpand(ticketId: number) {
+    if (expandedTicketId === ticketId) {
+      expandedTicketId = null;
+    } else {
+      expandedTicketId = ticketId;
+    }
+  }
+
+  function navigateToFullView(ticket: Ticket) {
     if (role === "admin") {
-      goto(`/tickets`);
-    } else if (role === "student") {
-      goto(`/tickets/${t.ticket_number}`);
+      goto(`/admin/tickets/${ticket.id}`);
+    } else {
+      goto(`/tickets/${ticket.ticket_number}`);
     }
   }
 </script>
 
-<div class="flex items-center justify-between mb-6 shrink-0">
-  <h1 class="text-2xl font-black text-base-content">Ticket Status Board</h1>
-
-  <div class="flex items-center gap-2 bg-base-200 p-1 rounded-lg">
-    <button
-      class="btn btn-sm {viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}"
-      onclick={() => (viewMode = "list")}
-    >
-      <Icon icon="mdi:format-list-bulleted" width="18" height="18" />
-      List
-    </button>
-    <button
-      class="btn btn-sm {viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'}"
-      onclick={() => (viewMode = "grid")}
-    >
-      <Icon icon="mdi:view-grid-outline" width="18" height="18" />
-      Board
-    </button>
-  </div>
+<div class="mb-6 shrink-0">
+  <h1 class="text-2xl font-black text-base-content mb-1">
+    Ticket Status Board
+  </h1>
+  <p class="text-sm text-base-content/60">Click any ticket to expand details</p>
 </div>
 
 {#if isLoading}
-  <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overyflow-y-hidden">
+  <div class="grid grid-cols-4 gap-4">
     {#each [1, 2, 3, 4] as _}
-      <div
-        class="flex flex-col shrink-0 w-80 bg-base-100 shadow-sm rounded-lg h-64"
-      >
-        <div class="p-4 border-b border-base-content/5">
-          <div class="skeleton w-28 h-4 rounded"></div>
-        </div>
-        <div class="flex flex-col gap-3 p-4">
-          <div class="skeleton h-20 rounded-xl"></div>
-          <div class="skeleton h-20 rounded-xl"></div>
-        </div>
+      <div class="flex flex-col gap-3">
+        <div class="skeleton h-12 rounded-xl"></div>
+        <div class="skeleton h-20 rounded-xl"></div>
+        <div class="skeleton h-20 rounded-xl"></div>
       </div>
     {/each}
   </div>
 {:else if tickets.length === 0}
   <div
-    class="flex-1 flex flex-col items-center justify-center gap-3 text-base-content/40"
+    class="flex flex-col items-center justify-center gap-3 py-16 text-base-content/40"
   >
     <Icon icon="mdi:ticket-outline" width="48" height="48" />
     <p class="text-sm font-medium">No tickets yet</p>
   </div>
-{:else if viewMode === "grid"}
-  <div class="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
+{:else}
+  <div class="grid grid-cols-4 gap-4 h-full min-h-0">
     {#each columns as column}
-      <div
-        class="flex flex-col shrink-0 w-80 bg-base-100 dark:bg-base-100 shadow rounded-lg h-full"
-      >
+      <div class="flex flex-col min-h-0 h-full">
         <div
-          class="flex items-center justify-between p-4 border-b border-base-content/5 shrink-0"
+          class="flex items-center justify-between px-4 py-3 mb-3 rounded-xl
+                 bg-base-200/60 border border-base-content/8 shrink-0"
         >
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 rounded-full {column.dotColor}"></div>
-            <h2 class="font-semibold text-sm {column.color}">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="w-2 h-2 rounded-full {column.dotColor} shrink-0"></div>
+            <h2
+              class="font-bold text-xs uppercase tracking-wider {column.color} truncate"
+            >
               {column.title}
             </h2>
-            <div class="badge badge-sm badge-ghost">
-              {column.reports.length}
-            </div>
+          </div>
+          <div class="badge badge-sm badge-ghost font-mono">
+            {column.reports.length}
           </div>
         </div>
 
-        <div class="flex flex-col gap-3 p-4 overflow-y-auto flex-1 max-h-130">
-          {#each column.reports as report}
+        <div class="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0 pr-1">
+          {#each column.reports as ticket (ticket.id)}
+            {@const isExpanded = expandedTicketId === ticket.id}
+            {@const priorityKey = getPriorityKey(ticket.priority)}
+
             <div
-              role="button"
-              tabindex="0"
-              aria-label={`Open ticket ${report.title}`}
-              onclick={() => navigate(report)}
-              onkeydown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  navigate(report);
-                }
-              }}
-              class="card bg-base-200 dark:bg-base-300 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 shrink-0 cursor-pointer"
+              class="bg-base-100 rounded-xl border border-base-content/8
+                     hover:border-base-content/15 transition-all duration-200
+                     overflow-hidden {isExpanded ? 'shadow-md' : 'shadow-sm'}"
             >
-              <div class="card-body p-4">
-                <div class="flex items-center justify-between mb-3">
-                  <div
-                    class="badge badge-sm {statusConfig[report.status].color}"
+              <button
+                type="button"
+                class="w-full text-left p-3 hover:bg-base-200/50 transition-colors duration-150"
+                onclick={() => toggleExpand(ticket.id)}
+              >
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <h3
+                    class="font-semibold text-sm text-base-content line-clamp-2 flex-1"
                   >
-                    {statusConfig[report.status].label}
+                    {ticket.title}
+                  </h3>
+                  <Icon
+                    icon={isExpanded ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    width="16"
+                    height="16"
+                    class="text-base-content/40 shrink-0 mt-0.5 transition-transform duration-200"
+                  />
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span
+                    class="text-[10px] font-mono text-base-content/40 tracking-wide"
+                  >
+                    {ticket.ticket_number}
+                  </span>
+                  <div
+                    class="badge badge-xs {priorityConfig[priorityKey].color}"
+                  >
+                    {priorityConfig[priorityKey].label}
                   </div>
                 </div>
+              </button>
 
-                <h3
-                  class="font-semibold text-base text-base-content mb-2 line-clamp-2"
+              {#if isExpanded}
+                <div
+                  class="border-t border-base-content/8 bg-base-200/30 p-4 space-y-3
+                         animate-accordion-down"
                 >
-                  {report.title}
-                </h3>
+                  <!-- Description -->
+                  <div>
+                    <p class="text-xs text-base-content/50 mb-1 font-semibold">
+                      Description
+                    </p>
+                    <p class="text-sm text-base-content/70 leading-relaxed">
+                      {ticket.description}
+                    </p>
+                  </div>
 
-                <p class="text-sm text-base-content/60 mb-3 line-clamp-2">
-                  {report.description}
-                </p>
-              </div>
+                  <!-- Location -->
+                  <div class="flex items-start gap-2">
+                    <Icon
+                      icon="mdi:map-marker"
+                      width="14"
+                      height="14"
+                      class="text-base-content/40 mt-0.5 shrink-0"
+                    />
+                    <div class="min-w-0">
+                      <p class="text-xs font-medium text-base-content/70">
+                        {ticket.building}
+                      </p>
+                      <p class="text-[11px] text-base-content/50">
+                        {ticket.room_name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Student -->
+                  <div class="flex items-center gap-2">
+                    <Icon
+                      icon="mdi:account"
+                      width="14"
+                      height="14"
+                      class="text-base-content/40 shrink-0"
+                    />
+                    <p class="text-xs text-base-content/60 truncate">
+                      {ticket.student.name || ticket.student.email}
+                    </p>
+                  </div>
+
+                  <!-- Category & Date -->
+                  <div class="flex items-center gap-3 text-xs">
+                    <div class="flex items-center gap-1.5">
+                      <Icon
+                        icon="mdi:tag"
+                        width="12"
+                        height="12"
+                        class="text-base-content/40"
+                      />
+                      <span class="text-base-content/60"
+                        >{ticket.category?.name || "Uncategorized"}</span
+                      >
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <Icon
+                        icon="mdi:calendar"
+                        width="12"
+                        height="12"
+                        class="text-base-content/40"
+                      />
+                      <span class="text-base-content/50"
+                        >{formatDate(ticket.created_at)}</span
+                      >
+                    </div>
+                  </div>
+
+                  <!-- Comments Count -->
+                  {#if (ticket.comments_count ?? 0) > 0}
+                    <div class="flex items-center gap-1.5 text-xs">
+                      <Icon
+                        icon="mdi:comment-outline"
+                        width="12"
+                        height="12"
+                        class="text-base-content/40"
+                      />
+                      <span class="text-base-content/50"
+                        >{ticket.comments_count ?? 0} comment{(ticket.comments_count ??
+                          0) !== 1
+                          ? "s"
+                          : ""}</span
+                      >
+                    </div>
+                  {/if}
+
+                  <!-- Action Button -->
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm w-full gap-1.5 mt-2"
+                    onclick={() => navigateToFullView(ticket)}
+                  >
+                    <Icon icon="mdi:open-in-new" width="14" height="14" />
+                    View Full Details
+                  </button>
+                </div>
+              {/if}
             </div>
           {/each}
+
+          {#if column.reports.length === 0}
+            <div
+              class="flex flex-col items-center justify-center py-8 text-center
+                     border-2 border-dashed border-base-content/8 rounded-xl"
+            >
+              <Icon
+                icon="mdi:inbox-outline"
+                width="24"
+                height="24"
+                class="text-base-content/15 mb-2"
+              />
+              <p class="text-xs text-base-content/30 font-medium">No tickets</p>
+            </div>
+          {/if}
         </div>
       </div>
-    {/each}
-  </div>
-{:else}
-  <div class="flex-1 overflow-y-auto space-y-2 pr-2">
-    {#each columns as column}
-      {#each column.reports as report}
-        {#if role === "student"}
-          <div
-            role="button"
-            tabindex="0"
-            aria-label={`Open ticket ${report.title}`}
-            onclick={() => navigate(report)}
-            onkeydown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                navigate(report);
-              }
-            }}
-            class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 cursor-pointer hover:border-primary/20"
-          >
-            <div class="card-body p-4">
-              <div class="flex items-center gap-4">
-                <div
-                  class="badge badge-sm whitespace-nowrap {statusConfig[
-                    report.status
-                  ].color}"
-                >
-                  {statusConfig[report.status].label}
-                </div>
-
-                <div class="flex-1 min-w-0">
-                  <h3
-                    class="font-semibold text-sm text-base-content truncate mb-1"
-                  >
-                    {report.title}
-                  </h3>
-                  <p class="text-xs text-base-content/60">
-                    {report.description}
-                  </p>
-                </div>
-
-                <span
-                  class="text-[10px] font-mono text-base-content/30 shrink-0"
-                  >{report.ticket_number}</span
-                >
-
-                <div
-                  class="badge badge-sm {priorityConfig[
-                    getPriorityKey(report.priority)
-                  ].color}"
-                >
-                  {priorityConfig[getPriorityKey(report.priority)].label}
-                </div>
-              </div>
-            </div>
-          </div>
-        {:else if role === "admin"}
-          <div
-            role="button"
-            tabindex="0"
-            aria-label={`Open ticket ${report.title}`}
-            onclick={() => navigate(report)}
-            onkeydown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                navigate(report);
-              }
-            }}
-            class="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-base-content/5 cursor-pointer hover:border-primary/20"
-          >
-            <div class="card-body p-4">
-              <div class="flex items-center gap-4">
-                <div
-                  class="badge badge-sm whitespace-nowrap {statusConfig[
-                    report.status
-                  ].color}"
-                >
-                  {statusConfig[report.status].label}
-                </div>
-
-                <div class="flex-1 min-w-0">
-                  <h3
-                    class="font-semibold text-sm text-base-content truncate mb-1"
-                  >
-                    {report.title}
-                  </h3>
-                  <p class="text-xs text-base-content/60">
-                    {report.description}
-                  </p>
-                </div>
-
-                <span
-                  class="text-[10px] font-mono text-base-content/30 shrink-0"
-                  >{report.ticket_number}</span
-                >
-
-                <div
-                  class="badge badge-sm {priorityConfig[
-                    getPriorityKey(report.priority)
-                  ].color}"
-                >
-                  {priorityConfig[getPriorityKey(report.priority)].label}
-                </div>
-              </div>
-            </div>
-          </div>
-        {/if}
-      {/each}
     {/each}
   </div>
 {/if}
