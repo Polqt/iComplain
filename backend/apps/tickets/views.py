@@ -61,29 +61,56 @@ def get_categories(request):
 def get_priorities(request):
     return TicketPriority.objects.all()
 
-@router.get("/community", response=list[TicketSchema])
-def community_tickets(request):
-    qs = Ticket.objects.select_related("category", "priority", "student") \
+def _active_tickets():
+    return Ticket.objects.filter(archived_at__isnull=True)
+
+
+PAGE_SIZE_DEFAULT = 50
+PAGE_SIZE_MAX = 100
+
+
+@router.get("/community", response=dict)
+def community_tickets(request, limit: int = PAGE_SIZE_DEFAULT, offset: int = 0):
+    limit = min(max(1, limit), PAGE_SIZE_MAX)
+    offset = max(0, offset)
+    qs = _active_tickets().select_related("category", "priority", "student") \
         .prefetch_related('attachments_tickets') \
         .annotate(comments_count=Count('comments')) \
-        .order_by('-created_at') 
-    return [TicketSchema.from_orm(ticket) for ticket in qs]
+        .order_by('-created_at')
+    total = qs.count()
+    page = list(qs[offset : offset + limit])
+    return {
+        "items": [TicketSchema.from_orm(t) for t in page],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
 
 # Ticket Views
-@router.get("/", response=list[TicketSchema])
-def ticket_list(request):
-    qs = Ticket.objects.select_related(
+@router.get("/", response=dict)
+def ticket_list(request, limit: int = PAGE_SIZE_DEFAULT, offset: int = 0):
+    limit = min(max(1, limit), PAGE_SIZE_MAX)
+    offset = max(0, offset)
+    qs = _active_tickets().select_related(
         'category', 'priority', 'student'
     ).prefetch_related('attachments_tickets').annotate(comments_count=Count('comments'))
-    if request.user.is_staff:
-        return [TicketSchema.from_orm(ticket, request) for ticket in qs]
-    return [TicketSchema.from_orm(ticket, request) for ticket in qs.filter(student=request.user)]
+    if not request.user.is_staff:
+        qs = qs.filter(student=request.user)
+    total = qs.count()
+    page = list(qs[offset : offset + limit])
+    return {
+        "items": [TicketSchema.from_orm(ticket, request) for ticket in page],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
 
 @router.get("/history", response=list[TicketHistoryItemSchema])
 def ticket_history(request):
     status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
     comments_qs = TicketComment.objects.select_related("user").order_by("created_at")
-    base = Ticket.objects.select_related("category", "priority", "student").prefetch_related(
+    base = _active_tickets().select_related("category", "priority", "student").prefetch_related(
         Prefetch("status_history", queryset=status_history_qs),
         Prefetch("comments", queryset=comments_qs),
     )
@@ -169,7 +196,7 @@ def admin_ticket_history(request):
     
     status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
     comments_qs = TicketComment.objects.select_related("user").order_by("created_at")
-    tickets = Ticket.objects.select_related("category", "priority", "student").prefetch_related(
+    tickets = _active_tickets().select_related("category", "priority", "student").prefetch_related(
         Prefetch("status_history", queryset=status_history_qs),
         Prefetch("comments", queryset=comments_qs),
     ).all()
@@ -245,14 +272,14 @@ def admin_ticket_history(request):
 
 @router.get("/{id}", response={200: TicketSchema, 404: dict})
 def ticket_detail(request, id: int):
-    ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), id=id)
+    ticket = get_object_or_404(_active_tickets().annotate(comments_count=Count('comments')), id=id)
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "Not found."}, 404
     return 200, TicketSchema.from_orm(ticket, request)
 
 @router.get("/number/{ticket_number}", response={200: TicketSchema, 404: dict})
 def ticket_detail_by_number(request, ticket_number: str):
-    ticket = get_object_or_404(Ticket.objects.annotate(comments_count=Count('comments')), ticket_number=ticket_number)
+    ticket = get_object_or_404(_active_tickets().annotate(comments_count=Count('comments')), ticket_number=ticket_number)
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "Not found."}, 404
     return 200, TicketSchema.from_orm(ticket, request)
@@ -311,7 +338,7 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: U
 
 @router.put("/{id}", response=TicketSchema)
 def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), attachment: UploadedFile = File(None)):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
 
     # Permission check
     if ticket.student != request.user and not request.user.is_staff:
@@ -387,8 +414,8 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
 def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
     if not request.user.is_staff:
         return {"detail": "You do not have permission to perform this action."}, 403
-    
-    ticket = get_object_or_404(Ticket, id=id)
+
+    ticket = get_object_or_404(_active_tickets(), id=id)
     
     if payload.status is not None:
         old_status = ticket.status
@@ -428,17 +455,19 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
     
 @router.delete("/{id}", response={204: None})
 def delete_ticket(request, id: int):
-    ticket = get_object_or_404(Ticket, id=id)
-    
+    ticket = get_object_or_404(_active_tickets(), id=id)
+
     # Permission check
     if ticket.student != request.user and not request.user.is_staff:
         return {"detail": "You do not have permission to delete this ticket."}, 403
-    
+
     # Students can only delete tickets with "pending" status
     if not request.user.is_staff and ticket.status != 'pending':
         return {"detail": "You cannot delete tickets that are being processed by admin."}, 400
 
-    ticket.delete()
+    # Soft delete: archive ticket instead of hard delete
+    ticket.archived_at = timezone.now()
+    ticket.save(update_fields=["archived_at"])
     
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
@@ -459,13 +488,13 @@ def delete_ticket(request, id: int):
 # Ticket Comments Views
 @router.get("/{id}/comments", response=list[TicketCommentSchema])
 def get_comments(request, id: int):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
     comments = TicketComment.objects.select_related('user').filter(ticket=ticket).order_by('created_at')
     return [TicketCommentSchema.from_orm(comment) for comment in comments]
 
 @router.post("/{id}/comments", response=TicketCommentSchema)
 def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(...), attachment: UploadedFile = File(None)):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
 
     if ticket.status == 'closed':
         return {"detail": "Cannot add comments to a closed ticket."}, 400
@@ -517,9 +546,9 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
 
     return 200, TicketCommentSchema.model_validate(comment)
 
-@router.put("/{id}/comments/{comment_id}", response=TicketCommentSchema)    
+@router.put("/{id}/comments/{comment_id}", response=TicketCommentSchema)
 def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdateSchema = Form(...)):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
     comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
     
@@ -556,9 +585,9 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
     
     return TicketCommentSchema.from_orm(comment)
 
-@router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})    
+@router.delete("/{id}/comments/{comment_id}", response={204: None, 400: dict})
 def delete_comment(request, id: int, comment_id: int):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
     comment = get_object_or_404(TicketComment, id=comment_id, ticket=ticket)
     
     if comment.user != request.user:
@@ -594,7 +623,7 @@ def delete_comment(request, id: int, comment_id: int):
 # Ticket Feedback Views
 @router.get("/{id}/feedback/", response={200: TicketFeedbackSchema, 403: dict, 404: dict})
 def get_feedback(request, id: int):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
     
     # Allow owner or staff to view
     if ticket.student != request.user and not request.user.is_staff:
@@ -607,7 +636,7 @@ def get_feedback(request, id: int):
 
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict, 403: dict})
 def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form(...), attachment: UploadedFile = File(None)):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
 
     # Only owner can submit feedback and only for resolved tickets
     if ticket.student != request.user:
@@ -665,7 +694,7 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form
 
 @router.put("/{id}/feedback/{feedback_id}", response={200: TicketFeedbackSchema, 400: dict, 403: dict})
 def update_feedback(request, id: int, feedback_id: int, payload: TicketFeedbackUpdateSchema):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
     feedback = get_object_or_404(TicketFeedback, id=feedback_id, ticket=ticket)
 
     # Only the student who submitted feedback can edit
@@ -701,7 +730,7 @@ def update_feedback(request, id: int, feedback_id: int, payload: TicketFeedbackU
 
 @router.delete("/{id}/feedback/{feedback_id}", response={204: None, 400: dict, 403: dict})
 def delete_feedback(request, id: int, feedback_id: int):
-    ticket = get_object_or_404(Ticket, id=id)
+    ticket = get_object_or_404(_active_tickets(), id=id)
     feedback = get_object_or_404(TicketFeedback, id=feedback_id, ticket=ticket)
 
     # Only the student who submitted feedback can delete
@@ -739,11 +768,10 @@ def dashboard_stats(request):
     last_month_start = (now - timedelta(days=30)).date()
     this_week_start = (now - timedelta(days=7)).date()
     
-    # Total Tickets Metrics
-    total_tickets = Ticket.objects.count()
-    last_month_tickets = Ticket.objects.filter(
-        created_at__date__lt = last_month_start
-    ).count()
+    # Total Tickets Metrics (exclude archived)
+    base = _active_tickets()
+    total_tickets = base.count()
+    last_month_tickets = base.filter(created_at__date__lt=last_month_start).count()
     
     if last_month_tickets > 0:
         total_change = ((total_tickets - last_month_tickets) / last_month_tickets) * 100
@@ -751,10 +779,10 @@ def dashboard_stats(request):
         total_change = 0
         
     # Resolved Tickets Metrics
-    resolved_tickets = Ticket.objects.filter(status='resolved').count()
-    last_month_resolved = Ticket.objects.filter(
-        status = 'resolved',
-        updated_at__date__lt = last_month_start
+    resolved_tickets = base.filter(status='resolved').count()
+    last_month_resolved = base.filter(
+        status='resolved',
+        updated_at__date__lt=last_month_start
     ).count()
     
     
@@ -764,10 +792,10 @@ def dashboard_stats(request):
         resolved_change = 0
         
     # Pending Tickets Metrics
-    pending_tickets = Ticket.objects.filter(status='pending').count()
-    last_month_pending = Ticket.objects.filter(
-        status = 'pending',
-        updated_at__date__lt = last_month_start
+    pending_tickets = base.filter(status='pending').count()
+    last_month_pending = base.filter(
+        status='pending',
+        updated_at__date__lt=last_month_start
     ).count()
     
     if last_month_pending > 0:
@@ -776,7 +804,7 @@ def dashboard_stats(request):
         pending_change = 0
         
     # Response time
-    tickets_with_staff_comments = Ticket.objects.filter(
+    tickets_with_staff_comments = base.filter(
         comments__user__is_staff=True,
         created_at__gte=this_week_start
     ).annotate(
@@ -791,7 +819,7 @@ def dashboard_stats(request):
         
     avg_response_time = sum(response_times) / len(response_times) if response_times else 0
     
-    last_month_tickets_with_comments = Ticket.objects.filter(
+    last_month_tickets_with_comments = base.filter(
         comments__user__is_staff=True,
         created_at__date__lt=last_month_start,
         created_at__date__gte=(last_month_start - timedelta(days=30))
@@ -843,7 +871,7 @@ def dashboard_stats(request):
     
     for i in range(7):
         day_date = today - timedelta(days=6-i)
-        count = Ticket.objects.filter(created_at__date=day_date).count()
+        count = base.filter(created_at__date=day_date).count()
         volume_data.append(
             TicketVolumeDataPointSchema(
                 day=days[(day_date.weekday() + 1) % 7],
@@ -852,15 +880,11 @@ def dashboard_stats(request):
         )
     
     status_breakdown = dict(
-        Ticket.objects.values('status')
-        .annotate(count=Count('id'))
-        .values_list('status', 'count')
+        base.values('status').annotate(count=Count('id')).values_list('status', 'count')
     )
-    
+
     category_breakdown = dict(
-        Ticket.objects.values('category__name')
-        .annotate(count=Count('id'))
-        .values_list('category__name', 'count')
+        base.values('category__name').annotate(count=Count('id')).values_list('category__name', 'count')
     )
     
     return DashboardStatsSchema(
