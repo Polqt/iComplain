@@ -51,7 +51,9 @@
   role="button"
   tabindex="0"
   class="w-full text-left rounded-2xl border border-base-content/10 bg-base-100/90 backdrop-blur-sm transition-all duration-200
-    {isActive ? 'ring-1 ring-base-content/20 border-base-content/20' : 'hover:bg-base-100 hover:border-base-content/20'}"
+    {isActive
+    ? 'ring-1 ring-base-content/20 border-base-content/20'
+    : 'hover:bg-base-100 hover:border-base-content/20'}"
   aria-label="Ticket: {ticket.title}"
   aria-current={isActive ? "true" : undefined}
   onclick={handleCardClick}
@@ -73,7 +75,9 @@
             loading="lazy"
           />
         {:else}
-          <div class="w-10 rounded-full bg-base-200 text-base-content/70 border border-base-content/10">
+          <div
+            class="w-10 rounded-full bg-base-200 text-base-content/70 border border-base-content/10"
+          >
             <span class="text-xs font-semibold">{getInitials(authorName)}</span>
           </div>
         {/if}
@@ -83,12 +87,20 @@
         <div class="flex items-start justify-between gap-3 mb-2">
           <div class="min-w-0">
             <div class="flex items-center gap-2 min-w-0">
-              <p class="text-sm font-semibold text-base-content truncate">{authorName}</p>
-              <span class="text-xs text-base-content/45 shrink-0">{formatTime(ticket.created_at)}</span>
+              <p class="text-sm font-semibold text-base-content truncate">
+                {authorName}
+              </p>
+              <span class="text-xs text-base-content/45 shrink-0"
+                >{formatTime(ticket.created_at)}</span
+              >
             </div>
-            <div class="mt-1 flex items-center gap-2 text-[11px] text-base-content/50 flex-wrap">
+            <div
+              class="mt-1 flex items-center gap-2 text-[11px] text-base-content/50 flex-wrap"
+            >
               <span class="font-mono">{ticket.ticket_number}</span>
-              <span class="px-2 py-0.5 rounded-full border border-base-content/20 bg-base-200/60">
+              <span
+                class="px-2 py-0.5 rounded-full border border-base-content/20 bg-base-200/60"
+              >
                 {ticket.category.name}
               </span>
             </div>
@@ -104,11 +116,15 @@
           </button>
         </div>
 
-        <h3 class="text-base md:text-lg font-medium text-base-content leading-snug mb-1.5 line-clamp-2">
+        <h3
+          class="text-base md:text-lg font-medium text-base-content leading-snug mb-1.5 line-clamp-2"
+        >
           {ticket.title}
         </h3>
 
-        <p class="text-sm text-base-content/75 leading-relaxed mb-2 line-clamp-3">
+        <p
+          class="text-sm text-base-content/75 leading-relaxed mb-2 line-clamp-3"
+        >
           {ticket.description}
         </p>
 
@@ -148,7 +164,13 @@
             aria-label="Upvote ticket"
             aria-pressed={isUpvoted ? "true" : "false"}
           >
-            <Icon icon={isUpvoted ? "mdi:arrow-up-bold-circle" : "mdi:arrow-up-bold-circle-outline"} width="20" height="20" />
+            <Icon
+              icon={isUpvoted
+                ? "mdi:arrow-up-bold-circle"
+                : "mdi:arrow-up-bold-circle-outline"}
+              width="20"
+              height="20"
+            />
             <span class="text-xs font-medium">{upvoteCount}</span>
           </button>
 
@@ -172,9 +194,24 @@
 
 {#if isImageModalOpen && ticket.attachment}
   <dialog class="modal modal-open" onclick={() => (isImageModalOpen = false)}>
-    <div class="modal-box max-w-5xl p-0 bg-base-100 border border-base-content/10" onclick={(e) => e.stopPropagation()}>
-      <div class="flex items-center justify-between px-4 py-3 border-b border-base-content/10">
-        <p class="text-sm font-medium text-base-content truncate pr-3">{ticket.title}</p>
+    <div
+      class="modal-box max-w-5xl p-0 bg-base-100 border border-base-content/10"
+      role="dialog"
+      tabindex="0"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+    >
+      <div
+        class="flex items-center justify-between px-4 py-3 border-b border-base-content/10"
+      >
+        <p class="text-sm font-medium text-base-content truncate pr-3">
+          {ticket.title}
+        </p>
         <button
           type="button"
           class="btn btn-ghost btn-sm btn-circle"
