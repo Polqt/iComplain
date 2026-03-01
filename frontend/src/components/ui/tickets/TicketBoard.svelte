@@ -191,7 +191,7 @@
                         class="text-base-content/40"
                       />
                       <span class="text-base-content/60"
-                        >{ticket.category.name}</span
+                        >{ticket.category?.name || "Uncategorized"}</span
                       >
                     </div>
                     <div class="flex items-center gap-1.5">
