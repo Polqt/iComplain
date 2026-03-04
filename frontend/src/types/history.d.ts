@@ -15,4 +15,5 @@ export type HistoryItem = {
     status: HistoryStatus;
     priority: HistoryPriority;
     category?: string;
+    performedBy?: string;
 };

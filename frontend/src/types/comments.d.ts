@@ -1,7 +1,7 @@
 import type { User } from "./user.ts";
 export type TicketComment = {
     id: number;
-    ticket: number;
+    ticket_id: number;
     user: User;
     message: string;
     created_at: string;

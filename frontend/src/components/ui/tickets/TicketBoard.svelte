@@ -213,6 +213,17 @@
               <!-- Expanded Details -->
               {#if isExpanded}
                 <div
+                  class="border-t border-base-content/8 bg-base-200/30 p-4 space-y-3"
+                >
+                  <div>
+                    <p class="text-xs text-base-content/50 mb-1 font-semibold">
+                      Description
+                    </p>
+                    <p class="text-sm text-base-content/70 leading-relaxed">
+                      {ticket.description}
+                    </p>
+                  </div>
+
                   class="border-t border-black/10 dark:border-white/10 bg-gradient-to-br from-base-100/60 to-transparent p-4 space-y-3 animate-accordion-down"
                 >
                   <!-- Location -->
