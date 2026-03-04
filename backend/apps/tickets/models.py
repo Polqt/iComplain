@@ -146,3 +146,39 @@ class TicketAttachment(models.Model):
         fields = [self.ticket, self.comment, self.feedback]
         if sum(f is not None for f in fields) != 1:
             raise ValidationError("Exactly one of ticket, comment, or feedback must be set for an attachment.")
+
+
+# TABLE FOR ACTIVITY LOGS
+class ActivityLog(models.Model):
+    ACTION_CHOICES = [
+        ('created', 'Ticket Created'),
+        ('status_changed', 'Status Changed'),
+        ('priority_changed', 'Priority Changed'),
+        ('assigned', 'Assigned'),
+        ('commented', 'Comment Added'),
+        ('reopened', 'Ticket Reopened'),
+        ('resolved', 'Marked Resolved'),
+    ]
+
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='activity_logs')
+    performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Details about the change
+    description = models.TextField()
+    old_value = models.CharField(max_length=255, null=True, blank=True)
+    new_value = models.CharField(max_length=255, null=True, blank=True)
+    
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['ticket', '-created_at']),
+            models.Index(fields=['action', '-created_at']),
+            models.Index(fields=['performed_by', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_action_display()} on {self.ticket.ticket_number} by {self.performed_by}"
