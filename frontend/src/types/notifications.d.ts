@@ -8,4 +8,9 @@ export type Notification = {
     actionUrl?: string;
     actionLabel?: string;
 };
+export type NotificationState = {
+    notifications: Notification[];
+    unreadCount: number;
+    isLoading: boolean;
+};
 export type NotificationFilter = "all" | "unread" | "read";

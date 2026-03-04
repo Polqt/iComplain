@@ -137,10 +137,8 @@
 
               {#if isExpanded}
                 <div
-                  class="border-t border-base-content/8 bg-base-200/30 p-4 space-y-3
-                         animate-accordion-down"
+                  class="border-t border-base-content/8 bg-base-200/30 p-4 space-y-3"
                 >
-                  <!-- Description -->
                   <div>
                     <p class="text-xs text-base-content/50 mb-1 font-semibold">
                       Description

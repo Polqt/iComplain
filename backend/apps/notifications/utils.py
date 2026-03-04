@@ -147,3 +147,25 @@ def notify_ticket_comment(
         notification_type="info",
         action_url=f"/tickets/{ticket_number}",
     )
+
+def notify_feedback_submitted(
+    *,
+    ticket_id: int,
+    ticket_number: str,
+    ticket_title: str,
+    rating: int,
+    student_name: str,
+):
+    User = get_user_model()
+    stars = "⭐" * rating
+    
+    for admin_user in User.objects.filter(is_staff=True):
+        create_in_app_notification(
+            user=admin_user,
+            ticket_id=ticket_id,
+            event="feedback_submitted",
+            title=f"New Feedback: {ticket_number}",
+            message=f'{student_name} rated "{ticket_title}" {stars} ({rating}/5)',
+            notification_type="info",
+            action_url=f"/tickets/{ticket_number}",
+        )

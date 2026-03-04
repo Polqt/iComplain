@@ -17,7 +17,7 @@ from .utils import (
     map_status_for_history,
 )
 from .validation import validate_file
-from apps.notifications.utils import notify_ticket_created, notify_ticket_status_change, notify_ticket_comment
+from apps.notifications.utils import notify_feedback_submitted, notify_ticket_created, notify_ticket_status_change, notify_ticket_comment
 
 from .schemas import (
     CategorySchema,
@@ -113,6 +113,7 @@ def ticket_history(request):
     base = _active_tickets().select_related("category", "priority", "student").prefetch_related(
         Prefetch("status_history", queryset=status_history_qs),
         Prefetch("comments", queryset=comments_qs),
+        "feedback",
     )
     if request.user.is_staff:
         tickets = base.all()
@@ -121,7 +122,6 @@ def ticket_history(request):
 
     events = []
     for ticket in tickets:
-        # Created
         events.append({
             "at": ticket.created_at,
             "id": f"created-{ticket.id}-{ticket.created_at.isoformat()}",
@@ -157,6 +157,22 @@ def ticket_history(request):
                 "description": f"Comment: {c.message[:100]}{'…' if len(c.message) > 100 else ''}",
                 "performed_by": c.user.full_name if c.user else None,
             })
+        
+        if hasattr(ticket, 'feedback') and ticket.feedback:
+            feedback = ticket.feedback
+            stars = "⭐" * feedback.rating
+            feedback_desc = f"Feedback submitted: {stars} ({feedback.rating}/5)"
+            if feedback.comments:
+                feedback_desc += f" - {feedback.comments[:80]}{'…' if len(feedback.comments) > 80 else ''}"
+            
+            events.append({
+                "at": feedback.created_at,
+                "id": f"feedback-{feedback.id}",
+                "ticket": ticket,
+                "action": "feedback",
+                "description": feedback_desc,
+                "performed_by": getattr(feedback.student, 'full_name', feedback.student.email),
+            })
 
     events.sort(key=lambda e: e["at"], reverse=True)
     status_change_actions = ("updated", "resolved", "closed", "reopened")
@@ -190,7 +206,6 @@ def ticket_history(request):
 
 @router.get("/admin/history", response={200: list[TicketHistoryItemSchema], 403: dict})
 def admin_ticket_history(request):
-    """Admin-only endpoint to view all ticket history for accountability tracking."""
     if not request.user.is_staff:
         return {"detail": "Not authorized."}, 403
     
@@ -677,6 +692,18 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form
         )
     ticket.status = "closed"
     ticket.save()
+    
+    try:
+        student_name = getattr(request.user, "name", None) or request.user.email
+        notify_feedback_submitted(
+            ticket_id=ticket.id,
+            ticket_number=ticket.ticket_number,
+            ticket_title=ticket.title,
+            rating=payload.rating,
+            student_name=student_name
+        )
+    except Exception as e:
+        logger.exception("notify_feedback_submitted failed", extra={"ticket_id": ticket.id})
 
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
