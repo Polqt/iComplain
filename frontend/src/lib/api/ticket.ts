@@ -4,6 +4,30 @@ import type { Category, Ticket, TicketCreatePayload, TicketPriority, TicketUpdat
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
 
+export type ActivityLog = {
+    id: number;
+    action: 'created' | 'status_changed' | 'priority_changed' | 'assigned' | 'commented' | 'reopened' | 'resolved';
+    ticket_number: string;
+    ticket_title: string;
+    performed_by: {
+        id: number;
+        name: string | null;
+        email: string;
+        avatar: string | null;
+    } | null;
+    description: string;
+    old_value: string | null;
+    new_value: string | null;
+    created_at: string;
+};
+
+export type ActivityLogListResponse = {
+    items: ActivityLog[];
+    total: number;
+    limit: number;
+    offset: number;
+};
+
 async function handleRes<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -194,6 +218,31 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         return await handleRes<DashboardStats>(res);
     } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        throw error;
+    }
+}
+export async function getActivityLogs(limit = 50, offset = 0, ticketId?: number): Promise<ActivityLogListResponse> {
+    try {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString(),
+        });
+        
+        if (ticketId !== undefined && ticketId !== null) {
+            params.append('ticket_id', ticketId.toString());
+        }
+        
+        const res = await fetch(`${BASE}/activity/?${params}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        return await handleRes<ActivityLogListResponse>(res);
+    } catch (error) {
+        console.error('Error fetching activity logs:', error);
         throw error;
     }
 }

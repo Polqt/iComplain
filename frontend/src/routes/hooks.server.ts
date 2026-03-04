@@ -1,20 +1,31 @@
 import type { Handle, HandleServerError } from "@sveltejs/kit"
+import { redirect } from "@sveltejs/kit";
 
 export const handle: Handle = async ({ event, resolve }) => {
-    // TODO: Get user session from cookies or headers
+    // Check for authentication via cookie or authorization header
+    const sessionCookie = event.cookies.get('sessionid');
+    const authHeader = event.request.headers.get('authorization');
+    const hasAuthCookie = !!sessionCookie || !!authHeader;
 
-    // TODO: Define protected routes
-    const protectedRoutes = ['/dashboard', '/profile'];
+    // Define protected routes
+    const protectedRoutes = ['/dashboard', '/profile', '/settings', '/tickets', '/history', '/notifications'];
 
     // Auth Routes
-    const authRoutes = ['/signin', '/signup'];
+    const authRoutes = ['/signin', '/signup', '/not-signed-in'];
 
-    // TODO: Redirect unauthenticated users from protected routes
-    // if (protectedRoutes.some(path => event.url.pathname.startsWith(path)) && !user) {
-    //     return Response.redirect('/not-signed-in', 303);
-    // }
+    // Check if current route is protected
+    const isProtectedRoute = protectedRoutes.some(path => event.url.pathname.startsWith(path));
+    const isAuthRoute = authRoutes.some(path => event.url.pathname.startsWith(path));
 
-    // TODO: Determine user role and redirect accordingly
+    // Redirect unauthenticated users from protected routes
+    if (isProtectedRoute && !hasAuthCookie) {
+        return redirect(303, '/not-signed-in');
+    }
+
+    // Redirect authenticated users away from auth pages
+    if (isAuthRoute && hasAuthCookie) {
+        return redirect(303, '/dashboard');
+    }
 
     const response = await resolve(event);
     return response;
