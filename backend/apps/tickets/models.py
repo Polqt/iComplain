@@ -169,7 +169,7 @@ class ActivityLog(models.Model):
     old_value = models.CharField(max_length=255, null=True, blank=True)
     new_value = models.CharField(max_length=255, null=True, blank=True)
     
-    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    created_at = models.DateTimeField(default=timezone.now)
     
     class Meta:
         ordering = ['-created_at']

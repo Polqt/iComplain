@@ -10,13 +10,22 @@ export function getPriorityKey(priority: TicketPriority | string | any): Priorit
   if (!priority) return "low";
   if (typeof priority === "string") {
     const k = priority.toLowerCase();
-    return k === "high" ? "high" : k === "medium" ? "medium" : "low";
+    if (k === "urgent") return "urgent";
+    if (k === "high") return "high";
+    if (k === "medium") return "medium";
+    return "low";
   }
   if (typeof priority === "object") {
     const name = priority.name ? String(priority.name).toLowerCase() : undefined;
-    if (name === "high" || name === "medium" || name === "low") return name as PriorityKey;
+    if (name === "urgent") return "urgent";
+    if (name === "high") return "high";
+    if (name === "medium") return "medium";
+    if (name === "low") return "low";
     if (typeof priority.level === "number") {
-      return priority.level >= 3 ? "high" : priority.level === 2 ? "medium" : "low";
+      if (priority.level >= 4) return "urgent";
+      if (priority.level === 3) return "high";
+      if (priority.level === 2) return "medium";
+      return "low";
     }
   }
   return "low";

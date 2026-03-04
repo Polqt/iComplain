@@ -2,9 +2,10 @@ import type { Handle, HandleServerError } from "@sveltejs/kit"
 import { redirect } from "@sveltejs/kit";
 
 export const handle: Handle = async ({ event, resolve }) => {
-    // Get authentication cookie from request headers
-    const cookieHeader = event.request.headers.get('cookie') || '';
-    const hasAuthCookie = cookieHeader.includes('sessionid') || cookieHeader.includes('Authorization');
+    // Check for authentication via cookie or authorization header
+    const sessionCookie = event.cookies.get('sessionid');
+    const authHeader = event.request.headers.get('authorization');
+    const hasAuthCookie = !!sessionCookie || !!authHeader;
 
     // Define protected routes
     const protectedRoutes = ['/dashboard', '/profile', '/settings', '/tickets', '/history', '/notifications'];

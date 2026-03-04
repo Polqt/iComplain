@@ -156,7 +156,8 @@
                   </p>
                   <p class="text-xs text-base-content/60">
                     <span class="font-medium text-base-content/70">{activity.ticket_number}</span>
-                    {activity.ticket_title}
+                    <span class="text-base-content/60"> – </span>
+                    <span>{activity.ticket_title}</span>
                   </p>
                 </div>
                 <Icon

@@ -216,8 +216,30 @@ class ActivityLogSchema(Schema):
     new_value: str | None = None
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    @classmethod
+    def from_orm(cls, activity_log):
+        """Custom ORM mapping to extract ticket details from related FK."""
+        performed_by_data = None
+        if activity_log.performed_by:
+            performed_by_data = {
+                'id': activity_log.performed_by.id,
+                'email': activity_log.performed_by.email,
+                'name': getattr(activity_log.performed_by, 'name', None),
+                'avatar': getattr(activity_log.performed_by, 'avatar', None),
+            }
+        
+        data = {
+            'id': activity_log.id,
+            'action': activity_log.action,
+            'ticket_number': activity_log.ticket.ticket_number,
+            'ticket_title': activity_log.ticket.title,
+            'performed_by': performed_by_data,
+            'description': activity_log.description,
+            'old_value': activity_log.old_value,
+            'new_value': activity_log.new_value,
+            'created_at': activity_log.created_at,
+        }
+        return cls.model_validate(data)
 
 
 class ActivityLogListSchema(Schema):

@@ -8,7 +8,7 @@ from django.utils import timezone
 from .models import Ticket, TicketComment, ActivityLog, TicketStatusHistory
 
 
-@receiver(post_save, sender=Ticket)
+@receiver(post_save, sender=Ticket, dispatch_uid='log_ticket_activity')
 def log_ticket_activity(sender, instance, created, **kwargs):
     """
     Log ticket creation or updates.
@@ -24,7 +24,7 @@ def log_ticket_activity(sender, instance, created, **kwargs):
         )
 
 
-@receiver(pre_save, sender=Ticket)
+@receiver(pre_save, sender=Ticket, dispatch_uid='detect_ticket_changes')
 def detect_ticket_changes(sender, instance, **kwargs):
     """
     Detect changes to ticket fields and log them via signals.
@@ -61,17 +61,19 @@ def detect_ticket_changes(sender, instance, **kwargs):
     
     # Check priority change
     if old_instance.priority_id != instance.priority_id:
+        old_priority_name = old_instance.priority.name if old_instance.priority else "None"
+        new_priority_name = instance.priority.name if instance.priority else "None"
         ActivityLog.objects.create(
             action='priority_changed',
             ticket=instance,
             performed_by=getattr(instance, '_changed_by', None),
-            description=f"Priority changed from {old_instance.priority.name} to {instance.priority.name}",
-            old_value=old_instance.priority.name,
-            new_value=instance.priority.name,
+            description=f"Priority changed from {old_priority_name} to {new_priority_name}",
+            old_value=old_priority_name,
+            new_value=new_priority_name,
         )
 
 
-@receiver(post_save, sender=TicketComment)
+@receiver(post_save, sender=TicketComment, dispatch_uid='log_comment_activity')
 def log_comment_activity(sender, instance, created, **kwargs):
     """
     Log when a comment is added to a ticket.
@@ -87,7 +89,7 @@ def log_comment_activity(sender, instance, created, **kwargs):
         )
 
 
-@receiver(post_save, sender=TicketStatusHistory)
+@receiver(post_save, sender=TicketStatusHistory, dispatch_uid='log_status_history')
 def log_status_history(sender, instance, created, **kwargs):
     """
     Alternative logging via TicketStatusHistory model.

@@ -228,7 +228,7 @@ export async function getActivityLogs(limit = 50, offset = 0, ticketId?: number)
             offset: offset.toString(),
         });
         
-        if (ticketId) {
+        if (ticketId !== undefined && ticketId !== null) {
             params.append('ticket_id', ticketId.toString());
         }
         

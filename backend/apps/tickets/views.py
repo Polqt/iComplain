@@ -769,7 +769,6 @@ def dashboard_stats(request):
     today = now.date()
     last_month_start = (now - timedelta(days=30)).date()
     this_week_start = (now - timedelta(days=7)).date()
-    two_weeks_ago = (now - timedelta(days=14)).date()
     
     # Base active tickets
     base = _active_tickets()
@@ -792,7 +791,6 @@ def dashboard_stats(request):
     last_month_resolved = last_month_status_counts.get('resolved', 0)
     
     # Calculate changes
-    total_change = ((total_tickets - last_month_total) / last_month_total * 100) if last_month_total > 0 else 0
     pending_change = ((pending_tickets - last_month_pending) / last_month_pending * 100) if last_month_pending > 0 else 0
     resolved_change = ((resolved_tickets - last_month_resolved) / last_month_resolved * 100) if last_month_resolved > 0 else 0
     
@@ -846,7 +844,7 @@ def dashboard_stats(request):
             title="In Progress",
             value=str(in_progress_tickets),
             change=f"{in_progress_tickets - last_month_status_counts.get('in_progress', 0):+d}",
-            subtitle=f"vs last month",
+            subtitle="vs last month",
             trend="success",
             is_critical=False,
             is_increasing=in_progress_tickets > last_month_status_counts.get('in_progress', 0)
