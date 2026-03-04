@@ -1,56 +1,56 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import HistoryFilters from "./HistoryFilters.svelte";
-  import HistoryTimeline from "./HistoryTimeline.svelte";
-  import AdminHistoryTimeline from "./AdminHistoryTimeline.svelte";
-  import type {
-    HistoryFilterType,
-    HistoryItem,
-    HistorySortType,
-  } from "../../../types/history.ts";
-  import {
-    filterAndSortHistory,
-    getActivityLabel,
-    historyConfig,
-  } from "../../../utils/historyConfig.ts";
-  import { authStore } from "../../../stores/auth.store.ts";
+import { onMount } from "svelte";
+import HistoryFilters from "./HistoryFilters.svelte";
+import HistoryTimeline from "./HistoryTimeline.svelte";
+import AdminHistoryTimeline from "./AdminHistoryTimeline.svelte";
+import type {
+	HistoryFilterType,
+	HistoryItem,
+	HistorySortType,
+} from "../../../types/history.ts";
+import {
+	filterAndSortHistory,
+	getActivityLabel,
+	historyConfig,
+} from "../../../utils/historyConfig.ts";
+import { authStore } from "../../../stores/auth.store.ts";
 
-  export let fetchItems: () => Promise<HistoryItem[]> = async () => [];
+export let fetchItems: () => Promise<HistoryItem[]> = async () => [];
 
-  let activeFilter: HistoryFilterType = "all";
-  let sortBy: HistorySortType = "newest";
-  let searchQuery: string = "";
-  let historyItems: HistoryItem[] = [];
-  let loading = true;
-  let error: string | null = null;
+let activeFilter: HistoryFilterType = "all";
+let sortBy: HistorySortType = "newest";
+let searchQuery: string = "";
+let historyItems: HistoryItem[] = [];
+let loading = true;
+let error: string | null = null;
 
-  $: ({ role } = $authStore);
+$: ({ role } = $authStore);
 
-  onMount(async () => {
-    try {
-      loading = true;
-      error = null;
-      historyItems = await fetchItems();
-    } catch (e) {
-      error = e instanceof Error ? e.message : "Failed to load history";
-      historyItems = [];
-    } finally {
-      loading = false;
-    }
-  });
+onMount(async () => {
+	try {
+		loading = true;
+		error = null;
+		historyItems = await fetchItems();
+	} catch (e) {
+		error = e instanceof Error ? e.message : "Failed to load history";
+		historyItems = [];
+	} finally {
+		loading = false;
+	}
+});
 
-  $: filteredItems = filterAndSortHistory(
-    historyItems,
-    activeFilter,
-    searchQuery,
-    sortBy,
-  );
+$: filteredItems = filterAndSortHistory(
+	historyItems,
+	activeFilter,
+	searchQuery,
+	sortBy,
+);
 
-  function clearFilters() {
-    activeFilter = "all";
-    searchQuery = "";
-    sortBy = "newest";
-  }
+function clearFilters() {
+	activeFilter = "all";
+	searchQuery = "";
+	sortBy = "newest";
+}
 </script>
 
 {#if role === "student"}

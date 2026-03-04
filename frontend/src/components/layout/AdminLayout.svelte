@@ -1,115 +1,115 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
-  import SearchModal from "../ui/SearchModal.svelte";
-  import SearchBar from "../ui/SearchBar.svelte";
-  import NotificationBell from "../ui/NotificationBell.svelte";
-  import Profile from "../ui/Profile.svelte";
-  import { goto } from "$app/navigation";
-  import type { Notification } from "../../types/notifications.js";
-  import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
-  import { authStore } from "../../stores/auth.store.ts";
-  import { notificationStore } from "../../stores/notification.store.ts";
-  import { formatNotificationTimestamp } from "../../utils/notificationConfig.ts";
+import Icon from "@iconify/svelte";
+import { onMount } from "svelte";
+import SearchModal from "../ui/SearchModal.svelte";
+import SearchBar from "../ui/SearchBar.svelte";
+import NotificationBell from "../ui/NotificationBell.svelte";
+import Profile from "../ui/Profile.svelte";
+import { goto } from "$app/navigation";
+import type { Notification } from "../../types/notifications.js";
+import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
+import { authStore } from "../../stores/auth.store.ts";
+import { notificationStore } from "../../stores/notification.store.ts";
+import { formatNotificationTimestamp } from "../../utils/notificationConfig.ts";
 
-  let showModal: boolean = false;
-  let theme: string = "lofi";
-  let isMobile: boolean = false;
+let showModal: boolean = false;
+let theme: string = "lofi";
+let isMobile: boolean = false;
 
-  $: notifications = $notificationStore.notifications.map((n) => ({
-    ...n,
-    timestamp: formatNotificationTimestamp(n.timestamp),
-  }));
-  $: unreadCount = $notificationStore.unreadCount;
+$: notifications = $notificationStore.notifications.map((n) => ({
+	...n,
+	timestamp: formatNotificationTimestamp(n.timestamp),
+}));
+$: unreadCount = $notificationStore.unreadCount;
 
-  function openModal() {
-    showModal = true;
-  }
+function openModal() {
+	showModal = true;
+}
 
-  function closeModal() {
-    showModal = false;
-  }
+function closeModal() {
+	showModal = false;
+}
 
-  function setTheme(newTheme: string) {
-    theme = newTheme;
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", newTheme);
-  }
+function setTheme(newTheme: string) {
+	theme = newTheme;
+	document.documentElement.setAttribute("data-theme", theme);
+	localStorage.setItem("theme", newTheme);
+}
 
-  function checkMobile() {
-    isMobile = window.innerWidth < 768;
-  }
+function checkMobile() {
+	isMobile = window.innerWidth < 768;
+}
 
-  async function handleLogout() {
-    await authStore.logout();
-  }
+async function handleLogout() {
+	await authStore.logout();
+}
 
-  async function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
-    const { id } = event.detail;
-    await notificationStore.markAsRead(id);
-  }
+async function handleMarkAsRead(event: CustomEvent<{ id: string }>) {
+	const { id } = event.detail;
+	await notificationStore.markAsRead(id);
+}
 
-  function handleNotificationClick(
-    event: CustomEvent<{ notification: Notification }>,
-  ) {
-    const { notification } = event.detail;
-    if (notification.actionUrl) {
-      goto(notification.actionUrl);
-    }
-  }
+function handleNotificationClick(
+	event: CustomEvent<{ notification: Notification }>,
+) {
+	const { notification } = event.detail;
+	if (notification.actionUrl) {
+		goto(notification.actionUrl);
+	}
+}
 
-  function handleViewAllNotifications() {
-    goto("/notifications");
-  }
+function handleViewAllNotifications() {
+	goto("/notifications");
+}
 
-  onMount(() => {
-    const savedTheme = localStorage.getItem("theme") || "lofi";
-    setTheme(savedTheme);
-    window.addEventListener("resize", checkMobile);
-    checkMobile();
+onMount(() => {
+	const savedTheme = localStorage.getItem("theme") || "lofi";
+	setTheme(savedTheme);
+	window.addEventListener("resize", checkMobile);
+	checkMobile();
 
-    notificationStore.loadNotifications(10);
+	notificationStore.loadNotifications(10);
 
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-    };
-  });
+	return () => {
+		window.removeEventListener("resize", checkMobile);
+	};
+});
 
-  const items = [
-    { name: "Dashboard", icon: "lucide:home", href: "/dashboard" },
-    { name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
-    { name: "History", icon: "lucide:clock", href: "/history" },
-    { name: "Help", icon: "lucide:help-circle", href: "/help" },
-  ];
+const items = [
+	{ name: "Dashboard", icon: "lucide:home", href: "/dashboard" },
+	{ name: "Tickets", icon: "lucide:ticket", href: "/tickets" },
+	{ name: "History", icon: "lucide:clock", href: "/history" },
+	{ name: "Help", icon: "lucide:help-circle", href: "/help" },
+];
 
-  const settingItem = {
-    name: "Settings",
-    icon: "lucide:settings",
-    href: "/settings",
-  };
+const settingItem = {
+	name: "Settings",
+	icon: "lucide:settings",
+	href: "/settings",
+};
 
-  const notificationsConfig = {
-    success: {
-      icon: "lucide:check-circle",
-      bgColor: "bg-success",
-      iconColor: "text-success",
-    },
-    info: {
-      icon: "lucide:info",
-      bgColor: "bg-info",
-      iconColor: "text-info",
-    },
-    warning: {
-      icon: "lucide:alert-circle",
-      bgColor: "bg-warning",
-      iconColor: "text-warning",
-    },
-    error: {
-      icon: "lucide:x-circle",
-      bgColor: "bg-error",
-      iconColor: "text-error",
-    },
-  };
+const notificationsConfig = {
+	success: {
+		icon: "lucide:check-circle",
+		bgColor: "bg-success",
+		iconColor: "text-success",
+	},
+	info: {
+		icon: "lucide:info",
+		bgColor: "bg-info",
+		iconColor: "text-info",
+	},
+	warning: {
+		icon: "lucide:alert-circle",
+		bgColor: "bg-warning",
+		iconColor: "text-warning",
+	},
+	error: {
+		icon: "lucide:x-circle",
+		bgColor: "bg-error",
+		iconColor: "text-error",
+	},
+};
 </script>
 
 <div class="min-h-screen w-full bg-base-300 dark:bg-base-300">

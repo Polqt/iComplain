@@ -1,92 +1,107 @@
-
 import { PUBLIC_API_URL } from "$env/static/public";
-import type { CommentCreatePayload, CommentUpdatePayload, TicketComment } from "../../types/comments.ts";
+import type {
+	CommentCreatePayload,
+	CommentUpdatePayload,
+	TicketComment,
+} from "../../types/comments.ts";
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
 
- async function handleRes<T>(res: Response): Promise<T> {
-    if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || body.detail || res.statusText);
-    }
-    return res.json() as Promise<T>;
+async function handleRes<T>(res: Response): Promise<T> {
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		throw new Error(body.message || body.detail || res.statusText);
+	}
+	return res.json() as Promise<T>;
 }
 
-export async function fetchComments(ticketId: number): Promise<TicketComment[]> {
-    try {
-        const res = await fetch(`${BASE}/${ticketId}/comments`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            credentials: "include",
-        })
-        return await handleRes<TicketComment[]>(res);
-    } catch (error) {
-        console.error(`Error fetching comments for ticket ${ticketId}:`, error);
-        throw error;
-    }
+export async function fetchComments(
+	ticketId: number,
+): Promise<TicketComment[]> {
+	try {
+		const res = await fetch(`${BASE}/${ticketId}/comments`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+		});
+		return await handleRes<TicketComment[]>(res);
+	} catch (error) {
+		console.error(`Error fetching comments for ticket ${ticketId}:`, error);
+		throw error;
+	}
 }
 
 export async function createComment(
-    ticketId: number,
-    payload: CommentCreatePayload,
+	ticketId: number,
+	payload: CommentCreatePayload,
 ): Promise<TicketComment> {
-    try {
-        const formData = new FormData();
-        formData.append("message", payload.message || "");
+	try {
+		const formData = new FormData();
+		formData.append("message", payload.message || "");
 
-        const res = await fetch(`${BASE}/${ticketId}/comments`, {
-            method: "POST",
-            body: formData,
-            credentials: "include",
-        });
+		const res = await fetch(`${BASE}/${ticketId}/comments`, {
+			method: "POST",
+			body: formData,
+			credentials: "include",
+		});
 
-        return await handleRes<TicketComment>(res);
-    } catch (error) {
-        console.error(`Error creating comment for ticket ${ticketId}:`, error);
-        throw error;
-    }
+		return await handleRes<TicketComment>(res);
+	} catch (error) {
+		console.error(`Error creating comment for ticket ${ticketId}:`, error);
+		throw error;
+	}
 }
 
 export async function editComment(
-    ticketId: number,
-    commentId: number,
-    payload: CommentUpdatePayload
+	ticketId: number,
+	commentId: number,
+	payload: CommentUpdatePayload,
 ): Promise<TicketComment> {
-    try {
-        const formData = new FormData();
-        if (payload.message !== undefined) {
-            formData.append("message", payload.message);
-        }
+	try {
+		const formData = new FormData();
+		if (payload.message !== undefined) {
+			formData.append("message", payload.message);
+		}
 
-        const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
-            method: "PUT",
-            body: formData,
-            credentials: "include",
-        });
+		const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
+			method: "PUT",
+			body: formData,
+			credentials: "include",
+		});
 
-        return await handleRes<TicketComment>(res);
-    } catch (error) {
-        console.error(`Error editing comment ${commentId} for ticket ${ticketId}:`, error);
-        throw error;
-    }
+		return await handleRes<TicketComment>(res);
+	} catch (error) {
+		console.error(
+			`Error editing comment ${commentId} for ticket ${ticketId}:`,
+			error,
+		);
+		throw error;
+	}
 }
 
-export async function deleteComment(ticketId: number, commentId: number): Promise<void> {
-    try {
-        const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
-            method: "DELETE",
-            credentials: "include",
-        });
+export async function deleteComment(
+	ticketId: number,
+	commentId: number,
+): Promise<void> {
+	try {
+		const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
+			method: "DELETE",
+			credentials: "include",
+		});
 
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.message || body.detail || `Failed to delete comment ${commentId}.`);
-        }
-    } catch (error) {
-        console.error(`Error deleting comment ${commentId} for ticket ${ticketId}:`, error);
-        throw error;
-    }
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			throw new Error(
+				body.message || body.detail || `Failed to delete comment ${commentId}.`,
+			);
+		}
+	} catch (error) {
+		console.error(
+			`Error deleting comment ${commentId} for ticket ${ticketId}:`,
+			error,
+		);
+		throw error;
+	}
 }
-

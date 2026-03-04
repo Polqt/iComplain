@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { Ticket } from "../../../types/tickets.ts";
-  import CommunityTicketCard from "./CommunityTicketCard.svelte";
-  import Icon from "@iconify/svelte";
+import type { Ticket } from "../../../types/tickets.ts";
+import CommunityTicketCard from "./CommunityTicketCard.svelte";
+import Icon from "@iconify/svelte";
 
-  export let tickets: Ticket[] = [];
-  export let totalPages: number = 1;
-  export let currentPage: number = 1;
-  export let onPageChange: (page: number) => void = () => {};
+export let tickets: Ticket[] = [];
+export let totalPages: number = 1;
+export let currentPage: number = 1;
+export let onPageChange: (page: number) => void = () => {};
 </script>
 
 <div class="flex flex-col flex-1 min-h-0">

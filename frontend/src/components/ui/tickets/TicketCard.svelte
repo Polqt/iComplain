@@ -1,26 +1,26 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { Ticket } from "../../../types/tickets.ts";
-  import {
-    getPriorityKey,
-    priorityAccent,
-    priorityConfig,
-    priorityIcons,
-    statusConfig,
-  } from "../../../utils/ticketConfig.ts";
-  import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import type { Ticket } from "../../../types/tickets.ts";
+import {
+	getPriorityKey,
+	priorityAccent,
+	priorityConfig,
+	priorityIcons,
+	statusConfig,
+} from "../../../utils/ticketConfig.ts";
+import { goto } from "$app/navigation";
 
-  export let report: Ticket;
-  export let onEdit: (report: Ticket) => void = () => {};
-  export let onDelete: (report: Ticket) => void = () => {};
+export let report: Ticket;
+export let onEdit: (report: Ticket) => void = () => {};
+export let onDelete: (report: Ticket) => void = () => {};
 
-  $: pKey = getPriorityKey(report.priority);
-  $: pIcon = priorityIcons[pKey] ?? "mdi:minus";
-  $: pAccent = priorityAccent[pKey] ?? "border-l-info";
+$: pKey = getPriorityKey(report.priority);
+$: pIcon = priorityIcons[pKey] ?? "mdi:minus";
+$: pAccent = priorityAccent[pKey] ?? "border-l-info";
 
-  function navigate() {
-    goto(`/tickets/${report.ticket_number}`);
-  }
+function navigate() {
+	goto(`/tickets/${report.ticket_number}`);
+}
 </script>
 
 <div

@@ -1,71 +1,69 @@
 <script lang="ts">
-  import { writable } from "svelte/store";
-  import type {
-    Ticket,
-    Category,
-    TicketPriority,
-  } from "../../../types/tickets.ts";
-  import {
-    statusConfig,
-    priorityConfig,
-    getPriorityKey,
-  } from "../../../utils/ticketConfig.js";
-  import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
-  import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
+import { writable } from "svelte/store";
+import type {
+	Ticket,
+	Category,
+	TicketPriority,
+} from "../../../types/tickets.ts";
+import {
+	statusConfig,
+	priorityConfig,
+	getPriorityKey,
+} from "../../../utils/ticketConfig.js";
+import Icon from "@iconify/svelte";
+import { onMount } from "svelte";
+import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
 
-  export let open = false;
-  export let mode: "create" | "edit" = "create";
-  export let canEditPriorityStatus = false;
-  export let formData: Partial<Ticket> = {};
-  export let isLoading = false;
-  export let onclose: () => void = () => {};
-  export let onsubmit: (
-    data: Partial<Ticket>,
-    file?: File | null,
-  ) => void = () => {};
+export let open = false;
+export let mode: "create" | "edit" = "create";
+export let canEditPriorityStatus = false;
+export let formData: Partial<Ticket> = {};
+export let isLoading = false;
+export let onclose: () => void = () => {};
+export let onsubmit: (data: Partial<Ticket>, file?: File | null) => void =
+	() => {};
 
-  let selectedFile: File | null = null;
+let selectedFile: File | null = null;
 
-  export const categoriesStore = writable<Category[]>([]);
-  export const prioritiesStore = writable<TicketPriority[]>([]);
+export const categoriesStore = writable<Category[]>([]);
+export const prioritiesStore = writable<TicketPriority[]>([]);
 
-  export async function loadCategories() {
-    try {
-      const cats = await fetchCategories();
-      categoriesStore.set(cats);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+export async function loadCategories() {
+	try {
+		const cats = await fetchCategories();
+		categoriesStore.set(cats);
+	} catch (err) {
+		console.error(err);
+	}
+}
 
-  export async function loadPriorities() {
-    try {
-      const prios = await fetchPriorities();
-      prioritiesStore.set(prios);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+export async function loadPriorities() {
+	try {
+		const prios = await fetchPriorities();
+		prioritiesStore.set(prios);
+	} catch (err) {
+		console.error(err);
+	}
+}
 
-  onMount(() => {
-    loadCategories();
-    loadPriorities();
-  });
+onMount(() => {
+	loadCategories();
+	loadPriorities();
+});
 
-  function handleSubmit(event: Event) {
-    event.preventDefault();
-    const data = canEditPriorityStatus
-      ? formData
-      : (({ priority, status, ...rest }) => rest)(formData);
-    onsubmit(data, selectedFile);
-    onclose();
-  }
+function handleSubmit(event: Event) {
+	event.preventDefault();
+	const data = canEditPriorityStatus
+		? formData
+		: (({ priority, status, ...rest }) => rest)(formData);
+	onsubmit(data, selectedFile);
+	onclose();
+}
 
-  function handleFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    selectedFile = input.files?.[0] ?? null;
-  }
+function handleFileChange(event: Event) {
+	const input = event.target as HTMLInputElement;
+	selectedFile = input.files?.[0] ?? null;
+}
 </script>
 
 {#if open}

@@ -1,105 +1,105 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
-  import { goto } from "$app/navigation";
-  import Icon from "@iconify/svelte";
+import { onMount, onDestroy } from "svelte";
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
 
-  import { createEventDispatcher } from "svelte";
-  import { searchStore } from "../../stores/search.store.ts";
-  import type { SearchResult } from "../../types/search.ts";
-  import { typeColors, typeIcons } from "../../utils/useSearch.ts";
+import { createEventDispatcher } from "svelte";
+import { searchStore } from "../../stores/search.store.ts";
+import type { SearchResult } from "../../types/search.ts";
+import { typeColors, typeIcons } from "../../utils/useSearch.ts";
 
-  export let isOpen: boolean = false;
+export let isOpen: boolean = false;
 
-  const dispatch = createEventDispatcher<{
-    close: void;
-    select: SearchResult;
-  }>();
+const dispatch = createEventDispatcher<{
+	close: void;
+	select: SearchResult;
+}>();
 
-  let inputElement: HTMLInputElement;
+let inputElement: HTMLInputElement;
 
-  // Subscribe to search store
-  $: query = $searchStore.query;
-  $: results = $searchStore.results;
-  $: recentSearches = $searchStore.recentSearches;
-  $: isSearching = $searchStore.isSearching;
-  $: selectedIndex = $searchStore.selectedIndex;
+// Subscribe to search store
+$: query = $searchStore.query;
+$: results = $searchStore.results;
+$: recentSearches = $searchStore.recentSearches;
+$: isSearching = $searchStore.isSearching;
+$: selectedIndex = $searchStore.selectedIndex;
 
-  // Global keyboard shortcut handler (Cmd+K to open modal)
-  function handleKeyDown(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-      event.preventDefault();
-      if (!isOpen) {
-        isOpen = true;
-      }
-    }
-  }
+// Global keyboard shortcut handler (Cmd+K to open modal)
+function handleKeyDown(event: KeyboardEvent) {
+	if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+		event.preventDefault();
+		if (!isOpen) {
+			isOpen = true;
+		}
+	}
+}
 
-  // Input keyboard handler - THIS HANDLES ARROW KEYS AND ENTER
-  function handleInputKeyDown(event: KeyboardEvent) {
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        searchStore.selectNext();
-        break;
-      case "ArrowUp":
-        event.preventDefault();
-        searchStore.selectPrevious();
-        break;
-      case "Enter":
-        event.preventDefault();
-        const selected = searchStore.getSelectedResult();
-        if (selected) {
-          handleSelectResult(selected);
-        }
-        break;
-      case "Escape":
-        event.preventDefault();
-        closeModal();
-        break;
-    }
-  }
+// Input keyboard handler - THIS HANDLES ARROW KEYS AND ENTER
+function handleInputKeyDown(event: KeyboardEvent) {
+	switch (event.key) {
+		case "ArrowDown":
+			event.preventDefault();
+			searchStore.selectNext();
+			break;
+		case "ArrowUp":
+			event.preventDefault();
+			searchStore.selectPrevious();
+			break;
+		case "Enter":
+			event.preventDefault();
+			const selected = searchStore.getSelectedResult();
+			if (selected) {
+				handleSelectResult(selected);
+			}
+			break;
+		case "Escape":
+			event.preventDefault();
+			closeModal();
+			break;
+	}
+}
 
-  function handleInputChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    searchStore.search(target.value);
-  }
+function handleInputChange(event: Event) {
+	const target = event.target as HTMLInputElement;
+	searchStore.search(target.value);
+}
 
-  function handleSelectResult(result: SearchResult) {
-    searchStore.addRecentSearch(query);
-    dispatch("select", result);
-    goto(result.url);
-    closeModal();
-  }
+function handleSelectResult(result: SearchResult) {
+	searchStore.addRecentSearch(query);
+	dispatch("select", result);
+	goto(result.url);
+	closeModal();
+}
 
-  function handleRecentSearch(recentQuery: string) {
-    searchStore.search(recentQuery);
-    if (inputElement) {
-      inputElement.focus();
-    }
-  }
+function handleRecentSearch(recentQuery: string) {
+	searchStore.search(recentQuery);
+	if (inputElement) {
+		inputElement.focus();
+	}
+}
 
-  function closeModal() {
-    isOpen = false;
-    searchStore.clear();
-    dispatch("close");
-  }
+function closeModal() {
+	isOpen = false;
+	searchStore.clear();
+	dispatch("close");
+}
 
-  $: if (isOpen && inputElement) {
-    setTimeout(() => inputElement.focus(), 100);
-  }
+$: if (isOpen && inputElement) {
+	setTimeout(() => inputElement.focus(), 100);
+}
 
-  onMount(() => {
-    searchStore.loadRecentSearches();
-    window.addEventListener("keydown", handleKeyDown);
+onMount(() => {
+	searchStore.loadRecentSearches();
+	window.addEventListener("keydown", handleKeyDown);
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  });
+	return () => {
+		window.removeEventListener("keydown", handleKeyDown);
+	};
+});
 
-  onDestroy(() => {
-    searchStore.clear();
-  });
+onDestroy(() => {
+	searchStore.clear();
+});
 </script>
 
 {#if isOpen}

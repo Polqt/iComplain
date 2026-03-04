@@ -1,101 +1,95 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-  import { goto } from "$app/navigation";
-  import type {
-    ModalMode,
-    Ticket,
-    TicketCreatePayload,
-    TicketUpdatePayload,
-    ViewMode,
-  } from "../../../types/tickets.ts";
-  import {
-    statusConfig,
-    priorityConfig,
-    getPriorityKey,
-    columnConfigs,
-    columnAccent,
-  } from "../../../utils/ticketConfig.ts";
-  import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
-  import TicketCreateModal from "../../../components/ui/tickets/TicketCreateModal.svelte";
-  import TicketCard from "../../../components/ui/tickets/TicketCard.svelte";
-  import { ticketsStore } from "../../../stores/tickets.store.ts";
-  import { onMount } from "svelte";
+import Icon from "@iconify/svelte";
+import StudentLayout from "../../../components/layout/StudentLayout.svelte";
+import { goto } from "$app/navigation";
+import type {
+	ModalMode,
+	Ticket,
+	TicketCreatePayload,
+	TicketUpdatePayload,
+	ViewMode,
+} from "../../../types/tickets.ts";
+import {
+	statusConfig,
+	priorityConfig,
+	getPriorityKey,
+	columnConfigs,
+	columnAccent,
+} from "../../../utils/ticketConfig.ts";
+import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
+import TicketCreateModal from "../../../components/ui/tickets/TicketCreateModal.svelte";
+import TicketCard from "../../../components/ui/tickets/TicketCard.svelte";
+import { ticketsStore } from "../../../stores/tickets.store.ts";
+import { onMount } from "svelte";
 
-  let viewMode: ViewMode = "grid";
-  let modalMode: ModalMode = null;
-  let selectedReport: Ticket | null = null;
-  let formData: Partial<Ticket> = {};
+let viewMode: ViewMode = "grid";
+let modalMode: ModalMode = null;
+let selectedReport: Ticket | null = null;
+let formData: Partial<Ticket> = {};
 
-  $: ({ tickets, isLoading, error } = $ticketsStore);
+$: ({ tickets, isLoading, error } = $ticketsStore);
 
-  $: columns = columnConfigs.map((config) => ({
-    ...config,
-    reports: tickets.filter((t) => t.status === config.id),
-  }));
+$: columns = columnConfigs.map((config) => ({
+	...config,
+	reports: tickets.filter((t) => t.status === config.id),
+}));
 
-  onMount(async () => {
-    await ticketsStore.loadTickets();
-  });
+onMount(async () => {
+	await ticketsStore.loadTickets();
+});
 
-  function openModal(mode: ModalMode, report: Ticket | null = null) {
-    modalMode = mode;
-    selectedReport = report;
-    formData = mode === "edit" && report ? { ...report } : {};
-  }
+function openModal(mode: ModalMode, report: Ticket | null = null) {
+	modalMode = mode;
+	selectedReport = report;
+	formData = mode === "edit" && report ? { ...report } : {};
+}
 
-  function closeModal() {
-    modalMode = null;
-    selectedReport = null;
-    formData = {};
-    ticketsStore.setError(null);
-  }
+function closeModal() {
+	modalMode = null;
+	selectedReport = null;
+	formData = {};
+	ticketsStore.setError(null);
+}
 
-  async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
-    if (modalMode === "create") {
-      const categoryId =
-        typeof data.category === "number"
-          ? data.category
-          : (data.category?.id ?? 1);
-      const payload: TicketCreatePayload = {
-        title: data.title!,
-        description: data.description!,
-        category: categoryId,
-        building: data.building!,
-        room_name: data.room_name!,
-      };
-      const created = await ticketsStore.createTicket(
-        payload,
-        file || undefined,
-      );
-      if (created) closeModal();
-    } else if (modalMode === "edit" && selectedReport) {
-      const categoryId =
-        typeof data.category === "number" ? data.category : data.category?.id;
-      const payload: TicketUpdatePayload = {
-        title: data.title!,
-        description: data.description!,
-        building: data.building!,
-        room_name: data.room_name!,
-        category: categoryId!,
-      };
-      const updated = await ticketsStore.updateTicket(
-        selectedReport.id,
-        payload,
-      );
-      if (updated) closeModal();
-    }
-  }
+async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
+	if (modalMode === "create") {
+		const categoryId =
+			typeof data.category === "number"
+				? data.category
+				: (data.category?.id ?? 1);
+		const payload: TicketCreatePayload = {
+			title: data.title!,
+			description: data.description!,
+			category: categoryId,
+			building: data.building!,
+			room_name: data.room_name!,
+		};
+		const created = await ticketsStore.createTicket(payload, file || undefined);
+		if (created) closeModal();
+	} else if (modalMode === "edit" && selectedReport) {
+		const categoryId =
+			typeof data.category === "number" ? data.category : data.category?.id;
+		const payload: TicketUpdatePayload = {
+			title: data.title!,
+			description: data.description!,
+			building: data.building!,
+			room_name: data.room_name!,
+			category: categoryId!,
+		};
+		const updated = await ticketsStore.updateTicket(selectedReport.id, payload);
+		if (updated) closeModal();
+	}
+}
 
-  async function handleDelete() {
-    if (!selectedReport) return;
-    const success = await ticketsStore.deleteTicket(selectedReport.id);
-    if (success) closeModal();
-  }
+async function handleDelete() {
+	if (!selectedReport) return;
+	const success = await ticketsStore.deleteTicket(selectedReport.id);
+	if (success) closeModal();
+}
 
-  function navigateToTicket(ticketnumber: string) {
-    goto(`/tickets/${ticketnumber}`);
-  }
+function navigateToTicket(ticketnumber: string) {
+	goto(`/tickets/${ticketnumber}`);
+}
 </script>
 
 <StudentLayout>

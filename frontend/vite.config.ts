@@ -1,7 +1,7 @@
-import { defineConfig } from 'vitest/config';
-import { playwright } from '@vitest/browser-playwright';
-import tailwindcss from '@tailwindcss/vite';
-import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
+import tailwindcss from "@tailwindcss/vite";
+import { sveltekit } from "@sveltejs/kit/vite";
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
@@ -11,45 +11,45 @@ export default defineConfig({
 
 		projects: [
 			{
-				extends: './vite.config.ts',
+				extends: "./vite.config.ts",
 
 				test: {
-					name: 'client',
+					name: "client",
 
 					browser: {
 						enabled: true,
 						provider: playwright(),
-						instances: [{ browser: 'chromium', headless: true }]
+						instances: [{ browser: "chromium", headless: true }],
 					},
 
-					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**']
-				}
+					include: ["src/**/*.svelte.{test,spec}.{js,ts}"],
+					exclude: ["src/lib/server/**"],
+				},
 			},
 
 			{
-				extends: './vite.config.ts',
+				extends: "./vite.config.ts",
 
 				test: {
-					name: 'server',
-					environment: 'node',
-					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
-				}
-			}
-		]
+					name: "server",
+					environment: "node",
+					include: ["src/**/*.{test,spec}.{js,ts}"],
+					exclude: ["src/**/*.svelte.{test,spec}.{js,ts}"],
+				},
+			},
+		],
 	},
 
 	server: {
 		proxy: {
-			'/media': {
-				target: 'http://localhost:8000',
+			"/media": {
+				target: "http://localhost:8000",
 				changeOrigin: true,
 			},
-			'/api': {
-				target: 'http://localhost:8000',
+			"/api": {
+				target: "http://localhost:8000",
 				changeOrigin: true,
-			}
-		}
-	}
+			},
+		},
+	},
 });

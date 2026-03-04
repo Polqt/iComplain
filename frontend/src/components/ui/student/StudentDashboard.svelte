@@ -1,6 +1,6 @@
 <script lang="ts">
-  import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-  import TicketBoard from "../tickets/TicketBoard.svelte";
+import StudentLayout from "../../../components/layout/StudentLayout.svelte";
+import TicketBoard from "../tickets/TicketBoard.svelte";
 </script>
 
 <StudentLayout>

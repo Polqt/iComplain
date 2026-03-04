@@ -1,27 +1,28 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type {
-    HistoryItem,
-    HistoryFilterType,
-    HistorySortType,
-  } from "../../../types/history.ts";
-  import { historyConfig, formatRelativeTime } from "../../../utils/historyConfig.ts";
-  import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import type {
+	HistoryItem,
+	HistoryFilterType,
+	HistorySortType,
+} from "../../../types/history.ts";
+import {
+	historyConfig,
+	formatRelativeTime,
+} from "../../../utils/historyConfig.ts";
+import { goto } from "$app/navigation";
 
-  export let items: HistoryItem[] = [];
-  export let activeFilter: HistoryFilterType = "all";
-  export let searchQuery: string = "";
-  export let sortBy: HistorySortType = "newest";
-  export let onclearfilters: () => void = () => {};
+export let items: HistoryItem[] = [];
+export let activeFilter: HistoryFilterType = "all";
+export let searchQuery: string = "";
+export let sortBy: HistorySortType = "newest";
+export let onclearfilters: () => void = () => {};
 
-  function navigate(ticketId: string) {
-    goto(`tickets/${ticketId}`);
-  }
+function navigate(ticketId: string) {
+	goto(`tickets/${ticketId}`);
+}
 
-  $: hasAnyFilter =
-    activeFilter !== "all" ||
-    searchQuery.length > 0 ||
-    sortBy !== "newest";
+$: hasAnyFilter =
+	activeFilter !== "all" || searchQuery.length > 0 || sortBy !== "newest";
 </script>
 
 {#if items.length === 0}

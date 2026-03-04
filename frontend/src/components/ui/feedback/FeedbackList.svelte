@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import FeedbackItem from "./FeedbackItem.svelte";
-  import type { TicketFeedback } from "../../../types/feedback.ts";
+import Icon from "@iconify/svelte";
+import FeedbackItem from "./FeedbackItem.svelte";
+import type { TicketFeedback } from "../../../types/feedback.ts";
 
-  export let feedbacks: TicketFeedback[] = [];
-  export let emptyMessage: string = "No feedback yet.";
+export let feedbacks: TicketFeedback[] = [];
+export let emptyMessage: string = "No feedback yet.";
 </script>
 
 {#if feedbacks?.length}

@@ -1,19 +1,19 @@
 import type { User } from "./user.ts";
 export type TicketComment = {
-    id: number;
-    ticket_id: number;
-    user: User;
-    message: string;
-    created_at: string;
+	id: number;
+	ticket_id: number;
+	user: User;
+	message: string;
+	created_at: string;
 };
 export type CommentCreatePayload = {
-    message: string;
+	message: string;
 };
 export type CommentUpdatePayload = {
-    message?: string;
+	message?: string;
 };
 export type CommentsState = {
-    comments: TicketComment[];
-    isLoading: boolean;
-    error: string | null;
+	comments: TicketComment[];
+	isLoading: boolean;
+	error: string | null;
 };

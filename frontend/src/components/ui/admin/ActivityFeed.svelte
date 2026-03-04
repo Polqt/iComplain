@@ -1,99 +1,99 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
-  import { getActivityLogs } from "../../../lib/api/ticket.ts";
-  import type { ActivityLog } from "../../../lib/api/ticket.ts";
+import Icon from "@iconify/svelte";
+import { onMount } from "svelte";
+import { goto } from "$app/navigation";
+import { getActivityLogs } from "../../../lib/api/ticket.ts";
+import type { ActivityLog } from "../../../lib/api/ticket.ts";
 
-  let activities: ActivityLog[] = [];
-  let isLoading = true;
-  let error: string | null = null;
+let activities: ActivityLog[] = [];
+let isLoading = true;
+let error: string | null = null;
 
-  onMount(async () => {
-    try {
-      const response = await getActivityLogs(10);  // Load last 10 activities
-      activities = response.items;
-      error = null;
-    } catch (err) {
-      error = err instanceof Error ? err.message : "Failed to load activities";
-      console.error("Activity feed error:", err);
-    } finally {
-      isLoading = false;
-    }
-  });
+onMount(async () => {
+	try {
+		const response = await getActivityLogs(10); // Load last 10 activities
+		activities = response.items;
+		error = null;
+	} catch (err) {
+		error = err instanceof Error ? err.message : "Failed to load activities";
+		console.error("Activity feed error:", err);
+	} finally {
+		isLoading = false;
+	}
+});
 
-  function getActionIcon(action: ActivityLog["action"]): string {
-    switch (action) {
-      case "commented":
-        return "mdi:comment-multiple";
-      case "status_changed":
-        return "mdi:swap-horizontal";
-      case "priority_changed":
-        return "mdi:alert-octagon";
-      case "resolved":
-        return "mdi:check-circle";
-      case "reopened":
-        return "mdi:sync";
-      case "created":
-        return "mdi:plus-circle";
-      case "assigned":
-        return "mdi:account-check";
-      default:
-        return "mdi:information";
-    }
-  }
+function getActionIcon(action: ActivityLog["action"]): string {
+	switch (action) {
+		case "commented":
+			return "mdi:comment-multiple";
+		case "status_changed":
+			return "mdi:swap-horizontal";
+		case "priority_changed":
+			return "mdi:alert-octagon";
+		case "resolved":
+			return "mdi:check-circle";
+		case "reopened":
+			return "mdi:sync";
+		case "created":
+			return "mdi:plus-circle";
+		case "assigned":
+			return "mdi:account-check";
+		default:
+			return "mdi:information";
+	}
+}
 
-  function getActionColor(action: ActivityLog["action"]): string {
-    switch (action) {
-      case "resolved":
-        return "text-success";
-      case "reopened":
-        return "text-error";
-      case "priority_changed":
-        return "text-warning";
-      case "created":
-        return "text-info";
-      default:
-        return "text-primary";
-    }
-  }
+function getActionColor(action: ActivityLog["action"]): string {
+	switch (action) {
+		case "resolved":
+			return "text-success";
+		case "reopened":
+			return "text-error";
+		case "priority_changed":
+			return "text-warning";
+		case "created":
+			return "text-info";
+		default:
+			return "text-primary";
+	}
+}
 
-  function getInitials(name: string | null | undefined): string {
-    if (!name) return "?";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  }
+function getInitials(name: string | null | undefined): string {
+	if (!name) return "?";
+	return name
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
 
-  function formatTime(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
+function formatTime(dateString: string): string {
+	const date = new Date(dateString);
+	const now = new Date();
+	const diffMs = now.getTime() - date.getTime();
+	const diffMins = Math.floor(diffMs / 60000);
+	const diffHours = Math.floor(diffMins / 60);
+	const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return "now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
+	if (diffMins < 1) return "now";
+	if (diffMins < 60) return `${diffMins}m ago`;
+	if (diffHours < 24) return `${diffHours}h ago`;
+	if (diffDays < 7) return `${diffDays}d ago`;
 
-  function isRecentAction(created_at: string): boolean {
-    const date = new Date(created_at);
-    const now = new Date();
-    const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    return diffHours < 24;  // Emphasis if within 24 hours
-  }
+	return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
-  function navigateToHistory() {
-    goto("/history");
-  }
+function isRecentAction(created_at: string): boolean {
+	const date = new Date(created_at);
+	const now = new Date();
+	const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+	return diffHours < 24; // Emphasis if within 24 hours
+}
+
+function navigateToHistory() {
+	goto("/history");
+}
 </script>
 
 <div class="flex flex-col h-full">

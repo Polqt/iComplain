@@ -1,130 +1,130 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import Icon from "@iconify/svelte";
-  import AdminLayout from "../../../components/layout/AdminLayout.svelte";
-  import { ticketsStore } from "../../../stores/tickets.store.ts";
-  import { fetchCategories } from "../../../lib/api/ticket.ts";
-  import type { TicketStatus, Category } from "../../../types/tickets.ts";
-  import { statusConfig } from "../../../utils/ticketConfig.ts";
-  import { getFileName, isImageFile } from "../../../utils/attachment.ts";
-  import AttachmentModal from "./AttachmentModal.svelte";
-  import CommentSection from "../comments/CommentSection.svelte";
+import { onMount } from "svelte";
+import Icon from "@iconify/svelte";
+import AdminLayout from "../../../components/layout/AdminLayout.svelte";
+import { ticketsStore } from "../../../stores/tickets.store.ts";
+import { fetchCategories } from "../../../lib/api/ticket.ts";
+import type { TicketStatus, Category } from "../../../types/tickets.ts";
+import { statusConfig } from "../../../utils/ticketConfig.ts";
+import { getFileName, isImageFile } from "../../../utils/attachment.ts";
+import AttachmentModal from "./AttachmentModal.svelte";
+import CommentSection from "../comments/CommentSection.svelte";
 
-  $: ({ tickets, isLoading } = $ticketsStore);
+$: ({ tickets, isLoading } = $ticketsStore);
 
-  let categories: Category[] = [];
-  let selectedTicketId: number | null = null;
+let categories: Category[] = [];
+let selectedTicketId: number | null = null;
 
-  let searchQuery = "";
-  let statusFilter: TicketStatus | "all" = "all";
-  let priorityFilter = "all";
-  let categoryFilter = "all";
-  let locationFilter = "all";
-  let pendingStatus: TicketStatus | null = null;
-  let pendingPriority: number | null = null;
-  let isSaving = false;
+let searchQuery = "";
+let statusFilter: TicketStatus | "all" = "all";
+let priorityFilter = "all";
+let categoryFilter = "all";
+let locationFilter = "all";
+let pendingStatus: TicketStatus | null = null;
+let pendingPriority: number | null = null;
+let isSaving = false;
 
-  $: selectedTicket = tickets.find((t) => t.id === selectedTicketId) ?? null;
+$: selectedTicket = tickets.find((t) => t.id === selectedTicketId) ?? null;
 
-  $: hasChanges =
-    selectedTicket &&
-    ((pendingStatus != null && pendingStatus !== selectedTicket.status) ||
-      (pendingPriority != null &&
-        pendingPriority !== selectedTicket.priority.id));
+$: hasChanges =
+	selectedTicket &&
+	((pendingStatus != null && pendingStatus !== selectedTicket.status) ||
+		(pendingPriority != null &&
+			pendingPriority !== selectedTicket.priority.id));
 
-  $: if (selectedTicket) {
-    pendingStatus = null;
-    pendingPriority = null;
-  }
+$: if (selectedTicket) {
+	pendingStatus = null;
+	pendingPriority = null;
+}
 
-  $: locations = Array.from(
-    new Set(tickets.map((t) => `${t.building} - ${t.room_name}`)),
-  ).sort();
+$: locations = Array.from(
+	new Set(tickets.map((t) => `${t.building} - ${t.room_name}`)),
+).sort();
 
-  $: filteredTickets = tickets.filter((ticket) => {
-    const query = searchQuery.trim().toLowerCase();
-    const matchesQuery =
-      !query ||
-      ticket.title.toLowerCase().includes(query) ||
-      ticket.description.toLowerCase().includes(query) ||
-      ticket.ticket_number.toLowerCase().includes(query) ||
-      ticket.student.name?.toLowerCase().includes(query);
+$: filteredTickets = tickets.filter((ticket) => {
+	const query = searchQuery.trim().toLowerCase();
+	const matchesQuery =
+		!query ||
+		ticket.title.toLowerCase().includes(query) ||
+		ticket.description.toLowerCase().includes(query) ||
+		ticket.ticket_number.toLowerCase().includes(query) ||
+		ticket.student.name?.toLowerCase().includes(query);
 
-    const matchesStatus =
-      statusFilter === "all" || ticket.status === statusFilter;
-    const matchesPriority =
-      priorityFilter === "all" ||
-      ticket.priority.name.toLowerCase() === priorityFilter;
-    const matchesCategory =
-      categoryFilter === "all" || ticket.category.name === categoryFilter;
+	const matchesStatus =
+		statusFilter === "all" || ticket.status === statusFilter;
+	const matchesPriority =
+		priorityFilter === "all" ||
+		ticket.priority.name.toLowerCase() === priorityFilter;
+	const matchesCategory =
+		categoryFilter === "all" || ticket.category.name === categoryFilter;
 
-    const locationLabel = `${ticket.building} - ${ticket.room_name}`;
-    const matchesLocation =
-      locationFilter === "all" || locationLabel === locationFilter;
+	const locationLabel = `${ticket.building} - ${ticket.room_name}`;
+	const matchesLocation =
+		locationFilter === "all" || locationLabel === locationFilter;
 
-    return (
-      matchesQuery &&
-      matchesStatus &&
-      matchesPriority &&
-      matchesCategory &&
-      matchesLocation
-    );
-  });
+	return (
+		matchesQuery &&
+		matchesStatus &&
+		matchesPriority &&
+		matchesCategory &&
+		matchesLocation
+	);
+});
 
-  onMount(async () => {
-    await Promise.all([
-      ticketsStore.loadTickets(),
-      fetchCategories().then((cats) => (categories = cats)),
-    ]);
+onMount(async () => {
+	await Promise.all([
+		ticketsStore.loadTickets(),
+		fetchCategories().then((cats) => (categories = cats)),
+	]);
 
-    if (filteredTickets.length > 0) {
-      selectedTicketId = filteredTickets[0].id;
-    }
-  });
+	if (filteredTickets.length > 0) {
+		selectedTicketId = filteredTickets[0].id;
+	}
+});
 
-  function handleStatusChange(newStatus: TicketStatus) {
-    pendingStatus = newStatus;
-  }
+function handleStatusChange(newStatus: TicketStatus) {
+	pendingStatus = newStatus;
+}
 
-  function handlePriorityChange(newPriorityId: number) {
-    pendingPriority = newPriorityId;
-  }
+function handlePriorityChange(newPriorityId: number) {
+	pendingPriority = newPriorityId;
+}
 
-  async function handleSaveChanges() {
-    if (!selectedTicket) return;
+async function handleSaveChanges() {
+	if (!selectedTicket) return;
 
-    isSaving = true;
-    try {
-      const updates: { status?: TicketStatus; priority?: number } = {};
+	isSaving = true;
+	try {
+		const updates: { status?: TicketStatus; priority?: number } = {};
 
-      if (pendingStatus != null && pendingStatus !== selectedTicket.status) {
-        updates.status = pendingStatus;
-      }
+		if (pendingStatus != null && pendingStatus !== selectedTicket.status) {
+			updates.status = pendingStatus;
+		}
 
-      if (
-        pendingPriority != null &&
-        pendingPriority !== selectedTicket.priority.id
-      ) {
-        updates.priority = pendingPriority;
-      }
+		if (
+			pendingPriority != null &&
+			pendingPriority !== selectedTicket.priority.id
+		) {
+			updates.priority = pendingPriority;
+		}
 
-      if (Object.keys(updates).length > 0) {
-        await ticketsStore.adminPatchTicket(selectedTicket.id, updates);
-      }
+		if (Object.keys(updates).length > 0) {
+			await ticketsStore.adminPatchTicket(selectedTicket.id, updates);
+		}
 
-      pendingStatus = null;
-      pendingPriority = null;
-    } catch (error) {
-      console.error("Failed to save changes:", error);
-    } finally {
-      isSaving = false;
-    }
-  }
+		pendingStatus = null;
+		pendingPriority = null;
+	} catch (error) {
+		console.error("Failed to save changes:", error);
+	} finally {
+		isSaving = false;
+	}
+}
 
-  function handleCancelChanges() {
-    pendingStatus = null;
-    pendingPriority = null;
-  }
+function handleCancelChanges() {
+	pendingStatus = null;
+	pendingPriority = null;
+}
 </script>
 
 <AdminLayout>

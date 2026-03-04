@@ -1,50 +1,50 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { Ticket } from "../../../types/tickets.ts";
-  import { goto } from "$app/navigation";
-  import { formatTime } from "../../../utils/date.ts";
+import Icon from "@iconify/svelte";
+import type { Ticket } from "../../../types/tickets.ts";
+import { goto } from "$app/navigation";
+import { formatTime } from "../../../utils/date.ts";
 
-  export let ticket: Ticket;
-  export let onClick: () => void = () => {};
-  export let onCommentClick: (ticket: Ticket) => void = () => {};
-  export let onUpvoteToggle: (ticket: Ticket) => void = () => {};
-  export let upvoteCount = 0;
-  export let isUpvoted = false;
-  export let isActive = false;
+export let ticket: Ticket;
+export let onClick: () => void = () => {};
+export let onCommentClick: (ticket: Ticket) => void = () => {};
+export let onUpvoteToggle: (ticket: Ticket) => void = () => {};
+export let upvoteCount = 0;
+export let isUpvoted = false;
+export let isActive = false;
 
-  let clickTimer: NodeJS.Timeout | null = null;
-  let clickCount = 0;
-  let isImageModalOpen = false;
+let clickTimer: NodeJS.Timeout | null = null;
+let clickCount = 0;
+let isImageModalOpen = false;
 
-  function handleCardClick() {
-    clickCount++;
+function handleCardClick() {
+	clickCount++;
 
-    if (clickCount === 1) {
-      clickTimer = setTimeout(() => {
-        onClick();
-        clickCount = 0;
-      }, 250);
-    } else if (clickCount === 2) {
-      if (clickTimer) clearTimeout(clickTimer);
-      goto(`/tickets/${ticket.ticket_number}`);
-      clickCount = 0;
-    }
-  }
+	if (clickCount === 1) {
+		clickTimer = setTimeout(() => {
+			onClick();
+			clickCount = 0;
+		}, 250);
+	} else if (clickCount === 2) {
+		if (clickTimer) clearTimeout(clickTimer);
+		goto(`/tickets/${ticket.ticket_number}`);
+		clickCount = 0;
+	}
+}
 
-  function getInitials(name?: string | null) {
-    if (!name) return "AN";
-    const parts = name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "")
-      .join("");
-    return parts || "AN";
-  }
+function getInitials(name?: string | null) {
+	if (!name) return "AN";
+	const parts = name
+		.trim()
+		.split(/\s+/)
+		.slice(0, 2)
+		.map((part) => part[0]?.toUpperCase() ?? "")
+		.join("");
+	return parts || "AN";
+}
 
-  $: commentCount = ticket.comments_count ?? 0;
-  $: hasAttachment = !!ticket.attachment;
-  $: authorName = ticket.student?.name || "Anonymous";
+$: commentCount = ticket.comments_count ?? 0;
+$: hasAttachment = !!ticket.attachment;
+$: authorName = ticket.student?.name || "Anonymous";
 </script>
 
 <div

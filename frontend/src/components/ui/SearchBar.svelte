@@ -1,24 +1,24 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { createEventDispatcher } from "svelte";
+import Icon from "@iconify/svelte";
+import { createEventDispatcher } from "svelte";
 
-  export let placeholder: string = "Start searching here...";
-  export let mobilePlaceholder: string = "Search...";
-  export let showShortcutBadge: boolean = true;
-  export let isMobile: boolean = false;
+export let placeholder: string = "Start searching here...";
+export let mobilePlaceholder: string = "Search...";
+export let showShortcutBadge: boolean = true;
+export let isMobile: boolean = false;
 
-  const dispatch = createEventDispatcher<{
-    openModal: void;
-    focus: void;
-  }>();
+const dispatch = createEventDispatcher<{
+	openModal: void;
+	focus: void;
+}>();
 
-  function handleClick() {
-    dispatch("openModal");
-  }
+function handleClick() {
+	dispatch("openModal");
+}
 
-  function handleFocus() {
-    dispatch("focus");
-  }
+function handleFocus() {
+	dispatch("focus");
+}
 </script>
 
 <div class="flex-1 min-w-0">

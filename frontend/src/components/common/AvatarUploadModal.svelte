@@ -1,87 +1,89 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { getInitials } from "../../utils/userConfig.ts";
-  import { AVATAR_UPLOAD, validateImageFile } from "../../utils/uploadConfig.ts";
+import Icon from "@iconify/svelte";
+import { getInitials } from "../../utils/userConfig.ts";
+import { AVATAR_UPLOAD, validateImageFile } from "../../utils/uploadConfig.ts";
 
-  export let show: boolean = false;
-  export let currentAvatar: string | null = null;
-  export let displayName: string = "";
-  export let isSaving: boolean = false;
-  export let onSave: (file: File) => Promise<void>;
-  export let onRemove: () => Promise<void>;
-  export let onClose: () => void;
+export let show: boolean = false;
+export let currentAvatar: string | null = null;
+export let displayName: string = "";
+export let isSaving: boolean = false;
+export let onSave: (file: File) => Promise<void>;
+export let onRemove: () => Promise<void>;
+export let onClose: () => void;
 
-  let selectedFile: File | null = null;
-  let previewUrl: string | null = null;
-  let errorMessage: string = "";
-  let fileInputRef: HTMLInputElement;
+let selectedFile: File | null = null;
+let previewUrl: string | null = null;
+let errorMessage: string = "";
+let fileInputRef: HTMLInputElement;
 
-  function handleClose() {
-    selectedFile = null;
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      previewUrl = null;
-    }
-    errorMessage = "";
-    onClose();
-  }
+function handleClose() {
+	selectedFile = null;
+	if (previewUrl) {
+		URL.revokeObjectURL(previewUrl);
+		previewUrl = null;
+	}
+	errorMessage = "";
+	onClose();
+}
 
-  function handleFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    
-    if (!file) return;
+function handleFileSelect(event: Event) {
+	const input = event.target as HTMLInputElement;
+	const file = input.files?.[0];
 
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      errorMessage = validation.error!;
-      input.value = "";
-      return;
-    }
+	if (!file) return;
 
-    errorMessage = "";
-    selectedFile = file;
-    
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    previewUrl = URL.createObjectURL(file);
-    input.value = "";
-  }
+	const validation = validateImageFile(file);
+	if (!validation.valid) {
+		errorMessage = validation.error!;
+		input.value = "";
+		return;
+	}
 
-  function triggerFileInput() {
-    fileInputRef?.click();
-  }
+	errorMessage = "";
+	selectedFile = file;
 
-  async function handleSave() {
-    if (!selectedFile) return;
-    errorMessage = "";
-    try {
-      await onSave(selectedFile);
-      handleClose();
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Failed to upload avatar.";
-    }
-  }
+	if (previewUrl) {
+		URL.revokeObjectURL(previewUrl);
+	}
+	previewUrl = URL.createObjectURL(file);
+	input.value = "";
+}
 
-  async function handleRemove() {
-    errorMessage = "";
-    try {
-      await onRemove();
-      handleClose();
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Failed to remove avatar.";
-    }
-  }
+function triggerFileInput() {
+	fileInputRef?.click();
+}
 
-  $: if (!show) {
-    selectedFile = null;
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      previewUrl = null;
-    }
-    errorMessage = "";
-  }
+async function handleSave() {
+	if (!selectedFile) return;
+	errorMessage = "";
+	try {
+		await onSave(selectedFile);
+		handleClose();
+	} catch (error) {
+		errorMessage =
+			error instanceof Error ? error.message : "Failed to upload avatar.";
+	}
+}
+
+async function handleRemove() {
+	errorMessage = "";
+	try {
+		await onRemove();
+		handleClose();
+	} catch (error) {
+		errorMessage =
+			error instanceof Error ? error.message : "Failed to remove avatar.";
+	}
+}
+
+$: if (!show) {
+	selectedFile = null;
+	if (previewUrl) {
+		URL.revokeObjectURL(previewUrl);
+		previewUrl = null;
+	}
+	errorMessage = "";
+}
 </script>
 
 {#if show}

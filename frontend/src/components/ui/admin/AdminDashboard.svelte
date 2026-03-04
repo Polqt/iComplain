@@ -1,43 +1,46 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
-  import AdminLayout from "../../layout/AdminLayout.svelte";
-  import TicketBoard from "../tickets/TicketBoard.svelte";
-  import ActivityFeed from "./ActivityFeed.svelte";
-  import type { DashboardStats, DashboardMetric } from "../../../types/dashboard.ts";
-  import { getDashboardStats } from "../../../lib/api/ticket.ts";
+import Icon from "@iconify/svelte";
+import { onMount } from "svelte";
+import AdminLayout from "../../layout/AdminLayout.svelte";
+import TicketBoard from "../tickets/TicketBoard.svelte";
+import ActivityFeed from "./ActivityFeed.svelte";
+import type {
+	DashboardStats,
+	DashboardMetric,
+} from "../../../types/dashboard.ts";
+import { getDashboardStats } from "../../../lib/api/ticket.ts";
 
-  let stats: DashboardStats | null = null;
-  let isLoading = true;
-  let error: string | null = null;
+let stats: DashboardStats | null = null;
+let isLoading = true;
+let error: string | null = null;
 
-  onMount(async () => {
-    try {
-      stats = await getDashboardStats();
-    } catch (err) {
-      error = err instanceof Error ? err.message : "Failed to load stats";
-      console.error("Dashboard stats error:", err);
-    } finally {
-      isLoading = false;
-    }
-  });
+onMount(async () => {
+	try {
+		stats = await getDashboardStats();
+	} catch (err) {
+		error = err instanceof Error ? err.message : "Failed to load stats";
+		console.error("Dashboard stats error:", err);
+	} finally {
+		isLoading = false;
+	}
+});
 
-  $: metrics = stats?.metrics ?? [];
-  $: volume = stats?.volume ?? [];
-  $: pendingMetric = metrics[0]; // Now first due to backend reorder
-  $: secondaryMetrics = metrics.slice(1);
+$: metrics = stats?.metrics ?? [];
+$: volume = stats?.volume ?? [];
+$: pendingMetric = metrics[0]; // Now first due to backend reorder
+$: secondaryMetrics = metrics.slice(1);
 
-  function getTrendIcon(metric: DashboardMetric) {
-    if (metric.is_increasing) return "mdi:trending-up";
-    return "mdi:trending-down";
-  }
+function getTrendIcon(metric: DashboardMetric) {
+	if (metric.is_increasing) return "mdi:trending-up";
+	return "mdi:trending-down";
+}
 
-  function getTrendColor(metric: DashboardMetric) {
-    if (metric.is_critical) {
-      return metric.is_increasing ? "text-error" : "text-success";
-    }
-    return metric.trend === "success" ? "text-success" : "text-error";
-  }
+function getTrendColor(metric: DashboardMetric) {
+	if (metric.is_critical) {
+		return metric.is_increasing ? "text-error" : "text-success";
+	}
+	return metric.trend === "success" ? "text-success" : "text-error";
+}
 </script>
 
 <AdminLayout>

@@ -1,138 +1,144 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
-  import { goto } from "$app/navigation";
-  import Icon from "@iconify/svelte";
-  import { authStore } from "../../../stores/auth.store.ts";
-  import { GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
-  import {
-    isValidEmail,
-    validatePassword,
-  } from "../../../utils/validations.ts";
-  import {
-    getRememberEmail,
-    handleRememberMe,
-  } from "../../../utils/auth-helpers.ts";
+import { onMount, tick } from "svelte";
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import { authStore } from "../../../stores/auth.store.ts";
+import { GOOGLE_CLIENT_ID } from "../../../utils/api.ts";
+import { isValidEmail, validatePassword } from "../../../utils/validations.ts";
+import {
+	getRememberEmail,
+	handleRememberMe,
+} from "../../../utils/auth-helpers.ts";
 
-  let email: string = "";
-  let password: string = "";
-  let rememberMe: boolean = !!getRememberEmail();
-  let isLoading: boolean = false;
-  let googleButtonEl: HTMLDivElement;
-  let googleWrapperEl: HTMLDivElement;
+let email: string = "";
+let password: string = "";
+let rememberMe: boolean = !!getRememberEmail();
+let isLoading: boolean = false;
+let googleButtonEl: HTMLDivElement;
+let googleWrapperEl: HTMLDivElement;
 
-  let emailError: string = "";
-  let passwordError: string = "";
-  let generalError: string = "";
+let emailError: string = "";
+let passwordError: string = "";
+let generalError: string = "";
 
-  function handleEmailBlur(): void {
-    const result = isValidEmail(email);
-    emailError = result.valid ? "" : result.message;
-  }
+function handleEmailBlur(): void {
+	const result = isValidEmail(email);
+	emailError = result.valid ? "" : result.message;
+}
 
-  function handlePasswordBlur(): void {
-    const result = validatePassword(password);
-    passwordError = result.valid ? "" : result.message;
-  }
+function handlePasswordBlur(): void {
+	const result = validatePassword(password);
+	passwordError = result.valid ? "" : result.message;
+}
 
-  async function handleSignIn(): Promise<void> {
-    const emailValidation = isValidEmail(email);
-    const passwordValidation = validatePassword(password);
+async function handleSignIn(): Promise<void> {
+	const emailValidation = isValidEmail(email);
+	const passwordValidation = validatePassword(password);
 
-    if (!emailValidation.valid || !passwordValidation.valid) {
-      emailError = emailValidation.valid ? "" : emailValidation.message;
-      passwordError = passwordValidation.valid
-        ? ""
-        : passwordValidation.message;
-      return;
-    }
+	if (!emailValidation.valid || !passwordValidation.valid) {
+		emailError = emailValidation.valid ? "" : emailValidation.message;
+		passwordError = passwordValidation.valid ? "" : passwordValidation.message;
+		return;
+	}
 
-    isLoading = true;
-    generalError = "";
+	isLoading = true;
+	generalError = "";
 
-    try {
-      await authStore.loginWithEmailPassword(email, password);
-      handleRememberMe(rememberMe, email);
-      goto("/dashboard");
-    } catch (error) {
-      generalError =
-        error instanceof Error ? error.message : "Sign-in failed. Please try again.";
-    } finally {
-      isLoading = false;
-    }
-  }
+	try {
+		await authStore.loginWithEmailPassword(email, password);
+		handleRememberMe(rememberMe, email);
+		goto("/dashboard");
+	} catch (error) {
+		generalError =
+			error instanceof Error
+				? error.message
+				: "Sign-in failed. Please try again.";
+	} finally {
+		isLoading = false;
+	}
+}
 
-  function getErrorMessage(err: unknown): string {
-    if (err instanceof Error) return err.message;
-    if (typeof err === "object" && err !== null && "message" in err && typeof (err as { message: unknown }).message === "string") {
-      return (err as { message: string }).message;
-    }
-    return "Google sign-in failed. Please try again.";
-  }
+function getErrorMessage(err: unknown): string {
+	if (err instanceof Error) return err.message;
+	if (
+		typeof err === "object" &&
+		err !== null &&
+		"message" in err &&
+		typeof (err as { message: unknown }).message === "string"
+	) {
+		return (err as { message: string }).message;
+	}
+	return "Google sign-in failed. Please try again.";
+}
 
-  async function handleGoogleCallback(response: { credential: string }): Promise<void> {
-    generalError = "";
-    isLoading = true;
-    try {
-      await authStore.loginWithGoogle(response.credential);
-      goto("/dashboard");
-    } catch (err) {
-      generalError = getErrorMessage(err);
-    } finally {
-      isLoading = false;
-      (document.activeElement as HTMLElement)?.blur();
-    }
-  }
+async function handleGoogleCallback(response: {
+	credential: string;
+}): Promise<void> {
+	generalError = "";
+	isLoading = true;
+	try {
+		await authStore.loginWithGoogle(response.credential);
+		goto("/dashboard");
+	} catch (err) {
+		generalError = getErrorMessage(err);
+	} finally {
+		isLoading = false;
+		(document.activeElement as HTMLElement)?.blur();
+	}
+}
 
-  function handleSignupRedirect() {
-    goto("/signup");
-  }
+function handleSignupRedirect() {
+	goto("/signup");
+}
 
-  onMount(async () => {
-    await tick();
-    if (!GOOGLE_CLIENT_ID || !googleButtonEl || !googleWrapperEl) return;
+onMount(async () => {
+	await tick();
+	if (!GOOGLE_CLIENT_ID || !googleButtonEl || !googleWrapperEl) return;
 
-    let retryCount = 0;
-    const MAX_RETRIES = 50; 
+	let retryCount = 0;
+	const MAX_RETRIES = 50;
 
-    const initGoogle = () => {
-      const g = (window as unknown as {
-        google?: {
-          accounts: {
-            id: {
-              initialize: (c: object) => void;
-              renderButton: (el: HTMLElement, o: object) => void;
-            };
-          };
-        };
-      }).google;
+	const initGoogle = () => {
+		const g = (
+			window as unknown as {
+				google?: {
+					accounts: {
+						id: {
+							initialize: (c: object) => void;
+							renderButton: (el: HTMLElement, o: object) => void;
+						};
+					};
+				};
+			}
+		).google;
 
-      if (!g?.accounts?.id) {
-        retryCount += 1;
-        if (retryCount > MAX_RETRIES) {
-          generalError =
-            "Google sign-in is unavailable. Please check your connection or disable any script blockers and try again.";
-          return;
-        }
-        setTimeout(initGoogle, 100);
-        return;
-      }
+		if (!g?.accounts?.id) {
+			retryCount += 1;
+			if (retryCount > MAX_RETRIES) {
+				generalError =
+					"Google sign-in is unavailable. Please check your connection or disable any script blockers and try again.";
+				return;
+			}
+			setTimeout(initGoogle, 100);
+			return;
+		}
 
-      g.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (res: { credential: string }) => handleGoogleCallback(res),
-      });
-      const width = Math.max(googleWrapperEl.offsetWidth || 320, 320);
-      g.accounts.id.renderButton(googleButtonEl, {
-        type: "standard",
-        theme: "outline",
-        size: "large",
-        width,
-        text: "continue_with",
-      });
-    };
+		g.accounts.id.initialize({
+			client_id: GOOGLE_CLIENT_ID,
+			callback: (res: { credential: string }) => handleGoogleCallback(res),
+		});
+		const width = Math.max(googleWrapperEl.offsetWidth || 320, 320);
+		g.accounts.id.renderButton(googleButtonEl, {
+			type: "standard",
+			theme: "outline",
+			size: "large",
+			width,
+			text: "continue_with",
+		});
+	};
 
-    initGoogle();
-  });
+	initGoogle();
+});
 </script>
 
 <div class="space-y-8 max-w-100">

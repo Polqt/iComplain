@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
+import Icon from "@iconify/svelte";
 
-  export let rating: number | null = null;
-  export let size: "sm" | "md" = "sm";
+export let rating: number | null = null;
+export let size: "sm" | "md" = "sm";
 
-  $: badgeClass = size === "sm" ? "badge-sm" : "badge-md";
-  $: starSize = size === "sm" ? 12 : 14;
+$: badgeClass = size === "sm" ? "badge-sm" : "badge-md";
+$: starSize = size === "sm" ? 12 : 14;
 </script>
 
 {#if rating !== null}
