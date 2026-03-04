@@ -190,6 +190,8 @@ class DashboardMetricsSchema(Schema):
     change: str
     subtitle: str
     trend: str
+    is_critical: bool = False  # For pending/urgent metrics that need visual emphasis
+    is_increasing: bool = False  # Direction of change (for trend arrow display)
     
 class TicketVolumeDataPointSchema(Schema):
     day: str
@@ -200,3 +202,27 @@ class DashboardStatsSchema(Schema):
     volume: list[TicketVolumeDataPointSchema]
     status_breakdown: dict[str, int]
     category_breakdown: dict[str, int]
+    recent_activity: list[dict] | None = None  # For activity feed
+
+class ActivityLogSchema(Schema):
+    """Schema for activity log entries."""
+    id: int
+    action: Literal["created", "status_changed", "priority_changed", "assigned", "commented", "reopened", "resolved"]
+    ticket_number: str
+    ticket_title: str
+    performed_by: UserSchema | None
+    description: str
+    old_value: str | None = None
+    new_value: str | None = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class ActivityLogListSchema(Schema):
+    """Paginated activity log response."""
+    items: list[ActivityLogSchema]
+    total: int
+    limit: int
+    offset: int
