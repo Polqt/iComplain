@@ -14,7 +14,7 @@
   } from "../../../utils/ticketConfig.ts";
   import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
-  import { feedbackStore } from "../../../stores/feedback.store.ts"; // NEW
+  import { feedbackStore } from "../../../stores/feedback.store.ts";
   import { onMount } from "svelte";
   import { formatDate, formatDateTime } from "../../../utils/date.ts";
   import {
@@ -28,13 +28,13 @@
   import AdminTicketControl from "../../../components/ui/tickets/AdminTicketControl.svelte";
   import TicketEdit from "../../../components/ui/tickets/TicketEdit.svelte";
   import CommentSection from "../../../components/ui/comments/CommentSection.svelte";
-  import FeedbackForm from "../../../components/ui/feedback/FeedbackForm.svelte"; 
-  import FeedbackList from "../../../components/ui/feedback/FeedbackList.svelte"; 
+  import FeedbackForm from "../../../components/ui/feedback/FeedbackForm.svelte";
+  import FeedbackList from "../../../components/ui/feedback/FeedbackList.svelte";
 
   $: idParam = $page.params.id;
   $: isNumericId = /^\d+$/.test(idParam ?? "");
   $: ({ tickets, isLoading, error } = $ticketsStore);
-  $: ({ feedbacks } = $feedbackStore); 
+  $: ({ feedbacks } = $feedbackStore);
   $: ({ role, user } = $authStore);
   $: ticket = isNumericId
     ? (tickets.find((t) => t.id === Number(idParam)) ?? null)
@@ -42,7 +42,11 @@
 
   $: existingFeedback = feedbacks[0] || null;
   $: canSubmitFeedback = ticket?.status === "resolved" && role === "student";
-  $: canViewFeedback = ticket?.status === "closed" || existingFeedback !== null;
+
+  $: canViewFeedback =
+    role === "admin" ||
+    ticket?.status === "closed" ||
+    existingFeedback !== null;
 
   let showFeedbackForm = false;
 
@@ -56,6 +60,7 @@
       if (!inStore) await ticketsStore.loadTickets();
     }
 
+    // Load feedback if we have the ticket and it's not already loaded
     if (ticket?.id) {
       await feedbackStore.loadFeedbackForTicket(ticket.id);
     }
@@ -78,7 +83,7 @@
     showFeedbackForm = false;
     if (ticket?.id) {
       await feedbackStore.loadFeedbackForTicket(ticket.id);
-      await ticketsStore.loadTicketById(ticket.id); 
+      await ticketsStore.loadTicketById(ticket.id);
     }
   }
 
@@ -141,7 +146,7 @@
       </p>
       <button
         class="btn btn-primary btn-sm gap-2 mt-2"
-        onclick={() => goto("/tickets")}
+        onclick={() => goto(role === "admin" ? "/admin/tickets" : "/tickets")}
       >
         <Icon icon="mdi:arrow-left" width="15" height="15" />
         Back to tickets
@@ -153,14 +158,17 @@
         <div class="flex items-center gap-2">
           <button
             class="btn btn-ghost btn-sm btn-circle"
-            onclick={() => goto("/tickets")}
+            onclick={() =>
+              goto(role === "admin" ? "/admin/tickets" : "/tickets")}
             aria-label="Back"
           >
             <Icon icon="mdi:arrow-left" width="18" height="18" />
           </button>
           <div class="breadcrumbs text-xs text-base-content/40 p-0">
             <ul>
-              <li><span>My Tickets</span></li>
+              <li>
+                <span>{role === "admin" ? "All Tickets" : "My Tickets"}</span>
+              </li>
               <li>
                 <span class="font-mono text-base-content/60"
                   >{ticket.ticket_number}</span
@@ -329,7 +337,7 @@
             <CommentSection ticketId={ticket.id} ticketStatus={ticket.status} />
           {/if}
 
-          {#if role === "student" && (canSubmitFeedback || canViewFeedback)}
+          {#if canViewFeedback}
             <div
               class="bg-base-100 rounded-2xl border border-base-content/8 p-5"
             >
@@ -337,7 +345,7 @@
                 <h3
                   class="text-[10px] font-bold uppercase tracking-widest text-base-content/35"
                 >
-                  Feedback
+                  {role === "admin" ? "Student Feedback" : "Feedback"}
                 </h3>
 
                 {#if canSubmitFeedback && !existingFeedback && !showFeedbackForm}
@@ -351,49 +359,69 @@
                 {/if}
               </div>
 
-              {#if showFeedbackForm && ticket.id}
-                <FeedbackForm
-                  ticketId={ticket.id}
-                  existing={existingFeedback}
-                  on:saved={handleFeedbackSaved}
-                  on:cancel={() => (showFeedbackForm = false)}
-                />
-              {:else if existingFeedback}
-                <FeedbackList feedbacks={[existingFeedback]} />
-
-                {#if canSubmitFeedback}
-                  <button
-                    class="btn btn-ghost btn-sm gap-1 mt-3"
-                    onclick={() => (showFeedbackForm = true)}
-                  >
-                    <Icon icon="mdi:pencil-outline" width="14" height="14" />
-                    Edit Feedback
-                  </button>
-                {/if}
-              {:else if canSubmitFeedback}
-                <div class="text-center py-8">
-                  <Icon
-                    icon="mdi:star-outline"
-                    width="32"
-                    height="32"
-                    class="text-base-content/20 mx-auto mb-3"
+              {#if role === "student"}
+                {#if showFeedbackForm && ticket.id}
+                  <FeedbackForm
+                    ticketId={ticket.id}
+                    existing={existingFeedback}
+                    on:saved={handleFeedbackSaved}
+                    on:cancel={() => (showFeedbackForm = false)}
                   />
-                  <p class="text-sm text-base-content/60 mb-4">
-                    Your ticket has been resolved!<br />
-                    Help us improve by sharing your feedback.
-                  </p>
-                  <button
-                    class="btn btn-primary btn-sm gap-1.5"
-                    onclick={() => (showFeedbackForm = true)}
+                {:else if existingFeedback}
+                  <FeedbackList feedbacks={[existingFeedback]} />
+
+                  {#if canSubmitFeedback}
+                    <button
+                      class="btn btn-ghost btn-sm gap-1 mt-3"
+                      onclick={() => (showFeedbackForm = true)}
+                    >
+                      <Icon icon="mdi:pencil-outline" width="14" height="14" />
+                      Edit Feedback
+                    </button>
+                  {/if}
+                {:else if canSubmitFeedback}
+                  <div class="text-center py-8">
+                    <Icon
+                      icon="mdi:star-outline"
+                      width="32"
+                      height="32"
+                      class="text-base-content/20 mx-auto mb-3"
+                    />
+                    <p class="text-sm text-base-content/60 mb-4">
+                      Your ticket has been resolved!<br />
+                      Help us improve by sharing your feedback.
+                    </p>
+                    <button
+                      class="btn btn-primary btn-sm gap-1.5"
+                      onclick={() => (showFeedbackForm = true)}
+                    >
+                      <Icon icon="mdi:star" width="16" height="16" />
+                      Submit Feedback
+                    </button>
+                  </div>
+                {:else}
+                  <div class="text-sm text-base-content/40 text-center py-4">
+                    No feedback submitted yet.
+                  </div>
+                {/if}
+              {:else if role === "admin"}
+                {#if existingFeedback}
+                  <FeedbackList feedbacks={[existingFeedback]} />
+                {:else}
+                  <div
+                    class="flex flex-col items-center justify-center py-8 text-center"
                   >
-                    <Icon icon="mdi:star" width="16" height="16" />
-                    Submit Feedback
-                  </button>
-                </div>
-              {:else}
-                <div class="text-sm text-base-content/40 text-center py-4">
-                  No feedback submitted yet.
-                </div>
+                    <Icon
+                      icon="mdi:star-off-outline"
+                      width="32"
+                      height="32"
+                      class="text-base-content/20 mx-auto mb-3"
+                    />
+                    <p class="text-sm text-base-content/40">
+                      No feedback submitted yet
+                    </p>
+                  </div>
+                {/if}
               {/if}
             </div>
           {/if}
@@ -488,21 +516,29 @@
               Reporter
             </h3>
             <div class="flex items-center gap-2.5">
-              {#if user}
-                {@const displayName =
-                  user.name || deriveNameFromEmail(user.email) || "Student"}
-                <div class="avatar placeholder shrink-0">
-                  <div
-                    class="w-8 h-8 rounded-full bg-primary/15 ring-1 ring-primary/20
-                            flex items-center justify-center"
-                  >
-                    <img src={user.avatar} alt={displayName} />
-                  </div>
+              <div class="avatar placeholder shrink-0">
+                <div
+                  class="w-8 h-8 rounded-full bg-primary/15 ring-1 ring-primary/20
+                          flex items-center justify-center"
+                >
+                  {#if ticket.student.avatar}
+                    <img
+                      src={ticket.student.avatar}
+                      alt={ticket.student.name || ticket.student.email}
+                    />
+                  {:else}
+                    <Icon
+                      icon="mdi:account"
+                      width="16"
+                      height="16"
+                      class="text-primary"
+                    />
+                  {/if}
                 </div>
-              {/if}
+              </div>
               <div class="min-w-0">
                 <p class="text-xs font-semibold text-base-content truncate">
-                  {ticket.student.email}
+                  {ticket.student.name || ticket.student.email}
                 </p>
                 <p class="text-[10px] text-base-content/40 mt-0.5">Student</p>
               </div>
