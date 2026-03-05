@@ -626,7 +626,7 @@ def get_feedback(request, id: int):
     return 200, TicketFeedbackSchema.from_orm(ticket.feedback)
 
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict, 403: dict})
-def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attachment: List[UploadedFile] = File(None)):
+def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form(...), attachment: List[UploadedFile] = File(None)):
     ticket = get_object_or_404(Ticket, id=id)
 
     # Only owner can submit feedback and only for resolved tickets
