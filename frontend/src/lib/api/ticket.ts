@@ -4,26 +4,51 @@ import type { Category, Ticket, TicketCreatePayload, TicketPriority, TicketUpdat
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
 
+export type ActivityLog = {
+    id: number;
+    action: 'created' | 'status_changed' | 'priority_changed' | 'assigned' | 'commented' | 'reopened' | 'resolved';
+    ticket_number: string;
+    ticket_title: string;
+    performed_by: {
+        id: number;
+        name: string | null;
+        email: string;
+        avatar: string | null;
+    } | null;
+    description: string;
+    old_value: string | null;
+    new_value: string | null;
+    created_at: string;
+};
+
+export type ActivityLogListResponse = {
+    items: ActivityLog[];
+    total: number;
+    limit: number;
+    offset: number;
+};
+
 async function handleRes<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || res.statusText);
+        throw new Error(body.message || body.detail || res.statusText);
     }
     return res.json() as Promise<T>;
 }
 
-// Fetch all tickets
-export async function fetchTickets(): Promise<Ticket[]> {
-    try {
-        const res = await fetch(`${BASE}/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-        })
+/** Paginated response from ticket list and community endpoints. */
+export type TicketListResponse = { items: Ticket[]; total: number; limit: number; offset: number };
 
-        return await handleRes<Ticket[]>(res);
+// Fetch tickets (paginated; defaults to first page of 50)
+export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
+    try {
+        const res = await fetch(`${BASE}/?limit=${limit}&offset=${offset}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        const data = await handleRes<TicketListResponse>(res);
+        return data.items;
     } catch (error) {
         console.error('Error fetching tickets:', error);
         throw error;
@@ -145,7 +170,7 @@ export async function deleteTicket(id: number): Promise<void> {
 
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(body.message || `Failed to delete ticket with ID ${id}.`);
+            throw new Error(body.message || body.detail || `Failed to delete ticket with ID ${id}.`);
         }
     } catch (error) {
         console.error('Error deleting ticket:', error);
@@ -173,15 +198,15 @@ export async function fetchPriorities(): Promise<TicketPriority[]> {
     return res.json() as Promise<TicketPriority[]>;
 }
 
-export async function loadCommunityTickets(): Promise<Ticket[]> {
+export async function loadCommunityTickets(limit = 50, offset = 0): Promise<Ticket[]> {
     try {
-        const res = await fetch(`${BASE}/community`, {
+        const res = await fetch(`${BASE}/community?limit=${limit}&offset=${offset}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-
             credentials: 'include',
         });
-        return await handleRes<Ticket[]>(res);
+        const data = await handleRes<TicketListResponse>(res);
+        return data.items;
     } catch (error) {
         console.error(`Error fetching community tickets:`, error);
         throw error;
@@ -201,6 +226,31 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         return await handleRes<DashboardStats>(res);
     } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        throw error;
+    }
+}
+export async function getActivityLogs(limit = 50, offset = 0, ticketId?: number): Promise<ActivityLogListResponse> {
+    try {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString(),
+        });
+        
+        if (ticketId !== undefined && ticketId !== null) {
+            params.append('ticket_id', ticketId.toString());
+        }
+        
+        const res = await fetch(`${BASE}/activity/?${params}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        return await handleRes<ActivityLogListResponse>(res);
+    } catch (error) {
+        console.error('Error fetching activity logs:', error);
         throw error;
     }
 }

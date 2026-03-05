@@ -6,7 +6,10 @@ const BASE = `${PUBLIC_API_URL}/tickets`;
 async function handleRes<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || res.statusText);
+        const detail = Array.isArray(body?.detail)
+            ? body.detail.map((item: { msg?: string }) => item?.msg).filter(Boolean).join(", ")
+            : body?.detail;
+        throw new Error(body.message || detail || res.statusText);
     }
 
     return res.json() as Promise<T>;
@@ -31,12 +34,15 @@ export async function getFeedback(ticketId: number): Promise<TicketFeedback> {
 
 export async function createFeedback(ticketId: number, payload: FeedbackCreatePayload): Promise<TicketFeedback> {
     try {
+        const formData = new FormData();
+        formData.append('rating', String(payload.rating));
+        if (payload.comments !== null && payload.comments !== undefined) {
+            formData.append('comments', payload.comments);
+        }
+
         const res = await fetch(`${BASE}/${ticketId}/feedback/`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
+            body: formData,
             credentials: 'include',
         });
 
@@ -74,7 +80,7 @@ export async function deleteFeedback(ticketId: number, feedbackId: number): Prom
 
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            throw new Error(body.message || 'Failed to delete feedback');
+            throw new Error(body.message || body.detail || 'Failed to delete feedback');
         }
     } catch (error) {
         console.error(`Error deleting feedback ${feedbackId} for ticket ${ticketId}:`, error);

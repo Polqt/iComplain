@@ -10,13 +10,22 @@ export function getPriorityKey(priority: TicketPriority | string | any): Priorit
   if (!priority) return "low";
   if (typeof priority === "string") {
     const k = priority.toLowerCase();
-    return k === "high" ? "high" : k === "medium" ? "medium" : "low";
+    if (k === "urgent") return "urgent";
+    if (k === "high") return "high";
+    if (k === "medium") return "medium";
+    return "low";
   }
   if (typeof priority === "object") {
     const name = priority.name ? String(priority.name).toLowerCase() : undefined;
-    if (name === "high" || name === "medium" || name === "low") return name as PriorityKey;
+    if (name === "urgent") return "urgent";
+    if (name === "high") return "high";
+    if (name === "medium") return "medium";
+    if (name === "low") return "low";
     if (typeof priority.level === "number") {
-      return priority.level >= 3 ? "high" : priority.level === 2 ? "medium" : "low";
+      if (priority.level >= 4) return "urgent";
+      if (priority.level === 3) return "high";
+      if (priority.level === 2) return "medium";
+      return "low";
     }
   }
   return "low";
@@ -34,12 +43,32 @@ export const statusConfig: Record<
 
 export const priorityConfig: Record<
   PriorityKey,
-  { label: string; color: string }
+  { label: string; color: string; bgColor: string; textColor: string }
 > = {
-  low: { label: "Low", color: "badge-info" },
-  medium: { label: "Medium", color: "badge-warning" },
-  high: { label: "High", color: "badge-error" },
-  urgent: { label: "Urgent", color: "badge-error" },
+  low: { 
+    label: "Low", 
+    color: "badge-info",
+    bgColor: "bg-blue-600 dark:bg-blue-700",
+    textColor: "text-white"
+  },
+  medium: { 
+    label: "Medium", 
+    color: "badge-warning",
+    bgColor: "bg-amber-500 dark:bg-amber-600",
+    textColor: "text-white dark:text-black"
+  },
+  high: { 
+    label: "High", 
+    color: "badge-error",
+    bgColor: "bg-red-600 dark:bg-red-700",
+    textColor: "text-white"
+  },
+  urgent: { 
+    label: "Urgent", 
+    color: "badge-error",
+    bgColor: "bg-red-700 dark:bg-red-800",
+    textColor: "text-white"
+  },
 };
 
 export const priorityIcons: Record<string, string> = {
@@ -50,43 +79,43 @@ export const priorityIcons: Record<string, string> = {
 };
 
 export const priorityAccent: Record<string, string> = {
-  low: "border-l-info",
-  medium: "border-l-warning",
-  high: "border-l-error",
-  urgent: "border-l-error",
+  low: "border-l-blue-600",
+  medium: "border-l-amber-500",
+  high: "border-l-red-600",
+  urgent: "border-l-red-700",
 };
 
 export const columnAccent: Record<string, string> = {
-  pending: "border-l-yellow-400",
-  in_progress: "border-l-sky-400",
-  resolved: "border-l-emerald-400",
-  closed: "border-l-base-content/25",
+  pending: "border-l-amber-400",
+  in_progress: "border-l-sky-500",
+  resolved: "border-l-emerald-500",
+  closed: "border-l-gray-500",
 };
 
  export const baseColumns: Omit<TicketColumn, "reports">[] = [
     {
       id: "pending",
       title: "Pending",
-      color: "text-yellow-300",
-      dotColor: "bg-yellow-300",
+      color: "text-amber-700 dark:text-amber-400",
+      dotColor: "bg-amber-500",
     },
     {
       id: "in_progress",
       title: "In Progress",
-      color: "text-info",
-      dotColor: "bg-info",
+      color: "text-blue-700 dark:text-blue-400",
+      dotColor: "bg-blue-500",
     },
     {
       id: "resolved",
       title: "Resolved",
-      color: "text-green-300",
-      dotColor: "bg-green-300",
+      color: "text-emerald-700 dark:text-emerald-400",
+      dotColor: "bg-emerald-500",
     },
     {
       id: "closed",
       title: "Closed",
-      color: "text-gray-300",
-      dotColor: "bg-gray-300",
+      color: "text-gray-700 dark:text-gray-400",
+      dotColor: "bg-gray-500",
     },
   ];
 
