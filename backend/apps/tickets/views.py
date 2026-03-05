@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models import Q, Count, Min, Prefetch
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
@@ -256,28 +257,36 @@ def ticket_detail(request, ticket_id: str):
 
 @router.post("/", response=TicketSchema)
 def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: List[UploadedFile] = File(None)):
+    # Validate attachments before creating the ticket to avoid orphaned tickets
+    if attachment:
+        try:
+            for f in attachment:
+                validate_file(f)
+        except ValueError as e:
+            return {"detail": str(e)}, 400
+
     category = Category.objects.get(id=ticket.category)
     priority = TicketPriority.objects.get(name="Medium")
-    ticket_obj = Ticket.objects.create(
-        title=ticket.title,
-        description=ticket.description,
-        student=request.user,
-        category=category,
-        priority=priority,
-        building=ticket.building,
-        room_name=ticket.room_name,
-        status='pending'
-    )
-    
-    if attachment:
-        for f in attachment:
-            validate_file(f)
-            TicketAttachment.objects.create(
-                ticket=ticket_obj,
-                uploaded_by=request.user,
-                file_path=f,
-                file_type=f.content_type,
-            )
+    # Create ticket + attachments atomically so DB changes roll back on failure
+    with transaction.atomic():
+        ticket_obj = Ticket.objects.create(
+            title=ticket.title,
+            description=ticket.description,
+            student=request.user,
+            category=category,
+            priority=priority,
+            building=ticket.building,
+            room_name=ticket.room_name,
+            status='pending'
+        )
+        if attachment:
+            for f in attachment:
+                TicketAttachment.objects.create(
+                    ticket=ticket_obj,
+                    uploaded_by=request.user,
+                    file_path=f,
+                    file_type=f.content_type,
+                )
     # Notify admin users about the new ticket
     try:
         notify_ticket_created(
@@ -319,6 +328,14 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
     if not request.user.is_staff and ticket.status != 'pending':
         return {"detail": "You cannot edit tickets that are being processed by admin."}, 400
 
+    # Validate attachments before applying updates to avoid leaving ticket in inconsistent state
+    if attachment:
+        try:
+            for f in attachment:
+                validate_file(f)
+        except ValueError as e:
+            return {"detail": str(e)}, 400
+
     if payload.title is not None:
         ticket.title = payload.title
     if payload.description is not None:
@@ -348,19 +365,18 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
     ticket.save()
     
     if attachment:
-        # remove existing attachments
-        for existing in ticket.attachments_tickets.all():
-            existing.file_path.delete(save=False)
-            existing.delete()
-        # add new attachments
-        for f in attachment:
-            validate_file(f)
-            TicketAttachment.objects.create(
-                ticket=ticket,
-                uploaded_by=request.user,
-                file_path=f,
-                file_type=f.content_type,
-            )
+        # remove existing attachments then add new ones inside a transaction
+        with transaction.atomic():
+            for existing in ticket.attachments_tickets.all():
+                existing.file_path.delete(save=False)
+                existing.delete()
+            for f in attachment:
+                TicketAttachment.objects.create(
+                    ticket=ticket,
+                    uploaded_by=request.user,
+                    file_path=f,
+                    file_type=f.content_type,
+                )
     
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
@@ -465,12 +481,29 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
 
     if ticket.status == 'closed':
         return {"detail": "Cannot add comments to a closed ticket."}, 400
-    
-    comment = TicketComment.objects.create(
-        ticket=ticket,
-        user=request.user,
-        message=payload.message
-    )
+    # Validate attachments before creating the comment to avoid orphaned attachments
+    if attachment:
+        try:
+            for f in attachment:
+                validate_file(f)
+        except ValueError as e:
+            return {"detail": str(e)}, 400
+
+    # Create comment and attachments atomically
+    with transaction.atomic():
+        comment = TicketComment.objects.create(
+            ticket=ticket,
+            user=request.user,
+            message=payload.message
+        )
+        if attachment:
+            for f in attachment:
+                TicketAttachment.objects.create(
+                    comment=comment,
+                    uploaded_by=request.user,
+                    file_path=f,
+                    file_type=f.content_type,
+                )
     
     preview = (payload.message or "")[:80] + ("…" if len(payload.message or "") > 80 else "")
     if ticket.student != request.user:
@@ -478,16 +511,6 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
     else:
         for staff_user in User.objects.filter(is_staff=True).exclude(pk=request.user.pk):
             notify_ticket_comment(recipient_user=staff_user, ticket_id=ticket.id, ticket_number=ticket.ticket_number, ticket_title=ticket.title, message_preview=preview)
-            
-    if attachment:
-        for f in attachment:
-            validate_file(f)
-            TicketAttachment.objects.create(
-                comment=comment,
-                uploaded_by=request.user,
-                file_path=f,
-                file_type=f.content_type,
-            )
     
     async_to_sync(channel_layer.group_send)(
         "ticket_updates",
@@ -616,23 +639,30 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema, attac
     # Only one feedback per ticket
     if hasattr(ticket, 'feedback'):
         return {"detail": "Feedback already submitted for this ticket."}, 400
-
-    feedback = TicketFeedback.objects.create(
-        ticket=ticket,
-        student=request.user,
-        rating=payload.rating,
-        comments=payload.comments
-    )
-    
+    # Validate attachments before creating feedback to avoid orphaned feedback or attachments
     if attachment:
-        for f in attachment:
-            validate_file(f)
-            TicketAttachment.objects.create(
-                feedback=feedback,
-                uploaded_by=request.user,
-                file_path=f,
-                file_type=f.content_type,
-            )
+        try:
+            for f in attachment:
+                validate_file(f)
+        except ValueError as e:
+            return {"detail": str(e)}, 400
+
+    # Create feedback and attachments atomically
+    with transaction.atomic():
+        feedback = TicketFeedback.objects.create(
+            ticket=ticket,
+            student=request.user,
+            rating=payload.rating,
+            comments=payload.comments
+        )
+        if attachment:
+            for f in attachment:
+                TicketAttachment.objects.create(
+                    feedback=feedback,
+                    uploaded_by=request.user,
+                    file_path=f,
+                    file_type=f.content_type,
+                )
 
     # Auto-close ticket upon feedback; record status history like update_ticket
     old_status = ticket.status
