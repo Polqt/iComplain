@@ -19,7 +19,8 @@ export type ActivityLog = {
 		| "assigned"
 		| "commented"
 		| "reopened"
-		| "resolved";
+		| "resolved"
+		| "feedback";
 	ticket_number: string;
 	ticket_title: string;
 	performed_by: {
