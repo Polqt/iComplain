@@ -4,7 +4,8 @@ export type HistoryAction =
 	| "resolved"
 	| "closed"
 	| "commented"
-	| "reopened";
+	| "reopened"
+	| "feedback";
 
 export type HistoryStatus = "pending" | "in-progress" | "resolved" | "closed";
 
@@ -17,7 +18,9 @@ export type HistoryFilterType =
 	| "resolved"
 	| "closed"
 	| "commented"
-	| "reopened";
+	| "reopened"
+	| "feedback";
+
 
 export type HistorySortType = "newest" | "oldest";
 

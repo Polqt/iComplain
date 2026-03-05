@@ -1,48 +1,48 @@
 <script lang="ts">
-import Icon from "@iconify/svelte";
-import {
-	baseColumns,
-	getAgingColor,
-	getAgingDays,
-	getAgingLabel,
-	getPriorityBadgeColor,
-	getPriorityBgColor,
-	getPriorityKey,
-	priorityConfig,
-} from "../../../utils/ticketConfig.ts";
-import type { Ticket, TicketColumn } from "../../../types/tickets.ts";
-import { ticketsStore } from "../../../stores/tickets.store.ts";
-import { goto } from "$app/navigation";
-import { onMount } from "svelte";
+  import Icon from "@iconify/svelte";
+  import {
+    baseColumns,
+    getAgingColor,
+    getAgingDays,
+    getAgingLabel,
+    getPriorityBadgeColor,
+    getPriorityBgColor,
+    getPriorityKey,
+    priorityConfig,
+  } from "../../../utils/ticketConfig.ts";
+  import type { Ticket, TicketColumn } from "../../../types/tickets.ts";
+  import { ticketsStore } from "../../../stores/tickets.store.ts";
+  import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
 
-let expandedTicketId: number | null = null;
+  let expandedTicketId: number | null = null;
 
-$: ({ tickets, isLoading } = $ticketsStore);
+  $: ({ tickets, isLoading } = $ticketsStore);
 
-onMount(async () => {
-	if ($ticketsStore.tickets.length === 0) {
-		await ticketsStore.loadTickets();
-	}
-});
+  onMount(async () => {
+    if ($ticketsStore.tickets.length === 0) {
+      await ticketsStore.loadTickets();
+    }
+  });
 
-$: columns = baseColumns.map(
-	(col): TicketColumn => ({
-		...col,
-		reports: tickets.filter((t) => t.status === col.id),
-	}),
-);
+  $: columns = baseColumns.map(
+    (col): TicketColumn => ({
+      ...col,
+      reports: tickets.filter((t) => t.status === col.id),
+    }),
+  );
 
-function toggleExpand(ticketId: number) {
-	if (expandedTicketId === ticketId) {
-		expandedTicketId = null;
-	} else {
-		expandedTicketId = ticketId;
-	}
-}
+  function toggleExpand(ticketId: number) {
+    if (expandedTicketId === ticketId) {
+      expandedTicketId = null;
+    } else {
+      expandedTicketId = ticketId;
+    }
+  }
 
-function navigateToFullView(ticket: Ticket) {
-	goto(`/tickets/${ticket.id}`);
-}
+  function navigateToFullView(ticket: Ticket) {
+    goto(`/tickets/${ticket.id}`);
+  }
 </script>
 
 <div class="space-y-4 shrink-0 mb-6">
@@ -57,15 +57,15 @@ function navigateToFullView(ticket: Ticket) {
     </div>
     <div class="flex items-center gap-3 text-xs text-base-content/50">
       <span class="inline-flex items-center gap-1.5">
-        <div class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500"></div>
+        <div class="w-2 h-2 rounded-full bg-error"></div>
         High Priority
       </span>
       <span class="inline-flex items-center gap-1.5">
-        <div class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400"></div>
+        <div class="w-2 h-2 rounded-full bg-warning"></div>
         Medium
       </span>
       <span class="inline-flex items-center gap-1.5">
-        <div class="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500"></div>
+        <div class="w-2 h-2 rounded-full bg-info"></div>
         Low
       </span>
     </div>
@@ -97,7 +97,7 @@ function navigateToFullView(ticket: Ticket) {
         class="flex flex-col min-h-0 h-full bg-base-200/20 rounded-2xl overflow-hidden border border-base-content/5"
       >
         <div
-          class="flex items-center justify-between px-4 py-4 border-b border-base-content/10 shrink-0 bg-linear-to-r from-base-100/50 to-transparent"
+          class="flex items-center justify-between px-4 py-4 border-b border-base-content/10 shrink-0 bg-base-100/50"
         >
           <div class="flex items-center gap-2 min-w-0">
             <div
@@ -182,7 +182,7 @@ function navigateToFullView(ticket: Ticket) {
 
               {#if isExpanded}
                 <div
-                  class="border-t border-black/10 dark:border-white/10 bg-linear-to-br from-base-100/60 to-transparent p-4 space-y-3 animate-accordion-down"
+                  class="border-t border-black/10 dark:border-white/10 bg-base-100/60 p-4 space-y-3 animate-accordion-down"
                 >
                   <div class="flex items-start gap-2">
                     <Icon

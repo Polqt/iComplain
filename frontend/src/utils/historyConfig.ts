@@ -52,6 +52,12 @@ export const historyConfig: Record<
 		color: "text-secondary",
 		bgColor: "bg-secondary/10",
 	},
+	feedback: {
+		label: "Feedback Submitted",
+		icon: "mdi:star",
+		color: "text-warning",
+		bgColor: "bg-warning/10",
+	},
 };
 
 export const statusConfig: Record<

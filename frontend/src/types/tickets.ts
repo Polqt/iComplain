@@ -88,3 +88,42 @@ export type ViewMode = "grid" | "list";
 export type ModalMode = "create" | "edit" | "delete" | null;
 
 export type AdminTicketEdit = "status" | "priority" | null;
+
+export type ActivityLog = {
+	id: number;
+	action:
+		| "created"
+		| "status_changed"
+		| "priority_changed"
+		| "assigned"
+		| "commented"
+		| "reopened"
+		| "resolved"
+		| "feedback";
+	ticket_number: string;
+	ticket_title: string;
+	performed_by: {
+		id: number;
+		name: string | null;
+		email: string;
+		avatar: string | null;
+	} | null;
+	description: string;
+	old_value: string | null;
+	new_value: string | null;
+	created_at: string;
+};
+
+export type ActivityLogListResponse = {
+	items: ActivityLog[];
+	total: number;
+	limit: number;
+	offset: number;
+};
+
+export type TicketListResponse = {
+	items: Ticket[];
+	total: number;
+	limit: number;
+	offset: number;
+};

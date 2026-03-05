@@ -1,46 +1,16 @@
 import { PUBLIC_API_URL } from "$env/static/public";
 import type { DashboardStats } from "../../types/dashboard.ts";
 import type {
+	ActivityLogListResponse,
 	Category,
 	Ticket,
 	TicketCreatePayload,
+	TicketListResponse,
 	TicketPriority,
 	TicketUpdatePayload,
 } from "../../types/tickets.ts";
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
-
-export type ActivityLog = {
-	id: number;
-	action:
-		| "created"
-		| "status_changed"
-		| "priority_changed"
-		| "assigned"
-		| "commented"
-		| "reopened"
-		| "resolved"
-		| "feedback";
-	ticket_number: string;
-	ticket_title: string;
-	performed_by: {
-		id: number;
-		name: string | null;
-		email: string;
-		avatar: string | null;
-	} | null;
-	description: string;
-	old_value: string | null;
-	new_value: string | null;
-	created_at: string;
-};
-
-export type ActivityLogListResponse = {
-	items: ActivityLog[];
-	total: number;
-	limit: number;
-	offset: number;
-};
 
 async function handleRes<T>(res: Response): Promise<T> {
 	if (!res.ok) {
@@ -49,14 +19,6 @@ async function handleRes<T>(res: Response): Promise<T> {
 	}
 	return res.json() as Promise<T>;
 }
-
-/** Paginated response from ticket list and community endpoints. */
-export type TicketListResponse = {
-	items: Ticket[];
-	total: number;
-	limit: number;
-	offset: number;
-};
 
 // Fetch tickets (paginated; defaults to first page of 50)
 export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
