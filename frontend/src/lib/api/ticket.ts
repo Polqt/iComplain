@@ -74,7 +74,7 @@ export async function fetchTicketById(id: number): Promise<Ticket> {
 
 }
 
-export async function createTicket(ticketData: TicketCreatePayload, attachment?: File): Promise<Ticket> { 
+export async function createTicket(ticketData: TicketCreatePayload, attachment?: File | File[] | null): Promise<Ticket> { 
     try {
         const formData = new FormData();
         formData.append('title', ticketData.title || '');
@@ -84,7 +84,11 @@ export async function createTicket(ticketData: TicketCreatePayload, attachment?:
         formData.append('room_name', ticketData.room_name || '');
 
         if (attachment) {
-            formData.append('attachment', attachment);
+            if (Array.isArray(attachment)) {
+                attachment.forEach((f) => formData.append('attachment', f));
+            } else {
+                formData.append('attachment', attachment);
+            }
         }
 
         const res = await fetch(`${BASE}/`, {
@@ -103,7 +107,7 @@ export async function createTicket(ticketData: TicketCreatePayload, attachment?:
     }
 }
 
-export async function updateTicket(id: number, ticketData: TicketUpdatePayload, attachment?: File | null): Promise<Ticket> { 
+export async function updateTicket(id: number, ticketData: TicketUpdatePayload, attachment?: File | File[] | null): Promise<Ticket> { 
     try {
         const formData = new FormData();
 
@@ -116,7 +120,11 @@ export async function updateTicket(id: number, ticketData: TicketUpdatePayload, 
         if (ticketData.status      !== undefined) formData.append('status',      ticketData.status);
 
         if (attachment) {
-            formData.append('attachment', attachment);
+            if (Array.isArray(attachment)) {
+                attachment.forEach((f) => formData.append('attachment', f));
+            } else {
+                formData.append('attachment', attachment);
+            }
         }
 
         const res = await fetch(`${BASE}/${id}`, {

@@ -22,10 +22,10 @@
   export let onclose: () => void = () => {};
   export let onsubmit: (
     data: Partial<Ticket>,
-    file?: File | null,
+    files?: File[] | null,
   ) => void = () => {};
 
-  let selectedFile: File | null = null;
+  let selectedFiles: File[] = [];
 
   export const categoriesStore = writable<Category[]>([]);
   export const prioritiesStore = writable<TicketPriority[]>([]);
@@ -58,13 +58,17 @@
     const data = canEditPriorityStatus
       ? formData
       : (({ priority, status, ...rest }) => rest)(formData);
-    onsubmit(data, selectedFile);
+    onsubmit(data, selectedFiles.length ? selectedFiles : null);
     onclose();
   }
 
   function handleFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    selectedFile = input.files?.[0] ?? null;
+    selectedFiles = Array.from(input.files ?? []);
+  }
+
+  function removeFile(index: number) {
+    selectedFiles = selectedFiles.filter((_, i) => i !== index);
   }
 </script>
 
@@ -244,20 +248,23 @@
             <label
               for="attachment"
               class="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-base-content/15 hover:border-primary/40 hover:bg-primary/3 transition-colors cursor-pointer py-6 px-4 text-center"
-              class:border-primary={!!selectedFile}
-              class:bg-primary={!!selectedFile}
+              class:border-primary={selectedFiles.length > 0}
+              class:bg-primary={selectedFiles.length > 0}
             >
-              {#if selectedFile}
-                <div class="flex items-center gap-2 text-primary">
-                  <Icon icon="mdi:file" class="w-5 h-5" />
-                  <span class="text-sm font-medium truncate max-w-xs"
-                    >{selectedFile.name}</span
-                  >
-                </div>
-                <span class="text-xs text-base-content/40"
-                  >Click to change file</span
-                >
-              {:else}
+                {#if selectedFiles.length}
+                  <div class="flex flex-col gap-2 w-full">
+                    {#each selectedFiles as f, i}
+                      <div class="flex items-center justify-between gap-2 text-primary">
+                        <div class="flex items-center gap-2">
+                          <Icon icon="mdi:file" class="w-5 h-5" />
+                          <span class="text-sm font-medium truncate max-w-xs">{f.name}</span>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-xs" onclick={() => removeFile(i)}>Remove</button>
+                      </div>
+                    {/each}
+                  </div>
+                  <span class="text-xs text-base-content/40">Click to change files</span>
+                {:else}
                 <Icon icon="mdi:upload" class="w-7 h-7 text-base-content/20" />
                 <span class="text-xs text-base-content/40">
                   Drop a file or <span class="text-primary font-medium"
@@ -271,10 +278,11 @@
             </label>
             <input
               id="attachment"
-              type="file"
-              class="hidden"
-              onchange={handleFileChange}
-              accept="image/*"
+                type="file"
+                class="hidden"
+                onchange={handleFileChange}
+                accept="image/*,application/pdf,image/webp"
+                multiple
             />
           </div>
 

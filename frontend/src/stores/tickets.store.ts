@@ -9,8 +9,8 @@ interface TicketsStore extends Readable<TicketsState> {
 
     loadTickets: () => Promise<void>;
     loadTicketById: (id: number) => Promise<Ticket | null>;
-    createTicket: (ticketData: TicketCreatePayload, attachment?: File) => Promise<Ticket | null>;
-    updateTicket: (id: number, updates: TicketUpdatePayload, attachment?: File | null) => Promise<Ticket | null>;
+    createTicket: (ticketData: TicketCreatePayload, attachment?: File | File[] | null) => Promise<Ticket | null>;
+    updateTicket: (id: number, updates: TicketUpdatePayload, attachment?: File | File[] | null) => Promise<Ticket | null>;
     deleteTicket: (id: number) => Promise<boolean>;
     adminPatchTicket: (id: number, patch: { status?: string; priority?: number }) => Promise<Ticket | null>;
     loadCommunityTickets: () => Promise<void>;
@@ -126,11 +126,11 @@ function createTicketsStore(): TicketsStore {
             }
         },
 
-        async createTicket(ticketData: TicketCreatePayload, attachment?: File): Promise<Ticket | null> {
+        async createTicket(ticketData: TicketCreatePayload, attachment?: File | File[] | null): Promise<Ticket | null> {
             update(s => ({ ...s, isLoading: true, error: null }));
 
             try {
-                const newTicket = await apiCreateTicket(ticketData, attachment);
+                const newTicket = await apiCreateTicket(ticketData, attachment as any);
 
                 if (newTicket) {
                     update(s => ({
@@ -154,11 +154,11 @@ function createTicketsStore(): TicketsStore {
             }
         },
 
-        async updateTicket(id: number, updates: TicketUpdatePayload, attachment?: File | null): Promise<Ticket | null> {
+        async updateTicket(id: number, updates: TicketUpdatePayload, attachment?: File | File[] | null): Promise<Ticket | null> {
             update(s => ({ ...s, isLoading: true, error: null }));
 
             try {
-                const updatedTicket = await apiUpdateTicket(id, updates, attachment ?? undefined);
+                const updatedTicket = await apiUpdateTicket(id, updates, attachment ?? undefined as any);
 
                 if (updatedTicket) {
                     update(s => ({
