@@ -51,35 +51,41 @@ function closeModal() {
 	ticketsStore.setError(null);
 }
 
-async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
-	if (modalMode === "create") {
-		const categoryId =
-			typeof data.category === "number"
-				? data.category
-				: (data.category?.id ?? 1);
-		const payload: TicketCreatePayload = {
-			title: data.title!,
-			description: data.description!,
-			category: categoryId,
-			building: data.building!,
-			room_name: data.room_name!,
-		};
-		const created = await ticketsStore.createTicket(payload, file || undefined);
-		if (created) closeModal();
-	} else if (modalMode === "edit" && selectedReport) {
-		const categoryId =
-			typeof data.category === "number" ? data.category : data.category?.id;
-		const payload: TicketUpdatePayload = {
-			title: data.title!,
-			description: data.description!,
-			building: data.building!,
-			room_name: data.room_name!,
-			category: categoryId!,
-		};
-		const updated = await ticketsStore.updateTicket(selectedReport.id, payload);
-		if (updated) closeModal();
-	}
-}
+  async function handleSubmit(data: Partial<Ticket>, files?: File[] | null) {
+    if (modalMode === "create") {
+      const categoryId =
+        typeof data.category === "number"
+          ? data.category
+          : (data.category?.id ?? 1);
+      const payload: TicketCreatePayload = {
+        title: data.title!,
+        description: data.description!,
+        category: categoryId,
+        building: data.building!,
+        room_name: data.room_name!,
+      };
+      const created = await ticketsStore.createTicket(
+        payload,
+        files && files.length ? files : undefined,
+      );
+      if (created) closeModal();
+    } else if (modalMode === "edit" && selectedReport) {
+      const categoryId =
+        typeof data.category === "number" ? data.category : data.category?.id;
+      const payload: TicketUpdatePayload = {
+        title: data.title!,
+        description: data.description!,
+        building: data.building!,
+        room_name: data.room_name!,
+        category: categoryId!,
+      };
+      const updated = await ticketsStore.updateTicket(
+        selectedReport.id,
+        payload,
+      );
+      if (updated) closeModal();
+    }
+  }
 
 async function handleDelete() {
 	if (!selectedReport) return;

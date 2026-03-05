@@ -10,23 +10,23 @@ export let onclose: () => void = () => {};
 
 $: formData = ticket ? { ...ticket } : {};
 
-async function handleSubmit(data: Partial<Ticket>, file?: File | null) {
-	if (!ticket) return;
-	const categoryId =
-		typeof data.category === "number" ? data.category : data.category?.id;
-	const payload: TicketUpdatePayload = {
-		title: data.title,
-		description: data.description,
-		building: data.building,
-		room_name: data.room_name,
-		category: categoryId,
-	};
-	const updated = await ticketsStore.updateTicket(ticket.id, payload, file);
-	if (updated) {
-		await ticketsStore.loadTicketById(ticket.id);
-		onclose();
-	}
-}
+  async function handleSubmit(data: Partial<Ticket>, files?: File[] | null) {
+    if (!ticket) return;
+    const categoryId =
+      typeof data.category === "number" ? data.category : data.category?.id;
+    const payload: TicketUpdatePayload = {
+      title: data.title,
+      description: data.description,
+      building: data.building,
+      room_name: data.room_name,
+      category: categoryId,
+    };
+    const updated = await ticketsStore.updateTicket(ticket.id, payload, files && files.length ? files : undefined);
+    if (updated) {
+      await ticketsStore.loadTicketById(ticket.id);
+      onclose();
+    }
+  }
 </script>
 
 <TicketCreateModal

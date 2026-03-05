@@ -54,74 +54,70 @@ export async function fetchTicketById(id: number): Promise<Ticket> {
 	}
 }
 
-export async function createTicket(
-	ticketData: TicketCreatePayload,
-	attachment?: File,
-): Promise<Ticket> {
-	try {
-		const formData = new FormData();
-		formData.append("title", ticketData.title || "");
-		formData.append("description", ticketData.description || "");
-		formData.append("category", ticketData.category?.toString() || "");
-		formData.append("building", ticketData.building || "");
-		formData.append("room_name", ticketData.room_name || "");
+export async function createTicket(ticketData: TicketCreatePayload, attachment?: File | File[] | null): Promise<Ticket> { 
+    try {
+        const formData = new FormData();
+        formData.append('title', ticketData.title || '');
+        formData.append('description', ticketData.description || '');
+        formData.append('category', ticketData.category?.toString() || '');
+        formData.append('building', ticketData.building || '');
+        formData.append('room_name', ticketData.room_name || '');
 
-		if (attachment) {
-			formData.append("attachment", attachment);
-		}
+        if (attachment) {
+            if (Array.isArray(attachment)) {
+                attachment.forEach((f) => formData.append('attachment', f));
+            } else {
+                formData.append('attachment', attachment);
+            }
+        }
 
-		const res = await fetch(`${BASE}/`, {
-			method: "POST",
-			headers: {},
-			body: formData,
-			credentials: "include",
-		});
+        const res = await fetch(`${BASE}/`, {
+            method: 'POST',
+            headers: {
+            
+            },
+            body: formData,
+            credentials: 'include',
+        })
 
-		return await handleRes<Ticket>(res);
-	} catch (error) {
-		console.error("Error creating ticket:", error);
-		throw error;
-	}
+    return await handleRes<Ticket>(res);
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        throw error;
+    }
 }
 
-export async function updateTicket(
-	id: number,
-	ticketData: TicketUpdatePayload,
-	attachment?: File | null,
-): Promise<Ticket> {
-	try {
-		const formData = new FormData();
+export async function updateTicket(id: number, ticketData: TicketUpdatePayload, attachment?: File | File[] | null): Promise<Ticket> { 
+    try {
+        const formData = new FormData();
 
-		if (ticketData.title !== undefined)
-			formData.append("title", ticketData.title);
-		if (ticketData.description !== undefined)
-			formData.append("description", ticketData.description);
-		if (ticketData.building !== undefined)
-			formData.append("building", ticketData.building);
-		if (ticketData.room_name !== undefined)
-			formData.append("room_name", ticketData.room_name);
-		if (ticketData.category !== undefined)
-			formData.append("category", ticketData.category.toString());
-		if (ticketData.priority !== undefined)
-			formData.append("priority", ticketData.priority.toString());
-		if (ticketData.status !== undefined)
-			formData.append("status", ticketData.status);
+        if (ticketData.title       !== undefined) formData.append('title',       ticketData.title);
+        if (ticketData.description !== undefined) formData.append('description', ticketData.description);
+        if (ticketData.building    !== undefined) formData.append('building',    ticketData.building);
+        if (ticketData.room_name   !== undefined) formData.append('room_name',   ticketData.room_name);
+        if (ticketData.category    !== undefined) formData.append('category',    ticketData.category.toString());
+        if (ticketData.priority    !== undefined) formData.append('priority',    ticketData.priority.toString());
+        if (ticketData.status      !== undefined) formData.append('status',      ticketData.status);
 
-		if (attachment) {
-			formData.append("attachment", attachment);
-		}
+        if (attachment) {
+            if (Array.isArray(attachment)) {
+                attachment.forEach((f) => formData.append('attachment', f));
+            } else {
+                formData.append('attachment', attachment);
+            }
+        }
 
-		const res = await fetch(`${BASE}/${id}`, {
-			method: "PUT",
-			body: formData,
-			credentials: "include",
-		});
+        const res = await fetch(`${BASE}/${id}`, {
+            method: 'PUT',
+            body: formData,
+            credentials: 'include',
+        })
 
-		return await handleRes<Ticket>(res);
-	} catch (error) {
-		console.error(`Error updating ticket with ID ${id}:`, error);
-		throw error;
-	}
+        return await handleRes<Ticket>(res);
+    } catch (error) {
+        console.error(`Error updating ticket with ID ${id}:`, error);
+        throw error;
+    }
 }
 
 export async function adminPatchTicket(
