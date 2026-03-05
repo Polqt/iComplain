@@ -8,9 +8,11 @@
   export let ticketId: number;
   export let ticketStatus: string = "pending";
   export let compact: boolean = false;
+  export let variant: "default" | "messenger" = "default";
 
   $: ({ comments, isLoading, error } = $commentsStore);
   $: isClosed = ticketStatus === "closed";
+  $: isMessenger = variant === "messenger";
 
   let newMessage = "";
   let sending = false;
@@ -69,10 +71,16 @@
 <div
   class="flex flex-col {compact
     ? 'h-full'
-    : 'bg-base-100 rounded-2xl border border-base-content/8 p-5 flex-1'}"
+    : isMessenger
+      ? 'bg-base-200 rounded-2xl border border-base-content/15 flex-1'
+      : 'bg-base-100 rounded-2xl border border-base-content/8 p-5 flex-1'}"
 >
   {#if $wsStore === "connected"}
-    <div class="flex items-center gap-1.5 px-5 pt-4 pb-0 shrink-0">
+    <div
+      class="flex items-center gap-1.5 shrink-0 {isMessenger
+        ? 'px-4 py-2 border-b border-base-content/10'
+        : 'px-5 pt-4 pb-0'}"
+    >
       <span
         class="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"
       ></span>
@@ -82,8 +90,13 @@
 
   <div
     bind:this={scrollContainer}
-    class="flex-1 overflow-y-auto min-h-0 px-5 py-4
-           {compact ? 'max-h-[calc(100vh-18rem)]' : 'max-h-80'}"
+    class="flex-1 overflow-y-auto min-h-0
+           {isMessenger ? 'px-4 py-4' : 'px-5 py-4'}
+           {compact
+      ? isMessenger
+        ? 'max-h-[calc(100vh-17rem)]'
+        : 'max-h-[calc(100vh-18rem)]'
+      : 'max-h-80'}"
   >
     {#if isLoading && comments.length === 0}
       <div class="flex flex-col gap-4">
@@ -141,13 +154,18 @@
             onUpdate={handleUpdate}
             onDelete={handleDelete}
             disabled={isClosed}
+            {variant}
           />
         {/each}
       </div>
     {/if}
   </div>
 
-  <div class="shrink-0 px-4 py-3 border-t border-base-content/8">
+  <div
+    class="shrink-0 border-t border-base-content/8 {isMessenger
+      ? 'px-3 py-3 bg-base-200'
+      : 'px-4 py-3'}"
+  >
     {#if !isClosed}
       <div class="flex items-end gap-2">
         <textarea
@@ -156,9 +174,11 @@
           bind:value={newMessage}
           onkeydown={handleKeyDown}
           rows="1"
-          placeholder="Say something about this ticket…"
-          class="textarea textarea-bordered flex-1 resize-none rounded-xl text-sm
-                 leading-relaxed min-h-10 max-h-24"
+          placeholder="Write a comment..."
+          class="textarea flex-1 resize-none rounded-xl text-sm
+                 leading-relaxed min-h-10 max-h-24 {isMessenger
+            ? 'textarea-ghost bg-base-100 border border-base-content/12'
+            : 'textarea-bordered'}"
           disabled={isLoading || sending}
         ></textarea>
 
@@ -166,7 +186,9 @@
           type="button"
           onclick={handleSend}
           disabled={sending || !newMessage.trim() || isLoading}
-          class="btn btn-primary btn-sm btn-circle shrink-0"
+          class="btn btn-sm btn-circle shrink-0 {isMessenger
+            ? 'btn-info'
+            : 'btn-primary'}"
           aria-label="Send comment"
         >
           {#if sending}
@@ -178,7 +200,7 @@
       </div>
     {:else}
       <p class="text-xs text-base-content/30 text-center py-1">
-        This ticket is closed — no new comments.
+        This ticket is closed. No new comments.
       </p>
     {/if}
   </div>

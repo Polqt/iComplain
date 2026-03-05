@@ -9,8 +9,10 @@
   export let onUpdate: (commentId: number, message: string) => Promise<void>;
   export let onDelete: (commentId: number) => Promise<void>;
   export let disabled: boolean = false;
+  export let variant: "default" | "messenger" = "default";
 
   $: ({ user } = $authStore);
+  $: isMessenger = variant === "messenger";
   $: isOwner = user?.id === comment.user.id;
   $: displayName = comment.user.name || deriveNameFromEmail(comment.user.email);
   $: initials = displayName
@@ -163,8 +165,12 @@
       <p
         class="inline-block w-fit max-w-full text-sm leading-relaxed whitespace-pre-wrap wrap-break-word rounded-2xl px-3 py-2
                {isOwner
-          ? 'bg-primary text-primary-content text-left'
-          : 'bg-base-200/70 text-base-content/75'}"
+          ? isMessenger
+            ? 'bg-info text-info-content text-left'
+            : 'bg-primary text-primary-content text-left'
+          : isMessenger
+            ? 'bg-base-300 text-base-content'
+            : 'bg-base-200/70 text-base-content/75'}"
       >
         {comment.message}
       </p>
