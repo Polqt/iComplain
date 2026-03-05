@@ -1,44 +1,44 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-  import { goto } from "$app/navigation";
-  import type { Notification } from "../../types/notifications.ts";
-  import Icon from "@iconify/svelte";
+import { createEventDispatcher } from "svelte";
+import { goto } from "$app/navigation";
+import type { Notification } from "../../types/notifications.ts";
+import Icon from "@iconify/svelte";
 
-  export let notifications: Notification[] = [];
-  export let unreadCount: number = 0;
-  export let viewAllHref: string = "/notifications";
+export let notifications: Notification[] = [];
+export let unreadCount: number = 0;
+export let viewAllHref: string = "/notifications";
 
-  export let notificationsConfig: Record<
-    string,
-    { icon: string; bgColor: string; iconColor: string }
-  >;
+export let notificationsConfig: Record<
+	string,
+	{ icon: string; bgColor: string; iconColor: string }
+>;
 
-  const dispatch = createEventDispatcher<{
-    markAsRead: { id: string };
-    notificationClick: { notification: Notification };
-    viewAll: void;
-  }>();
+const dispatch = createEventDispatcher<{
+	markAsRead: { id: string };
+	notificationClick: { notification: Notification };
+	viewAll: void;
+}>();
 
-  function handleMarkAsRead(id: string, event: Event) {
-    event.stopPropagation();
-    dispatch("markAsRead", { id });
-  }
+function handleMarkAsRead(id: string, event: Event) {
+	event.stopPropagation();
+	dispatch("markAsRead", { id });
+}
 
-  function handleNotificationClick(notification: Notification) {
-    if (!notification.read) {
-      dispatch("markAsRead", { id: notification.id });
-    }
-    dispatch("notificationClick", { notification });
-    if (notification.actionUrl) {
-      goto(notification.actionUrl);
-    }
-  }
+function handleNotificationClick(notification: Notification) {
+	if (!notification.read) {
+		dispatch("markAsRead", { id: notification.id });
+	}
+	dispatch("notificationClick", { notification });
+	if (notification.actionUrl) {
+		goto(notification.actionUrl);
+	}
+}
 
-  function handleViewAll() {
-    dispatch("viewAll");
-  }
+function handleViewAll() {
+	dispatch("viewAll");
+}
 
-  $: previewNotifications = notifications.slice(0, 5);
+$: previewNotifications = notifications.slice(0, 5);
 </script>
 
 <div class="dropdown dropdown-end">

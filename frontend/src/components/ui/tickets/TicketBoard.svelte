@@ -2,6 +2,11 @@
   import Icon from "@iconify/svelte";
   import {
     baseColumns,
+    getAgingColor,
+    getAgingDays,
+    getAgingLabel,
+    getPriorityBadgeColor,
+    getPriorityBgColor,
     getPriorityKey,
     priorityConfig,
   } from "../../../utils/ticketConfig.ts";
@@ -9,12 +14,10 @@
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-  import { authStore } from "../../../stores/auth.store.ts";
 
   let expandedTicketId: number | null = null;
 
   $: ({ tickets, isLoading } = $ticketsStore);
-  $: ({ role } = $authStore);
 
   onMount(async () => {
     if ($ticketsStore.tickets.length === 0) {
@@ -40,59 +43,6 @@
   function navigateToFullView(ticket: Ticket) {
     goto(`/tickets/${ticket.id}`);
   }
-
-  function getAgingDays(createdAt: string): number {
-    const created = new Date(createdAt);
-    const now = new Date();
-    return Math.floor(
-      (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24),
-    );
-  }
-
-  function getAgingLabel(days: number): string {
-    if (days === 0) return "Today";
-    if (days === 1) return "1 day ago";
-    if (days < 7) return `${days}d ago`;
-    if (days < 30) return `${Math.floor(days / 7)}w ago`;
-    return `${Math.floor(days / 30)}mo ago`;
-  }
-
-  function getAgingColor(days: number): string {
-    if (days > 14) return "text-error bg-error/10"; 
-    if (days > 7) return "text-warning bg-warning/10"; 
-    return "text-info bg-info/10"; 
-  }
-
-  function getPriorityBgColor(priorityKey: string): string {
-    switch (priorityKey) {
-      case "high":
-      case "urgent":
-        return "bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-700";
-      case "medium":
-        return "bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-700";
-      case "low":
-        return "bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-700";
-      default:
-        return "bg-base-100 border-base-content/5";
-    }
-  }
-
-  function getPriorityBadgeColor(priorityKey: string): string {
-    const config = priorityConfig[priorityKey as keyof typeof priorityConfig];
-    if (!config) return "badge-ghost";
-
-    switch (priorityKey) {
-      case "high":
-      case "urgent":
-        return "bg-red-600 dark:bg-red-700 text-white font-bold";
-      case "medium":
-        return "bg-amber-500 dark:bg-amber-600 text-white dark:text-black font-bold";
-      case "low":
-        return "bg-blue-600 dark:bg-blue-700 text-white font-bold";
-      default:
-        return "badge-ghost";
-    }
-  }
 </script>
 
 <div class="space-y-4 shrink-0 mb-6">
@@ -107,15 +57,15 @@
     </div>
     <div class="flex items-center gap-3 text-xs text-base-content/50">
       <span class="inline-flex items-center gap-1.5">
-        <div class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500"></div>
+        <div class="w-2 h-2 rounded-full bg-error"></div>
         High Priority
       </span>
       <span class="inline-flex items-center gap-1.5">
-        <div class="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400"></div>
+        <div class="w-2 h-2 rounded-full bg-warning"></div>
         Medium
       </span>
       <span class="inline-flex items-center gap-1.5">
-        <div class="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500"></div>
+        <div class="w-2 h-2 rounded-full bg-info"></div>
         Low
       </span>
     </div>
@@ -147,7 +97,7 @@
         class="flex flex-col min-h-0 h-full bg-base-200/20 rounded-2xl overflow-hidden border border-base-content/5"
       >
         <div
-          class="flex items-center justify-between px-4 py-4 border-b border-base-content/10 shrink-0 bg-linear-to-r from-base-100/50 to-transparent"
+          class="flex items-center justify-between px-4 py-4 border-b border-base-content/10 shrink-0 bg-base-100/50"
         >
           <div class="flex items-center gap-2 min-w-0">
             <div
@@ -157,9 +107,7 @@
               {column.title}
             </h3>
           </div>
-          <div
-            class="badge badge-sm badge-ghost font-bold text-xs shrink-0"
-          >
+          <div class="badge badge-sm badge-ghost font-bold text-xs shrink-0">
             {column.reports.length}
           </div>
         </div>
@@ -169,7 +117,6 @@
             {@const isExpanded = expandedTicketId === ticket.id}
             {@const priorityKey = getPriorityKey(ticket.priority)}
             {@const agingDays = getAgingDays(ticket.created_at)}
-            {@const showAgingWarning = agingDays > 7}
 
             <div
               class="rounded-lg border-2 transition-all duration-200 overflow-hidden
@@ -235,7 +182,7 @@
 
               {#if isExpanded}
                 <div
-                  class="border-t border-black/10 dark:border-white/10 bg-linear-to-br from-base-100/60 to-transparent p-4 space-y-3 animate-accordion-down"
+                  class="border-t border-black/10 dark:border-white/10 bg-base-100/60 p-4 space-y-3 animate-accordion-down"
                 >
                   <div class="flex items-start gap-2">
                     <Icon
@@ -270,7 +217,6 @@
                     </div>
                   {/if}
 
-                  <!-- Student -->
                   <div class="flex items-center gap-2 text-xs">
                     <Icon
                       icon="mdi:account-circle"

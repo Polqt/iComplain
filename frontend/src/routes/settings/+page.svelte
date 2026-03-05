@@ -1,12 +1,12 @@
 <script lang="ts">
-  import AdminSettings from "../../components/ui/admin/AdminSettings.svelte";
-  import StudentSettings from "../../components/ui/student/StudentSettings.svelte";
-  import { authStore } from "../../stores/auth.store.ts";
+import AdminSettings from "../../components/ui/admin/AdminSettings.svelte";
+import StudentSettings from "../../components/ui/student/StudentSettings.svelte";
+import { authStore } from "../../stores/auth.store.ts";
 
-  let isLoading: boolean = true;
-  let role: string | null = null;
+let isLoading: boolean = true;
+let role: string | null = null;
 
-  $: ({ isLoading, isAuthenticated, role } = $authStore);
+$: ({ isLoading, isAuthenticated, role } = $authStore);
 </script>
 
 <svelte:head>

@@ -1,84 +1,86 @@
 <script lang="ts">
-  import StudentLayout from "../../components/layout/StudentLayout.svelte";
-  import { ticketsStore } from "../../stores/tickets.store.ts";
-  import { onMount } from "svelte";
-  import type { Ticket, TicketStatus } from "../../types/tickets.ts";
-  import { getPriorityKey } from "../../utils/ticketConfig.ts";
-  import TicketFilters from "../../components/ui/tickets/TicketFilters.svelte";
-  import CommunityTicketCard from "../../components/ui/tickets/CommunityTicketCard.svelte";
-  import KanbanSkeleton from "../../components/ui/tickets/KanbanSkeleton.svelte";
-  import ErrorState from "../../components/ui/ErrorState.svelte";
-  import { COMMUNITY_STATUSES } from "../../utils/paginationConfig.ts";
-  import Icon from "@iconify/svelte";
-  import CommentDrawer from "../../components/ui/comments/CommentDrawer.svelte";
+import StudentLayout from "../../components/layout/StudentLayout.svelte";
+import { ticketsStore } from "../../stores/tickets.store.ts";
+import { onMount } from "svelte";
+import type { Ticket, TicketStatus } from "../../types/tickets.ts";
+import { getPriorityKey } from "../../utils/ticketConfig.ts";
+import TicketFilters from "../../components/ui/tickets/TicketFilters.svelte";
+import CommunityTicketCard from "../../components/ui/tickets/CommunityTicketCard.svelte";
+import KanbanSkeleton from "../../components/ui/tickets/KanbanSkeleton.svelte";
+import ErrorState from "../../components/ui/ErrorState.svelte";
+import { COMMUNITY_STATUSES } from "../../utils/paginationConfig.ts";
+import Icon from "@iconify/svelte";
+import CommentDrawer from "../../components/ui/comments/CommentDrawer.svelte";
 
-  $: ({ tickets, isLoading, error } = $ticketsStore);
+$: ({ tickets, isLoading, error } = $ticketsStore);
 
-  onMount(async () => {
-    await ticketsStore.loadCommunityTickets();
-  });
+onMount(async () => {
+	await ticketsStore.loadCommunityTickets();
+});
 
-  let search = "";
-  let activeStatus: TicketStatus | "all" = "all";
-  let priorityFilter = "all";
-  let categoryFilter = "all";
-  let selectedTicket: Ticket | null = null;
-  let upvoteByTicketId: Record<number, { count: number; upvoted: boolean }> = {};
+let search = "";
+let activeStatus: TicketStatus | "all" = "all";
+let priorityFilter = "all";
+let categoryFilter = "all";
+let selectedTicket: Ticket | null = null;
+let upvoteByTicketId: Record<number, { count: number; upvoted: boolean }> = {};
 
-  $: filtered = tickets.filter((t) => {
-    const q = search.trim().toLowerCase();
-    const matchSearch =
-      !q ||
-      t.title.toLowerCase().includes(q) ||
-      t.building.toLowerCase().includes(q) ||
-      t.room_name.toLowerCase().includes(q) ||
-      t.category.name.toLowerCase().includes(q) ||
-      t.ticket_number.toLowerCase().includes(q);
-    const matchStatus = activeStatus === "all" || t.status === activeStatus;
-    const matchPriority =
-      priorityFilter === "all" || getPriorityKey(t.priority) === priorityFilter;
-    const matchCategory =
-      categoryFilter === "all" ||
-      t.category.name.toLowerCase() === categoryFilter.toLowerCase();
-    return matchSearch && matchStatus && matchPriority && matchCategory;
-  });
+$: filtered = tickets.filter((t) => {
+	const q = search.trim().toLowerCase();
+	const matchSearch =
+		!q ||
+		t.title.toLowerCase().includes(q) ||
+		t.building.toLowerCase().includes(q) ||
+		t.room_name.toLowerCase().includes(q) ||
+		t.category.name.toLowerCase().includes(q) ||
+		t.ticket_number.toLowerCase().includes(q);
+	const matchStatus = activeStatus === "all" || t.status === activeStatus;
+	const matchPriority =
+		priorityFilter === "all" || getPriorityKey(t.priority) === priorityFilter;
+	const matchCategory =
+		categoryFilter === "all" ||
+		t.category.name.toLowerCase() === categoryFilter.toLowerCase();
+	return matchSearch && matchStatus && matchPriority && matchCategory;
+});
 
-  $: statusCounts = {
-    all: filtered.length,
-    ...COMMUNITY_STATUSES.reduce(
-      (acc, status) => {
-        acc[status] = filtered.filter((t) => t.status === status).length;
-        return acc;
-      },
-      {} as Record<TicketStatus, number>,
-    ),
-  };
+$: statusCounts = {
+	all: filtered.length,
+	...COMMUNITY_STATUSES.reduce(
+		(acc, status) => {
+			acc[status] = filtered.filter((t) => t.status === status).length;
+			return acc;
+		},
+		{} as Record<TicketStatus, number>,
+	),
+};
 
-  function handleClearFilters() {
-    search = "";
-    activeStatus = "all";
-    priorityFilter = "all";
-    categoryFilter = "all";
-  }
+function handleClearFilters() {
+	search = "";
+	activeStatus = "all";
+	priorityFilter = "all";
+	categoryFilter = "all";
+}
 
-  function handleTicketClick(ticket: Ticket) {
-    selectedTicket = ticket;
-  }
+function handleTicketClick(ticket: Ticket) {
+	selectedTicket = ticket;
+}
 
-  function handleCommentClick(ticket: Ticket) {
-    selectedTicket = ticket;
-  }
+function handleCommentClick(ticket: Ticket) {
+	selectedTicket = ticket;
+}
 
-  function handleUpvoteToggle(ticket: Ticket) {
-    const current = upvoteByTicketId[ticket.id] ?? { count: 0, upvoted: false };
-    upvoteByTicketId = {
-      ...upvoteByTicketId,
-      [ticket.id]: {
-        upvoted: !current.upvoted,
-        count: current.upvoted ? Math.max(0, current.count - 1) : current.count + 1,
-      },
-    };
-  }
+function handleUpvoteToggle(ticket: Ticket) {
+	const current = upvoteByTicketId[ticket.id] ?? { count: 0, upvoted: false };
+	upvoteByTicketId = {
+		...upvoteByTicketId,
+		[ticket.id]: {
+			upvoted: !current.upvoted,
+			count: current.upvoted
+				? Math.max(0, current.count - 1)
+				: current.count + 1,
+		},
+	};
+}
 </script>
 
 <StudentLayout>

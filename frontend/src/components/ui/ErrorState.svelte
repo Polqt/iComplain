@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
+import Icon from "@iconify/svelte";
 
-  export let error: string | null;
-  export let onRetry: () => void;
-  export let retryLabel: string = "Retry";
+export let error: string | null;
+export let onRetry: () => void;
+export let retryLabel: string = "Retry";
 </script>
 
 <div class="flex flex-col items-center justify-center flex-1 gap-3">

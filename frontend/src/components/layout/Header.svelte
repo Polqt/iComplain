@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
-  import Icon from "@iconify/svelte";
+import { goto } from "$app/navigation";
+import { page } from "$app/stores";
+import Icon from "@iconify/svelte";
 
-  let menuOpen = false;
+let menuOpen = false;
 
-  $: currentPath = $page.url.pathname;
+$: currentPath = $page.url.pathname;
 
-  function isActivePath(path: string): boolean {
-    return currentPath === path;
-  }
+function isActivePath(path: string): boolean {
+	return currentPath === path;
+}
 
-  function toggleMenu() {
-    menuOpen = !menuOpen;
-  }
+function toggleMenu() {
+	menuOpen = !menuOpen;
+}
 
-  function closeMenu() {
-    menuOpen = false;
-  }
+function closeMenu() {
+	menuOpen = false;
+}
 </script>
 
 <header class="w-full py-4 md:py-6">

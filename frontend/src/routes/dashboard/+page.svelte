@@ -1,20 +1,20 @@
 <script lang="ts">
-  import AdminDashboard from "../../components/ui/admin/AdminDashboard.svelte";
-  import StudentDashboard from "../../components/ui/student/StudentDashboard.svelte";
-  import { authStore } from "../../stores/auth.store.ts";
-  import { goto } from "$app/navigation";
-  import Icon from "@iconify/svelte";
+import AdminDashboard from "../../components/ui/admin/AdminDashboard.svelte";
+import StudentDashboard from "../../components/ui/student/StudentDashboard.svelte";
+import { authStore } from "../../stores/auth.store.ts";
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
 
-  let isLoading: boolean = true;
-  let role: string | null = null;
-  let isAuthenticated: boolean = false;
+let isLoading: boolean = true;
+let role: string | null = null;
+let isAuthenticated: boolean = false;
 
-  $: ({ isLoading, isAuthenticated, role } = $authStore);
+$: ({ isLoading, isAuthenticated, role } = $authStore);
 
-  // Redirect if not authenticated after loading
-  $: if (!isLoading && !isAuthenticated) {
-    goto('/not-signed-in', { replaceState: true });
-  }
+// Redirect if not authenticated after loading
+$: if (!isLoading && !isAuthenticated) {
+	goto("/not-signed-in", { replaceState: true });
+}
 </script>
 
 {#if isLoading}

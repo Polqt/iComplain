@@ -1,69 +1,69 @@
 <script lang="ts">
-  import { onDestroy, onMount, tick } from "svelte";
-  import { commentsStore } from "../../../stores/comment.store.ts";
-  import { wsStore } from "../../../stores/websocket.store.ts";
-  import Icon from "@iconify/svelte";
-  import CommentItem from "./CommentItem.svelte";
+import { onDestroy, onMount, tick } from "svelte";
+import { commentsStore } from "../../../stores/comment.store.ts";
+import { wsStore } from "../../../stores/websocket.store.ts";
+import Icon from "@iconify/svelte";
+import CommentItem from "./CommentItem.svelte";
 
-  export let ticketId: number;
-  export let ticketStatus: string = "pending";
-  export let compact: boolean = false;
+export let ticketId: number;
+export let ticketStatus: string = "pending";
+export let compact: boolean = false;
 
-  $: ({ comments, isLoading, error } = $commentsStore);
-  $: isClosed = ticketStatus === "closed";
+$: ({ comments, isLoading, error } = $commentsStore);
+$: isClosed = ticketStatus === "closed";
 
-  let newMessage = "";
-  let sending = false;
-  let scrollContainer: HTMLDivElement;
+let newMessage = "";
+let sending = false;
+let scrollContainer: HTMLDivElement;
 
-  onMount(async () => {
-    wsStore.connect();
-    await commentsStore.loadCommentsForTicket(ticketId);
-    await tick();
-    scrollToBottom();
-  });
+onMount(async () => {
+	wsStore.connect();
+	await commentsStore.loadCommentsForTicket(ticketId);
+	await tick();
+	scrollToBottom();
+});
 
-  onDestroy(() => {
-    commentsStore.clearComments();
-  });
+onDestroy(() => {
+	commentsStore.clearComments();
+});
 
-  async function scrollToBottom() {
-    await tick();
-    if (scrollContainer) {
-      scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    }
-  }
+async function scrollToBottom() {
+	await tick();
+	if (scrollContainer) {
+		scrollContainer.scrollTop = scrollContainer.scrollHeight;
+	}
+}
 
-  async function handleSend() {
-    const msg = newMessage.trim();
-    if (!msg || sending) return;
+async function handleSend() {
+	const msg = newMessage.trim();
+	if (!msg || sending) return;
 
-    sending = true;
-    const result = await commentsStore.createComment(ticketId, {
-      message: msg,
-    });
+	sending = true;
+	const result = await commentsStore.createComment(ticketId, {
+		message: msg,
+	});
 
-    if (result) {
-      newMessage = "";
-      await scrollToBottom();
-    }
-    sending = false;
-  }
+	if (result) {
+		newMessage = "";
+		await scrollToBottom();
+	}
+	sending = false;
+}
 
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  }
+function handleKeyDown(e: KeyboardEvent) {
+	if (e.key === "Enter" && !e.shiftKey) {
+		e.preventDefault();
+		handleSend();
+	}
+}
 
-  async function handleUpdate(commentId: number, message: string) {
-    await commentsStore.updateComment(ticketId, commentId, { message });
-  }
+async function handleUpdate(commentId: number, message: string) {
+	await commentsStore.updateComment(ticketId, commentId, { message });
+}
 
-  async function handleDelete(commentId: number) {
-    await commentsStore.deleteComment(ticketId, commentId);
-  }
+async function handleDelete(commentId: number) {
+	await commentsStore.deleteComment(ticketId, commentId);
+}
 </script>
 
 <div

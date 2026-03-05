@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { page } from "$app/stores";
-  import { onMount } from "svelte";
-  import Header from "../../components/layout/Header.svelte";
+import { page } from "$app/stores";
+import { onMount } from "svelte";
+import Header from "../../components/layout/Header.svelte";
 
-  $: isSignIn = $page.url.pathname.includes("/signin");
+$: isSignIn = $page.url.pathname.includes("/signin");
 
-  onMount(() => {
-    const saved = localStorage.getItem("lofi") || "lofi";
-    document.documentElement.setAttribute("data-theme", saved);
-  });
+onMount(() => {
+	const saved = localStorage.getItem("lofi") || "lofi";
+	document.documentElement.setAttribute("data-theme", saved);
+});
 </script>
 
 <div class="min-h-screen flex flex-col">

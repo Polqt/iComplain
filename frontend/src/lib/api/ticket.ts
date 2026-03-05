@@ -1,77 +1,57 @@
-import { PUBLIC_API_URL } from '$env/static/public';
-import type { DashboardStats } from '../../types/dashboard.ts';
-import type { Category, Ticket, TicketCreatePayload, TicketPriority, TicketUpdatePayload } from '../../types/tickets.ts';
+import { PUBLIC_API_URL } from "$env/static/public";
+import type { DashboardStats } from "../../types/dashboard.ts";
+import type {
+	ActivityLogListResponse,
+	Category,
+	Ticket,
+	TicketCreatePayload,
+	TicketListResponse,
+	TicketPriority,
+	TicketUpdatePayload,
+} from "../../types/tickets.ts";
 
 const BASE = `${PUBLIC_API_URL}/tickets`;
 
-export type ActivityLog = {
-    id: number;
-    action: 'created' | 'status_changed' | 'priority_changed' | 'assigned' | 'commented' | 'reopened' | 'resolved';
-    ticket_number: string;
-    ticket_title: string;
-    performed_by: {
-        id: number;
-        name: string | null;
-        email: string;
-        avatar: string | null;
-    } | null;
-    description: string;
-    old_value: string | null;
-    new_value: string | null;
-    created_at: string;
-};
-
-export type ActivityLogListResponse = {
-    items: ActivityLog[];
-    total: number;
-    limit: number;
-    offset: number;
-};
-
 async function handleRes<T>(res: Response): Promise<T> {
-    if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || body.detail || res.statusText);
-    }
-    return res.json() as Promise<T>;
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		throw new Error(body.message || body.detail || res.statusText);
+	}
+	return res.json() as Promise<T>;
 }
-
-/** Paginated response from ticket list and community endpoints. */
-export type TicketListResponse = { items: Ticket[]; total: number; limit: number; offset: number };
 
 // Fetch tickets (paginated; defaults to first page of 50)
 export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
-    try {
-        const res = await fetch(`${BASE}/?limit=${limit}&offset=${offset}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-        const data = await handleRes<TicketListResponse>(res);
-        return data.items;
-    } catch (error) {
-        console.error('Error fetching tickets:', error);
-        throw error;
-    }
+	try {
+		const res = await fetch(`${BASE}/?limit=${limit}&offset=${offset}`, {
+			method: "GET",
+			headers: { "Content-Type": "application/json" },
+			credentials: "include",
+		});
+		const data = await handleRes<TicketListResponse>(res);
+		return data.items;
+	} catch (error) {
+		console.error("Error fetching tickets:", error);
+		throw error;
+	}
 }
 
 // Fetch ticket by ID
-export async function fetchTicketById(id: number): Promise<Ticket> { 
-    try {
-        const res = await fetch(`${BASE}/${id}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-        });
+export async function fetchTicketById(id: number): Promise<Ticket> {
+	try {
+		const res = await fetch(`${BASE}/${id}`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+		});
 
-        return await handleRes<Ticket>(res);
-    } catch (error) {
-        console.error(`Error fetching ticket with ID ${id}:`, error);
-        throw error;
-    }
-
+		return await handleRes<Ticket>(res);
+	} catch (error) {
+		console.error(`Error fetching ticket with ID ${id}:`, error);
+		throw error;
+	}
 }
 
 export async function createTicket(ticketData: TicketCreatePayload, attachment?: File | File[] | null): Promise<Ticket> { 
@@ -140,117 +120,132 @@ export async function updateTicket(id: number, ticketData: TicketUpdatePayload, 
     }
 }
 
-export async function adminPatchTicket(id: number, patch: {status?: string; priority?: number }): Promise<Ticket> {
-    try {
-        const res = await fetch(`${BASE}/${id}/admin`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(patch),
-            credentials: 'include',
-        });
+export async function adminPatchTicket(
+	id: number,
+	patch: { status?: string; priority?: number },
+): Promise<Ticket> {
+	try {
+		const res = await fetch(`${BASE}/${id}/admin`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(patch),
+			credentials: "include",
+		});
 
-        return await handleRes<Ticket>(res);
-    } catch (error) {
-        console.error(`Error patching ticket with ID ${id}:`, error);
-        throw error;
-    }
+		return await handleRes<Ticket>(res);
+	} catch (error) {
+		console.error(`Error patching ticket with ID ${id}:`, error);
+		throw error;
+	}
 }
 
 export async function deleteTicket(id: number): Promise<void> {
-    try {
-        const res = await fetch(`${BASE}/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-        })
+	try {
+		const res = await fetch(`${BASE}/${id}`, {
+			method: "DELETE",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+		});
 
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.message || body.detail || `Failed to delete ticket with ID ${id}.`);
-        }
-    } catch (error) {
-        console.error('Error deleting ticket:', error);
-        throw error;
-    }
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			throw new Error(
+				body.message || body.detail || `Failed to delete ticket with ID ${id}.`,
+			);
+		}
+	} catch (error) {
+		console.error("Error deleting ticket:", error);
+		throw error;
+	}
 }
 
 export async function fetchCategories(): Promise<Category[]> {
-    const res = await fetch(`${BASE}/categories`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-    });
-    if (!res.ok) throw new Error('Failed to fetch categories');
-    return res.json() as Promise<Category[]>;
+	const res = await fetch(`${BASE}/categories`, {
+		method: "GET",
+		headers: { "Content-Type": "application/json" },
+		credentials: "include",
+	});
+	if (!res.ok) throw new Error("Failed to fetch categories");
+	return res.json() as Promise<Category[]>;
 }
 
 export async function fetchPriorities(): Promise<TicketPriority[]> {
-    const res = await fetch(`${BASE}/priorities`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-    });
-    if (!res.ok) throw new Error('Failed to fetch priorities');
-    return res.json() as Promise<TicketPriority[]>;
+	const res = await fetch(`${BASE}/priorities`, {
+		method: "GET",
+		headers: { "Content-Type": "application/json" },
+		credentials: "include",
+	});
+	if (!res.ok) throw new Error("Failed to fetch priorities");
+	return res.json() as Promise<TicketPriority[]>;
 }
 
-export async function loadCommunityTickets(limit = 50, offset = 0): Promise<Ticket[]> {
-    try {
-        const res = await fetch(`${BASE}/community?limit=${limit}&offset=${offset}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-        const data = await handleRes<TicketListResponse>(res);
-        return data.items;
-    } catch (error) {
-        console.error(`Error fetching community tickets:`, error);
-        throw error;
-    }
+export async function loadCommunityTickets(
+	limit = 50,
+	offset = 0,
+): Promise<Ticket[]> {
+	try {
+		const res = await fetch(
+			`${BASE}/community?limit=${limit}&offset=${offset}`,
+			{
+				method: "GET",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+			},
+		);
+		const data = await handleRes<TicketListResponse>(res);
+		return data.items;
+	} catch (error) {
+		console.error(`Error fetching community tickets:`, error);
+		throw error;
+	}
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-    try {
-        const res = await fetch(`${BASE}/stats/dashboard`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-        });
+	try {
+		const res = await fetch(`${BASE}/stats/dashboard`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+		});
 
-        return await handleRes<DashboardStats>(res);
-    } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        throw error;
-    }
+		return await handleRes<DashboardStats>(res);
+	} catch (error) {
+		console.error("Error fetching dashboard stats:", error);
+		throw error;
+	}
 }
-export async function getActivityLogs(limit = 50, offset = 0, ticketId?: number): Promise<ActivityLogListResponse> {
-    try {
-        const params = new URLSearchParams({
-            limit: limit.toString(),
-            offset: offset.toString(),
-        });
-        
-        if (ticketId !== undefined && ticketId !== null) {
-            params.append('ticket_id', ticketId.toString());
-        }
-        
-        const res = await fetch(`${BASE}/activity/?${params}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-        });
+export async function getActivityLogs(
+	limit = 50,
+	offset = 0,
+	ticketId?: number,
+): Promise<ActivityLogListResponse> {
+	try {
+		const params = new URLSearchParams({
+			limit: limit.toString(),
+			offset: offset.toString(),
+		});
 
-        return await handleRes<ActivityLogListResponse>(res);
-    } catch (error) {
-        console.error('Error fetching activity logs:', error);
-        throw error;
-    }
+		if (ticketId !== undefined && ticketId !== null) {
+			params.append("ticket_id", ticketId.toString());
+		}
+
+		const res = await fetch(`${BASE}/activity/?${params}`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+		});
+
+		return await handleRes<ActivityLogListResponse>(res);
+	} catch (error) {
+		console.error("Error fetching activity logs:", error);
+		throw error;
+	}
 }

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import Icon from "@iconify/svelte";
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
 
-  function handleSignIn(): void {
-    goto("/signin");
-  }
+function handleSignIn(): void {
+	goto("/signin");
+}
 
-  function handleGoHome(): void {
-    goto("/");
-  }
+function handleGoHome(): void {
+	goto("/");
+}
 </script>
 
 <div

@@ -114,15 +114,16 @@ def ticket_list(request, limit: int = PAGE_SIZE_DEFAULT, offset: int = 0):
 def ticket_history(request):
     status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
     comments_qs = TicketComment.objects.select_related("user").order_by("created_at")
-    base = _active_tickets().select_related("category", "priority", "student").prefetch_related(
+
+    prefetch = [
         Prefetch("status_history", queryset=status_history_qs),
         Prefetch("comments", queryset=comments_qs),
-        "feedback",
-    )
+    ]
     if request.user.is_staff:
-        tickets = base.all()
-    else:
-        tickets = base.filter(student=request.user)
+        prefetch.append("feedback")
+
+    base = _active_tickets().select_related("category", "priority", "student").prefetch_related(*prefetch)
+    tickets = base.all() if request.user.is_staff else base.filter(student=request.user)
 
     events = []
     for ticket in tickets:
@@ -132,10 +133,8 @@ def ticket_history(request):
             "ticket": ticket,
             "action": "created",
             "description": "Ticket created",
-            "event_status": "pending",
             "performed_by": None,
         })
-        # Status history
         for h in ticket.status_history.all():
             action = history_action_for_status_change(h.old_status, h.new_status)
             events.append({
@@ -148,10 +147,8 @@ def ticket_history(request):
                     f"Status changed from {map_status_for_history(h.old_status)} "
                     f"to {map_status_for_history(h.new_status)}"
                 ),
-                "event_status": h.new_status,
                 "performed_by": h.changed_by.full_name if h.changed_by else None,
             })
-        # Comments
         for c in ticket.comments.all():
             events.append({
                 "at": c.created_at,
@@ -161,14 +158,12 @@ def ticket_history(request):
                 "description": f"Comment: {c.message[:100]}{'…' if len(c.message) > 100 else ''}",
                 "performed_by": c.user.full_name if c.user else None,
             })
-        
-        if hasattr(ticket, 'feedback') and ticket.feedback:
+        if request.user.is_staff and hasattr(ticket, 'feedback') and ticket.feedback:
             feedback = ticket.feedback
             stars = "⭐" * feedback.rating
             feedback_desc = f"Feedback submitted: {stars} ({feedback.rating}/5)"
             if feedback.comments:
                 feedback_desc += f" - {feedback.comments[:80]}{'…' if len(feedback.comments) > 80 else ''}"
-            
             events.append({
                 "at": feedback.created_at,
                 "id": f"feedback-{feedback.id}",
@@ -185,13 +180,14 @@ def ticket_history(request):
         t = e["ticket"]
         priority_name = t.priority.name if t.priority else ""
         category_name = t.category.name if t.category else None
-        event_status = e.get("event_status", t.status)
+
         if e["action"] in status_change_actions:
-            event_status = map_status_for_history(e["new_status"])
+            final_status = map_status_for_history(e["new_status"])
         elif e["action"] == "created":
-            event_status = map_status_for_history("pending")
+            final_status = map_status_for_history("pending")
         else:
-            event_status = map_status_for_history(t.status)
+            final_status = map_status_for_history(t.status)
+
         out.append(TicketHistoryItemSchema(
             id=e["id"],
             ticketPk=t.id,
@@ -201,93 +197,12 @@ def ticket_history(request):
             description=e["description"],
             timestamp=format_timestamp(e["at"]),
             date=format_date(e["at"]),
-            status=map_status_for_history(event_status),
+            status=final_status,
             priority=map_priority_for_history(priority_name),
             category=category_name,
             performedBy=e.get("performed_by"),
         ))
     return out
-
-@router.get("/admin/history", response={200: list[TicketHistoryItemSchema], 403: dict})
-def admin_ticket_history(request):
-    if not request.user.is_staff:
-        return {"detail": "Not authorized."}, 403
-    
-    status_history_qs = TicketStatusHistory.objects.select_related("changed_by").order_by("changed_at")
-    comments_qs = TicketComment.objects.select_related("user").order_by("created_at")
-    tickets = _active_tickets().select_related("category", "priority", "student").prefetch_related(
-        Prefetch("status_history", queryset=status_history_qs),
-        Prefetch("comments", queryset=comments_qs),
-    ).all()
-
-    events = []
-    for ticket in tickets:
-        # Created
-        events.append({
-            "at": ticket.created_at,
-            "id": f"created-{ticket.id}-{ticket.created_at.isoformat()}",
-            "ticket": ticket,
-            "action": "created",
-            "description": "Ticket created",
-            "event_status": "pending",
-            "performed_by": None,
-        })
-        # Status history
-        for h in ticket.status_history.all():
-            action = history_action_for_status_change(h.old_status, h.new_status)
-            events.append({
-                "at": h.changed_at,
-                "id": f"status-{h.id}",
-                "ticket": ticket,
-                "action": action,
-                "new_status": h.new_status,
-                "description": (
-                    f"Status changed from {map_status_for_history(h.old_status)} "
-                    f"to {map_status_for_history(h.new_status)}"
-                ),
-                "event_status": h.new_status,
-                "performed_by": h.changed_by.full_name if h.changed_by else None,
-            })
-        # Comments
-        for c in ticket.comments.all():
-            events.append({
-                "at": c.created_at,
-                "id": f"comment-{c.id}",
-                "ticket": ticket,
-                "action": "commented",
-                "description": f"Comment: {c.message[:100]}{'…' if len(c.message) > 100 else ''}",
-                "performed_by": c.user.full_name if c.user else None,
-            })
-
-    events.sort(key=lambda e: e["at"], reverse=True)
-    status_change_actions = ("updated", "resolved", "closed", "reopened")
-    out = []
-    for e in events:
-        t = e["ticket"]
-        priority_name = t.priority.name if t.priority else ""
-        category_name = t.category.name if t.category else None
-        event_status = e.get("event_status", t.status)
-        if e["action"] in status_change_actions:
-            event_status = map_status_for_history(e["new_status"])
-        elif e["action"] == "created":
-            event_status = map_status_for_history("pending")
-        else:
-            event_status = map_status_for_history(t.status)
-        out.append(TicketHistoryItemSchema(
-            id=e["id"],
-            ticketPk=t.id,
-            ticketId=t.ticket_number,
-            title=t.title,
-            action=e["action"],
-            description=e["description"],
-            timestamp=format_timestamp(e["at"]),
-            date=format_date(e["at"]),
-            status=map_status_for_history(event_status),
-            priority=map_priority_for_history(priority_name),
-            category=category_name,
-            performedBy=e.get("performed_by"),
-        ))
-    return 200, out
 
 @router.get("/{id}", response={200: TicketSchema, 404: dict})
 def ticket_detail(request, id: int):
@@ -829,17 +744,14 @@ def dashboard_stats(request):
     last_month_start = (now - timedelta(days=30)).date()
     this_week_start = (now - timedelta(days=7)).date()
     
-    # Base active tickets
     base = _active_tickets()
     
-    # Optimize: Aggregate all counts in one query per time period
     all_counts = base.values('status').annotate(count=Count('id')).values_list('status', 'count')
     status_counts = dict(all_counts)
     
     last_month_counts = base.filter(created_at__date__lt=last_month_start).values('status').annotate(count=Count('id')).values_list('status', 'count')
     last_month_status_counts = dict(last_month_counts)
     
-    # Extract individual metrics
     total_tickets = base.count()
     pending_tickets = status_counts.get('pending', 0)
     resolved_tickets = status_counts.get('resolved', 0)
@@ -896,7 +808,7 @@ def dashboard_stats(request):
             change=f"+{abs(pending_change):.0f}%" if pending_change > 0 else f"-{abs(pending_change):.0f}%",
             subtitle=f"Last Month {last_month_pending}",
             trend="error" if pending_change > 0 else "success",
-            is_critical=True,  # VISUAL EMPHASIS
+            is_critical=True,  
             is_increasing=pending_change > 0
         ),
         DashboardMetricsSchema(
@@ -932,7 +844,6 @@ def dashboard_stats(request):
     volume_data = []
     days = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
     
-    # Get all volume data in one query
     volume_counts = base.filter(
         created_at__date__gte=today - timedelta(days=6)
     ).extra(select={'created_date': 'DATE(created_at)'}).values('created_date').annotate(count=Count('id')).values_list('created_date', 'count')
@@ -948,11 +859,9 @@ def dashboard_stats(request):
                 value=count
             )
         )
-    
-    # Status breakdown
+        
     status_breakdown = dict(status_counts)
     
-    # Category breakdown
     category_breakdown = dict(
         base.values('category__name').annotate(count=Count('id')).values_list('category__name', 'count')
     )
@@ -968,13 +877,7 @@ def dashboard_stats(request):
 
 @router.get("/activity/", response=ActivityLogListSchema)
 def get_activity_logs(request, limit: int = 50, offset: int = 0, ticket_id: int | None = None):
-    """
-    Get paginated activity logs.
-    Optional: filter by ticket_id for a specific ticket's activity.
-    
-    Optimized with select_related to avoid N+1 queries.
-    """
-    limit = min(max(1, limit), 100)  # Limit between 1-100
+    limit = min(max(1, limit), 100)  
     offset = max(0, offset)
     
     # Base queryset with optimizations
@@ -983,17 +886,14 @@ def get_activity_logs(request, limit: int = 50, offset: int = 0, ticket_id: int 
         'performed_by'
     ).order_by('-created_at')
     
-    # Filter by ticket if provided
     if ticket_id:
         qs = qs.filter(ticket_id=ticket_id)
     
-    # Count total before pagination
     total = qs.count()
     
     # Paginate
     items = list(qs[offset:offset + limit])
     
-    # Convert to schemas with proper formatting
     activity_items = []
     for activity in items:
         activity_items.append(ActivityLogSchema(

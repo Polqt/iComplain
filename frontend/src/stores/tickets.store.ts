@@ -1,6 +1,20 @@
 import { get, writable, type Readable } from "svelte/store";
-import type { RawTicket, Ticket, TicketCreatePayload, TicketsState, TicketUpdatePayload } from "../types/tickets.ts";
-import { fetchTicketById, fetchTickets, createTicket as apiCreateTicket, updateTicket as apiUpdateTicket, deleteTicket as apiDeleteTicket, adminPatchTicket as apiAdminPatch, loadCommunityTickets as apiGetCommunity } from "../lib/api/ticket.ts";
+import type {
+	RawTicket,
+	Ticket,
+	TicketCreatePayload,
+	TicketsState,
+	TicketUpdatePayload,
+} from "../types/tickets.ts";
+import {
+	fetchTicketById,
+	fetchTickets,
+	createTicket as apiCreateTicket,
+	updateTicket as apiUpdateTicket,
+	deleteTicket as apiDeleteTicket,
+	adminPatchTicket as apiAdminPatch,
+	loadCommunityTickets as apiGetCommunity,
+} from "../lib/api/ticket.ts";
 
 interface TicketsStore extends Readable<TicketsState> {
     setTickets: (tickets: Ticket[]) => void;
@@ -21,7 +35,6 @@ interface TicketsStore extends Readable<TicketsState> {
     removeTicketFromStore: (id: number) => void;
     adjustCommentCount: (ticketId: number, delta: number) => void;
 }
-
 
 function createTicketsStore(): TicketsStore {
     const { subscribe, update, set } = writable<TicketsState>({
@@ -262,24 +275,24 @@ function createTicketsStore(): TicketsStore {
 export const ticketsStore = createTicketsStore();
 
 export function getTicketsByStatus(status: string) {
-    const store = get(ticketsStore);
-    return store.tickets.filter(t => t.status === status);
+	const store = get(ticketsStore);
+	return store.tickets.filter((t) => t.status === status);
 }
 
 export function getPendingTicketsCount() {
-    const store = get(ticketsStore);
-    return store.tickets.filter(t => t.status === 'pending').length;
+	const store = get(ticketsStore);
+	return store.tickets.filter((t) => t.status === "pending").length;
 }
 
 export function searchTickets(query: string) {
-    const store = get(ticketsStore);
-    const lowerQuery= query.toLowerCase();
-    return store.tickets.filter(
-        t => 
-            t.title.toLowerCase().includes(lowerQuery) ||
-            t.description.toLowerCase().includes(lowerQuery) ||
-            t.ticket_number.toLowerCase().includes(lowerQuery) ||
-            t.building.toLowerCase().includes(lowerQuery) ||
-            t.room_name.toLowerCase().includes(lowerQuery)
-    )
+	const store = get(ticketsStore);
+	const lowerQuery = query.toLowerCase();
+	return store.tickets.filter(
+		(t) =>
+			t.title.toLowerCase().includes(lowerQuery) ||
+			t.description.toLowerCase().includes(lowerQuery) ||
+			t.ticket_number.toLowerCase().includes(lowerQuery) ||
+			t.building.toLowerCase().includes(lowerQuery) ||
+			t.room_name.toLowerCase().includes(lowerQuery),
+	);
 }

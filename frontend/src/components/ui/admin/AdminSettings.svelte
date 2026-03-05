@@ -1,53 +1,59 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import AdminLayout from "../../layout/AdminLayout.svelte";
-  import { onMount } from "svelte";
-  import {
-    loadRecentSearches,
-    clearRecentSearchesStorage,
-  } from "../../../utils/useSearch.ts";
+import Icon from "@iconify/svelte";
+import AdminLayout from "../../layout/AdminLayout.svelte";
+import { onMount } from "svelte";
+import {
+	loadRecentSearches,
+	clearRecentSearchesStorage,
+} from "../../../utils/useSearch.ts";
 
-  let theme: string = "lofi";
-  let emailNotifications: boolean = true;
-  let inAppNotifications: boolean = true;
-  let recentSearchesCount: number = 0;
-  let clearSuccess: boolean = false;
+let theme: string = "lofi";
+let emailNotifications: boolean = true;
+let inAppNotifications: boolean = true;
+let recentSearchesCount: number = 0;
+let clearSuccess: boolean = false;
 
-  function setTheme(newTheme: string) {
-    theme = newTheme;
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", newTheme);
-  }
+function setTheme(newTheme: string) {
+	theme = newTheme;
+	document.documentElement.setAttribute("data-theme", theme);
+	localStorage.setItem("theme", newTheme);
+}
 
-  function toggleEmailNotifications() {
-    emailNotifications = !emailNotifications;
-    localStorage.setItem("settings.emailNotifications", String(emailNotifications));
-  }
+function toggleEmailNotifications() {
+	emailNotifications = !emailNotifications;
+	localStorage.setItem(
+		"settings.emailNotifications",
+		String(emailNotifications),
+	);
+}
 
-  function toggleInAppNotifications() {
-    inAppNotifications = !inAppNotifications;
-    localStorage.setItem("settings.inAppNotifications", String(inAppNotifications));
-  }
+function toggleInAppNotifications() {
+	inAppNotifications = !inAppNotifications;
+	localStorage.setItem(
+		"settings.inAppNotifications",
+		String(inAppNotifications),
+	);
+}
 
-  function clearRecentSearches() {
-    clearRecentSearchesStorage();
-    recentSearchesCount = 0;
-    clearSuccess = true;
-    setTimeout(() => (clearSuccess = false), 2500);
-  }
+function clearRecentSearches() {
+	clearRecentSearchesStorage();
+	recentSearchesCount = 0;
+	clearSuccess = true;
+	setTimeout(() => (clearSuccess = false), 2500);
+}
 
-  function refreshRecentSearchesCount() {
-    recentSearchesCount = loadRecentSearches().length;
-  }
+function refreshRecentSearchesCount() {
+	recentSearchesCount = loadRecentSearches().length;
+}
 
-  onMount(() => {
-    theme = localStorage.getItem("theme") || "lofi";
-    emailNotifications =
-      localStorage.getItem("settings.emailNotifications") !== "false";
-    inAppNotifications =
-      localStorage.getItem("settings.inAppNotifications") !== "false";
-    refreshRecentSearchesCount();
-  });
+onMount(() => {
+	theme = localStorage.getItem("theme") || "lofi";
+	emailNotifications =
+		localStorage.getItem("settings.emailNotifications") !== "false";
+	inAppNotifications =
+		localStorage.getItem("settings.inAppNotifications") !== "false";
+	refreshRecentSearchesCount();
+});
 </script>
 
 <svelte:head>

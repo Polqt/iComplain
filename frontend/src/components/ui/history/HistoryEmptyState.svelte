@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
+import Icon from "@iconify/svelte";
 
-  export let searchQuery: string = "";
-  export let hasActiveFilter: boolean = false;
-  export let onclear: () => void = () => {};
+export let searchQuery: string = "";
+export let hasActiveFilter: boolean = false;
+export let onclear: () => void = () => {};
 </script>
 
 <div class="flex flex-col items-center justify-center h-full text-center py-12">

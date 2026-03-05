@@ -1,67 +1,64 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-  import Icon from "@iconify/svelte";
-  import type {
-    FeedbackCreatePayload,
-    FeedbackUpdatePayload,
-    TicketFeedback,
-  } from "../../../types/feedback.ts";
-  import { createFeedback, updateFeedback } from "../../../lib/api/feedback.ts";
+import { createEventDispatcher } from "svelte";
+import Icon from "@iconify/svelte";
+import type {
+	FeedbackCreatePayload,
+	FeedbackUpdatePayload,
+	TicketFeedback,
+} from "../../../types/feedback.ts";
+import { createFeedback, updateFeedback } from "../../../lib/api/feedback.ts";
 
-  export let ticketId: number;
-  export let existing: TicketFeedback | null = null;
-  export let disabled: boolean = false;
+export let ticketId: number;
+export let existing: TicketFeedback | null = null;
+export let disabled: boolean = false;
 
-  const dispatch = createEventDispatcher();
+const dispatch = createEventDispatcher();
 
-  let rating: number = existing?.rating ?? 5;
-  let comments: string = existing?.comments ?? "";
-  let saving = false;
-  let error: string | null = null;
-  let hoveredStar: number | null = null;
+let rating: number = existing?.rating ?? 5;
+let comments: string = existing?.comments ?? "";
+let saving = false;
+let error: string | null = null;
+let hoveredStar: number | null = null;
 
-  async function handleSubmit(e: Event) {
-    e.preventDefault();
-    if (disabled || saving) return;
-    saving = true;
-    error = null;
+async function handleSubmit(e: Event) {
+	e.preventDefault();
+	if (disabled || saving) return;
+	saving = true;
+	error = null;
 
-    try {
-      const payload: FeedbackCreatePayload | FeedbackUpdatePayload = {
-        rating,
-        comments: comments || null,
-      };
+	try {
+		const payload: FeedbackCreatePayload | FeedbackUpdatePayload = {
+			rating,
+			comments: comments || null,
+		};
 
-      let result: TicketFeedback;
-      if (existing) {
-        result = await updateFeedback(
-          ticketId,
-          existing.id,
-          payload as FeedbackUpdatePayload,
-        );
-      } else {
-        result = await createFeedback(
-          ticketId,
-          payload as FeedbackCreatePayload,
-        );
-      }
+		let result: TicketFeedback;
+		if (existing) {
+			result = await updateFeedback(
+				ticketId,
+				existing.id,
+				payload as FeedbackUpdatePayload,
+			);
+		} else {
+			result = await createFeedback(ticketId, payload as FeedbackCreatePayload);
+		}
 
-      dispatch("saved", { feedback: result });
-    } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
-      dispatch("error", { error });
-    } finally {
-      saving = false;
-    }
-  }
+		dispatch("saved", { feedback: result });
+	} catch (err) {
+		error = err instanceof Error ? err.message : String(err);
+		dispatch("error", { error });
+	} finally {
+		saving = false;
+	}
+}
 
-  function setRating(value: number) {
-    if (!disabled) {
-      rating = value;
-    }
-  }
+function setRating(value: number) {
+	if (!disabled) {
+		rating = value;
+	}
+}
 
-  $: displayRating = hoveredStar !== null ? hoveredStar : rating;
+$: displayRating = hoveredStar !== null ? hoveredStar : rating;
 </script>
 
 <form class="space-y-4" onsubmit={handleSubmit}>

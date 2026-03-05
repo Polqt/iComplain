@@ -1,67 +1,66 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { TicketStatus } from "../../../types/tickets.ts";
-  import {
-    statusFilters,
-    priorityFilters,
-    categoriesFilters,
-  } from "../../../utils/ticketConfig.ts";
+import Icon from "@iconify/svelte";
+import type { TicketStatus } from "../../../types/tickets.ts";
+import {
+	statusFilters,
+	priorityFilters,
+	categoriesFilters,
+} from "../../../utils/ticketConfig.ts";
 
-  export let activeStatus: TicketStatus | "all" = "all";
-  export let priorityFilter: string = "all";
-  export let categoryFilter: string = "all";
-  export let totalCount = 0;
-  export let search: string = "";
-  export let statusCounts: Record<TicketStatus | "all", number> = {
-    all: 0,
-    pending: 0,
-    in_progress: 0,
-    resolved: 0,
-    closed: 0,
-  };
+export let activeStatus: TicketStatus | "all" = "all";
+export let priorityFilter: string = "all";
+export let categoryFilter: string = "all";
+export let totalCount = 0;
+export let search: string = "";
+export let statusCounts: Record<TicketStatus | "all", number> = {
+	all: 0,
+	pending: 0,
+	in_progress: 0,
+	resolved: 0,
+	closed: 0,
+};
 
-  export let onStatusChange: (value: TicketStatus | "all") => void = () => {};
-  export let onPriorityChange: (value: string) => void = () => {};
-  export let onCategoryChange: (value: string) => void = () => {};
-  export let onClear: () => void = () => {};
+export let onStatusChange: (value: TicketStatus | "all") => void = () => {};
+export let onPriorityChange: (value: string) => void = () => {};
+export let onCategoryChange: (value: string) => void = () => {};
+export let onClear: () => void = () => {};
 
-  $: hasActiveFilters =
-    activeStatus !== "all" ||
-    priorityFilter !== "all" ||
-    categoryFilter !== "all";
+$: hasActiveFilters =
+	activeStatus !== "all" ||
+	priorityFilter !== "all" ||
+	categoryFilter !== "all";
 
-  $: activeStatusLabel =
-    statusFilters.find((f) => f.id === activeStatus)?.label ?? "All";
-  $: activeStatusDot =
-    statusFilters.find((f) => f.id === activeStatus)?.dot ??
-    "bg-base-content/30";
+$: activeStatusLabel =
+	statusFilters.find((f) => f.id === activeStatus)?.label ?? "All";
+$: activeStatusDot =
+	statusFilters.find((f) => f.id === activeStatus)?.dot ?? "bg-base-content/30";
 
-  $: activePriorityLabel =
-    priorityFilters.find((p) => p.id === priorityFilter)?.label ?? "All";
-  $: activePriorityDot =
-    priorityFilter === "urgent"
-      ? "bg-red-500"
-      : priorityFilter === "high"
-        ? "bg-orange-400"
-        : priorityFilter === "medium"
-          ? "bg-yellow-400"
-          : priorityFilter === "low"
-            ? "bg-base-content/20"
-            : null;
+$: activePriorityLabel =
+	priorityFilters.find((p) => p.id === priorityFilter)?.label ?? "All";
+$: activePriorityDot =
+	priorityFilter === "urgent"
+		? "bg-red-500"
+		: priorityFilter === "high"
+			? "bg-orange-400"
+			: priorityFilter === "medium"
+				? "bg-yellow-400"
+				: priorityFilter === "low"
+					? "bg-base-content/20"
+					: null;
 
-  $: activeCategoryLabel =
-    categoriesFilters.find((c) => c.id === categoryFilter)?.name ?? "All";
+$: activeCategoryLabel =
+	categoriesFilters.find((c) => c.id === categoryFilter)?.name ?? "All";
 
-  function closeDropdown() {
-    (document.activeElement as HTMLElement)?.blur();
-  }
+function closeDropdown() {
+	(document.activeElement as HTMLElement)?.blur();
+}
 
-  function clearAll() {
-    onStatusChange("all");
-    onPriorityChange("all");
-    onCategoryChange("all");
-    onClear();
-  }
+function clearAll() {
+	onStatusChange("all");
+	onPriorityChange("all");
+	onCategoryChange("all");
+	onClear();
+}
 </script>
 
 <div class="flex items-center gap-2 shrink-0">

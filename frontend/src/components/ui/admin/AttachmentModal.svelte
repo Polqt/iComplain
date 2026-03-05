@@ -1,27 +1,27 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { getFileName, isImageFile } from "../../../utils/attachment.ts";
+import Icon from "@iconify/svelte";
+import { getFileName, isImageFile } from "../../../utils/attachment.ts";
 
-  export let attachment: string | null = null;
-  export let ticketNumber: string = "";
+export let attachment: string | null = null;
+export let ticketNumber: string = "";
 
-  let isOpen = false;
+let isOpen = false;
 
-  function open() {
-    if (attachment) isOpen = true;
-  }
+function open() {
+	if (attachment) isOpen = true;
+}
 
-  function close() {
-    isOpen = false;
-  }
+function close() {
+	isOpen = false;
+}
 
-  function handleBackdropClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) close();
-  }
+function handleBackdropClick(e: MouseEvent) {
+	if (e.target === e.currentTarget) close();
+}
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (isOpen && e.key === "Escape") close();
-  }
+function handleKeydown(e: KeyboardEvent) {
+	if (isOpen && e.key === "Escape") close();
+}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />

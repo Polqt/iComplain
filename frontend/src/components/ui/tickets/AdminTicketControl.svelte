@@ -1,83 +1,83 @@
 <script lang="ts">
-  import { ticketsStore } from "../../../stores/tickets.store.ts";
-  import type { AdminTicketEdit } from "../../../types/tickets.ts";
-  import type { Ticket } from "../../../types/tickets.ts";
-  import {
-    getPriorityKey,
-    priorities,
-    priorityConfig,
-    priorityIcons,
-    priorityIdMap,
-    statusConfig,
-    statuses,
-  } from "../../../utils/ticketConfig.ts";
-  import Icon from "@iconify/svelte";
+import { ticketsStore } from "../../../stores/tickets.store.ts";
+import type { AdminTicketEdit } from "../../../types/tickets.ts";
+import type { Ticket } from "../../../types/tickets.ts";
+import {
+	getPriorityKey,
+	priorities,
+	priorityConfig,
+	priorityIcons,
+	priorityIdMap,
+	statusConfig,
+	statuses,
+} from "../../../utils/ticketConfig.ts";
+import Icon from "@iconify/svelte";
 
-  export let ticket: Ticket;
+export let ticket: Ticket;
 
-  let editing: AdminTicketEdit = null;
-  let saving: AdminTicketEdit = null;
-  let saved: AdminTicketEdit = null;
+let editing: AdminTicketEdit = null;
+let saving: AdminTicketEdit = null;
+let saved: AdminTicketEdit = null;
 
-  async function applyStatus(newStatus: string) {
-    if (newStatus === ticket.status) {
-      editing = null;
-      return;
-    }
-    saving = "status";
-    editing = null;
+async function applyStatus(newStatus: string) {
+	if (newStatus === ticket.status) {
+		editing = null;
+		return;
+	}
+	saving = "status";
+	editing = null;
 
-    const updated = await ticketsStore.adminPatchTicket(ticket.id, {
-      status: newStatus,
-    });
+	const updated = await ticketsStore.adminPatchTicket(ticket.id, {
+		status: newStatus,
+	});
 
-    if (updated) {
-      await ticketsStore.loadTicketById(ticket.id);
-      saved = "status";
-      setTimeout(() => {
-        saved = null;
-      }, 2000);
-    }
-    saving = null;
-  }
+	if (updated) {
+		await ticketsStore.loadTicketById(ticket.id);
+		saved = "status";
+		setTimeout(() => {
+			saved = null;
+		}, 2000);
+	}
+	saving = null;
+}
 
-  async function applyPriority(newKey: string) {
-    if (newKey === getPriorityKey(ticket.priority)) {
-      editing = null;
-      return;
-    }
-    saving = "priority";
-    editing = null;
+async function applyPriority(newKey: string) {
+	if (newKey === getPriorityKey(ticket.priority)) {
+		editing = null;
+		return;
+	}
+	saving = "priority";
+	editing = null;
 
-    const updated = await ticketsStore.adminPatchTicket(ticket.id, {
-      priority: priorityIdMap[newKey],
-    });
+	const updated = await ticketsStore.adminPatchTicket(ticket.id, {
+		priority: priorityIdMap[newKey],
+	});
 
-    if (updated) {
-      await ticketsStore.loadTicketById(ticket.id);
-      saved = "priority";
-      setTimeout(() => {
-        saved = null;
-      }, 2000);
-    }
-    saving = null;
-  }
+	if (updated) {
+		await ticketsStore.loadTicketById(ticket.id);
+		saved = "priority";
+		setTimeout(() => {
+			saved = null;
+		}, 2000);
+	}
+	saving = null;
+}
 
-  function clickOutside(node: HTMLElement, cb: () => void) {
-    const handler = (e: MouseEvent) => {
-      if (!node.contains(e.target as Node)) {
-        cb();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return {
-      destroy: () => {
-        document.removeEventListener("mousedown", handler);
-      },
-    };
-  }
+function clickOutside(node: HTMLElement, cb: () => void) {
+	const handler = (e: MouseEvent) => {
+		if (!node.contains(e.target as Node)) {
+			cb();
+		}
+	};
+	document.addEventListener("mousedown", handler);
+	return {
+		destroy: () => {
+			document.removeEventListener("mousedown", handler);
+		},
+	};
+}
 
-  $: pKey = getPriorityKey(ticket.priority);
+$: pKey = getPriorityKey(ticket.priority);
 </script>
 
 <div class="flex items-center gap-2">
