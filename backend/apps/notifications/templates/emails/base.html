@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}iComplain{% endblock %}</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f4f5; }
+    .container { max-width: 600px; margin: 32px auto; background: #fff; border-radius: 8px; border: 1px solid #e4e4e7; overflow: hidden; }
+    .header { background: #18181b; color: #fff; padding: 24px 32px; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    .body { padding: 32px; color: #27272a; line-height: 1.6; }
+    .footer { padding: 16px 32px; background: #fafafa; border-top: 1px solid #e4e4e7; color: #71717a; font-size: 12px; text-align: center; }
+    .btn { display: inline-block; padding: 10px 24px; background: #18181b; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>iComplain</h1>
+    </div>
+    <div class="body">
+      {% block content %}{% endblock %}
+    </div>
+    <div class="footer">
+      &copy; {{ year }} iComplain &mdash; University of St. La Salle
+    </div>
+  </div>
+</body>
+</html>

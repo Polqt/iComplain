@@ -24,7 +24,7 @@
   let pendingPriority: number | null = null;
   let isSaving = false;
   let highlightedTicketId: number | null = null;
-  let handledQueryTicketId: number | null = null;
+  let handledQueryTicketNumber: string | null = null;
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
   const ticketRowElements = new Map<number, HTMLButtonElement>();
 
@@ -73,18 +73,9 @@
       matchesCategory &&
       matchesLocation
     );
-  }).sort((a, b) => {
-    const aTime = new Date(a.updated_at).getTime();
-    const bTime = new Date(b.updated_at).getTime();
-    return bTime - aTime || b.id - a.id;
-  });
+  })
 
-  $: queryTicketId = (() => {
-    const raw = $page.url.searchParams.get("ticket");
-    if (!raw) return null;
-    const parsed = Number(raw);
-    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-  })();
+  $: queryTicketNumber = $page.url.searchParams.get("ticket");
 
   $: {
     if (filteredTickets.length === 0) {
@@ -99,8 +90,8 @@
 
   $: if (
     !isLoading &&
-    queryTicketId !== null &&
-    handledQueryTicketId !== queryTicketId
+    queryTicketNumber !== null &&
+    handledQueryTicketNumber !== queryTicketNumber
   ) {
     searchQuery = "";
     statusFilter = "all";
@@ -108,12 +99,12 @@
     categoryFilter = "all";
     locationFilter = "all";
 
-    const exists = tickets.some((ticket) => ticket.id === queryTicketId);
-    if (exists) {
-      selectedTicketId = queryTicketId;
-      highlightTicket(queryTicketId);
+    const match = tickets.find((ticket) => ticket.ticket_number === queryTicketNumber);
+    if (match) {
+      selectedTicketId = match.id;
+      highlightTicket(match.id);
     }
-    handledQueryTicketId = queryTicketId;
+    handledQueryTicketNumber = queryTicketNumber;
   }
 
   onMount(async () => {
@@ -318,9 +309,6 @@
                     <span class="text-xs font-semibold font-mono">
                       {ticket.ticket_number}
                     </span>
-                    <span class="text-[11px] text-base-content/50">
-                      {new Date(ticket.updated_at).toLocaleDateString()}
-                    </span>
                   </div>
                   <p class="text-sm font-semibold truncate">
                     {ticket.student.name || "Anonymous"}
@@ -510,17 +498,6 @@
                     <option value="4">Urgent</option>
                   </select>
                 </div>
-
-                <div>
-                  <p class="text-xs text-base-content/60 font-semibold mb-1">
-                    Updated
-                  </p>
-                  <div
-                    class="px-3 py-2 rounded-lg border border-base-content/10 bg-base-200 text-sm"
-                  >
-                    {new Date(selectedTicket.updated_at).toLocaleString()}
-                  </div>
-                </div>
               </div>
 
               <div class="flex flex-wrap items-center gap-2">
@@ -553,7 +530,7 @@
                   type="button"
                   class="btn btn-sm btn-outline gap-2"
                   onclick={() =>
-                    (window.location.href = `/history?ticket=${selectedTicket.id}`)}
+                    (window.location.href = `/history?ticket=${selectedTicket.ticket_number}`)}
                 >
                   <Icon icon="mdi:history" width="18" height="18" />
                   View History

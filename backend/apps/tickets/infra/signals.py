@@ -1,11 +1,7 @@
-"""
-Signals to automatically log ticket activities.
-These ensure every important ticket change is recorded without duplication.
-"""
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
-from .models import Ticket, TicketComment, ActivityLog, TicketStatusHistory
+from ..models import Ticket, TicketComment, ActivityLog, TicketStatusHistory
 
 
 @receiver(post_save, sender=Ticket, dispatch_uid='log_ticket_activity')

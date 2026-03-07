@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block title %}New Comment{% endblock %}
+{% block content %}
+<p>Hi {{ user.first_name|default:"there" }},</p>
+<p>A new comment has been added to ticket <strong>#{{ ticket.id }} &mdash; {{ ticket.title }}</strong>.</p>
+<p><strong>Comment by:</strong> {{ comment.user.get_full_name }}<br>
+<strong>Message:</strong></p>
+<blockquote style="border-left:3px solid #e4e4e7;padding:8px 16px;margin:8px 0;color:#52525b;">
+  {{ comment.content }}
+</blockquote>
+{% endblock %}

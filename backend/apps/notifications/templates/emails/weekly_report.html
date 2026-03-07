@@ -1,0 +1,24 @@
+{% extends "emails/base.html" %}
+{% block title %}Weekly Report{% endblock %}
+{% block content %}
+<p>Hi {{ user.first_name|default:"Admin" }},</p>
+<p>Here is your weekly report for <strong>{{ week_start }} &ndash; {{ week_end }}</strong>:</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0;">
+  <tr style="background:#f4f4f5;">
+    <td style="padding:8px 12px;font-weight:600;">New Tickets</td>
+    <td style="padding:8px 12px;text-align:right;">{{ new_count }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px 12px;font-weight:600;">Resolved</td>
+    <td style="padding:8px 12px;text-align:right;">{{ resolved_count }}</td>
+  </tr>
+  <tr style="background:#f4f4f5;">
+    <td style="padding:8px 12px;font-weight:600;">Still Open</td>
+    <td style="padding:8px 12px;text-align:right;">{{ open_count }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px 12px;font-weight:600;">Avg Resolution Time</td>
+    <td style="padding:8px 12px;text-align:right;">{{ avg_resolution }}</td>
+  </tr>
+</table>
+{% endblock %}

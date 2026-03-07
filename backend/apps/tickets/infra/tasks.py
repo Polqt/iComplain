@@ -3,7 +3,7 @@ from celery import shared_task
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
-from .models import Ticket
+from ..models import Ticket
 from apps.notifications.utils import create_in_app_notification
 from django.db.models import Count
 

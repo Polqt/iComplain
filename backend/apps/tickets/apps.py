@@ -6,5 +6,5 @@ class TicketsConfig(AppConfig):
     name = 'apps.tickets'
 
     def ready(self):
-        """Register signals when the app is ready."""
-        import apps.tickets.signals  # noqa
+        import apps.tickets.infra.signals  
+

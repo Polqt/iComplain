@@ -2,10 +2,10 @@
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "iComplain",
 	"version": "0.1.0",
-	"identifier": "com.tauri.dev",
+	"identifier": "ph.edu.usls.icomplain",
 	"build": {
-		"frontendDist": "../public",
-		"devUrl": "http://localhost:8080",
+		"frontendDist": "../build",
+		"devUrl": "http://localhost:5173",
 		"beforeDevCommand": "bun dev",
 		"beforeBuildCommand": "bun build"
 	},
