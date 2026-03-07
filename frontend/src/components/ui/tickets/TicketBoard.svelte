@@ -41,6 +41,10 @@
   }
 
   function navigateToFullView(ticket: Ticket) {
+    if (role === "admin") {
+      goto(`/tickets?ticket=${ticket.id}`);
+      return;
+    }
     goto(`/tickets/${ticket.id}`);
   }
 </script>
