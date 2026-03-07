@@ -73,11 +73,7 @@
       matchesCategory &&
       matchesLocation
     );
-  }).sort((a, b) => {
-    const aTime = new Date(a.updated_at).getTime();
-    const bTime = new Date(b.updated_at).getTime();
-    return bTime - aTime || b.id - a.id;
-  });
+  })
 
   $: queryTicketNumber = $page.url.searchParams.get("ticket");
 
@@ -313,9 +309,6 @@
                     <span class="text-xs font-semibold font-mono">
                       {ticket.ticket_number}
                     </span>
-                    <span class="text-[11px] text-base-content/50">
-                      {new Date(ticket.updated_at).toLocaleDateString()}
-                    </span>
                   </div>
                   <p class="text-sm font-semibold truncate">
                     {ticket.student.name || "Anonymous"}
@@ -504,17 +497,6 @@
                     <option value="3">High</option>
                     <option value="4">Urgent</option>
                   </select>
-                </div>
-
-                <div>
-                  <p class="text-xs text-base-content/60 font-semibold mb-1">
-                    Updated
-                  </p>
-                  <div
-                    class="px-3 py-2 rounded-lg border border-base-content/10 bg-base-200 text-sm"
-                  >
-                    {new Date(selectedTicket.updated_at).toLocaleString()}
-                  </div>
                 </div>
               </div>
 
