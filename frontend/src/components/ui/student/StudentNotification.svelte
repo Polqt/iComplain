@@ -1,99 +1,99 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
-  import Icon from "@iconify/svelte";
-  import type {
-    NotificationFilter,
-    Notification,
-  } from "../../../types/notifications.ts";
-  import {
-    notificationConfig,
-    formatNotificationTimestamp,
-  } from "../../../utils/notificationConfig.ts";
-  import StudentLayout from "../../layout/StudentLayout.svelte";
-  import {
-    fetchNotifications,
-    markAsRead as apiMarkAsRead,
-    markAllAsRead as apiMarkAllAsRead,
-    deleteNotification as apiDeleteNotification,
-  } from "../../../lib/api/notifications.ts";
+import { onMount } from "svelte";
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import type {
+	NotificationFilter,
+	Notification,
+} from "../../../types/notifications.ts";
+import {
+	notificationConfig,
+	formatNotificationTimestamp,
+} from "../../../utils/notificationConfig.ts";
+import StudentLayout from "../../layout/StudentLayout.svelte";
+import {
+	fetchNotifications,
+	markAsRead as apiMarkAsRead,
+	markAllAsRead as apiMarkAllAsRead,
+	deleteNotification as apiDeleteNotification,
+} from "../../../lib/api/notifications.ts";
 
-  let notifications: Notification[] = [];
-  let loading = true;
-  let activeFilter: NotificationFilter = "all";
-  let markError = "";
-  let deleteError = "";
-  let fetchError = "";
+let notifications: Notification[] = [];
+let loading = true;
+let activeFilter: NotificationFilter = "all";
+let markError = "";
+let deleteError = "";
+let fetchError = "";
 
-  $: filteredNotifications = notifications.filter((n) => {
-    if (activeFilter === "unread") return !n.read;
-    if (activeFilter === "read") return n.read;
-    return true;
-  });
+$: filteredNotifications = notifications.filter((n) => {
+	if (activeFilter === "unread") return !n.read;
+	if (activeFilter === "read") return n.read;
+	return true;
+});
 
-  $: unreadCount = notifications.filter((n) => !n.read).length;
+$: unreadCount = notifications.filter((n) => !n.read).length;
 
-  async function handleCardClick(notification: Notification) {
-    if (!notification.read) {
-      try {
-        await apiMarkAsRead(notification.id);
-        notifications = notifications.map((n) =>
-          n.id === notification.id ? { ...n, read: true } : n,
-        );
-      } catch (e) {
-        console.error("Failed to mark notification as read", e);
-      }
-    }
-    if (notification.actionUrl) {
-      goto(notification.actionUrl);
-    }
-  }
+async function handleCardClick(notification: Notification) {
+	if (!notification.read) {
+		try {
+			await apiMarkAsRead(notification.id);
+			notifications = notifications.map((n) =>
+				n.id === notification.id ? { ...n, read: true } : n,
+			);
+		} catch (e) {
+			console.error("Failed to mark notification as read", e);
+		}
+	}
+	if (notification.actionUrl) {
+		goto(notification.actionUrl);
+	}
+}
 
-  async function markAllAsRead() {
-    markError = "";
-    try {
-      await apiMarkAllAsRead();
-      notifications = notifications.map((n) => ({ ...n, read: true }));
-    } catch (e) {
-      console.error("Failed to mark all as read", e);
-      markError = "Could not update read status.";
-      setTimeout(() => (markError = ""), 3000);
-    }
-  }
+async function markAllAsRead() {
+	markError = "";
+	try {
+		await apiMarkAllAsRead();
+		notifications = notifications.map((n) => ({ ...n, read: true }));
+	} catch (e) {
+		console.error("Failed to mark all as read", e);
+		markError = "Could not update read status.";
+		setTimeout(() => (markError = ""), 3000);
+	}
+}
 
-  async function deleteNotification(e: MouseEvent, notificationId: string) {
-    e.stopPropagation();
-    deleteError = "";
-    try {
-      await apiDeleteNotification(notificationId);
-      notifications = notifications.filter((n) => n.id !== notificationId);
-    } catch (e) {
-      console.error("Failed to delete notification", e);
-      deleteError = "Could not delete notification. Please try again.";
-      setTimeout(() => (deleteError = ""), 4000);
-    }
-  }
+async function deleteNotification(e: MouseEvent, notificationId: string) {
+	e.stopPropagation();
+	deleteError = "";
+	try {
+		await apiDeleteNotification(notificationId);
+		notifications = notifications.filter((n) => n.id !== notificationId);
+	} catch (e) {
+		console.error("Failed to delete notification", e);
+		deleteError = "Could not delete notification. Please try again.";
+		setTimeout(() => (deleteError = ""), 4000);
+	}
+}
 
-  async function loadNotifications() {
-    try {
-      loading = true;
-      fetchError = "";
-      const list = await fetchNotifications();
-      notifications = list.map((n) => ({
-        ...n,
-        timestamp: formatNotificationTimestamp(n.timestamp),
-      }));
-    } catch (e) {
-      console.error("Failed to load notifications", e);
-      fetchError = "Could not load notifications. Please try again.";
-    } finally {
-      loading = false;
-    }
-  }
+async function loadNotifications() {
+	try {
+		loading = true;
+		fetchError = "";
+		const list = await fetchNotifications();
+		notifications = list.map((n) => ({
+			...n,
+			timestamp: formatNotificationTimestamp(n.timestamp),
+		}));
+	} catch (e) {
+		console.error("Failed to load notifications", e);
+		fetchError = "Could not load notifications. Please try again.";
+	} finally {
+		loading = false;
+	}
+}
 
-  onMount(() => {
-    loadNotifications();
-  });
+onMount(() => {
+	loadNotifications();
+});
 </script>
 
 <svelte:head>

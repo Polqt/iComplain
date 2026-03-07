@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { columns } from "../../../utils/ticketConfig.ts";
+import { columns } from "../../../utils/ticketConfig.ts";
 </script>
 
 <div class="flex gap-6 flex-1">

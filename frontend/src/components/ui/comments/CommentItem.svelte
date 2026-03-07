@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { authStore } from "../../../stores/auth.store.ts";
-  import type { TicketComment } from "../../../types/comments.ts";
-  import { formatTime } from "../../../utils/date.ts";
-  import { deriveNameFromEmail } from "../../../utils/userConfig.ts";
+import Icon from "@iconify/svelte";
+import { authStore } from "../../../stores/auth.store.ts";
+import type { TicketComment } from "../../../types/comments.ts";
+import { formatTime } from "../../../utils/date.ts";
+import { deriveNameFromEmail } from "../../../utils/userConfig.ts";
 
   export let comment: TicketComment;
   export let onUpdate: (commentId: number, message: string) => Promise<void>;
@@ -22,41 +22,41 @@
     .slice(0, 2)
     .toUpperCase();
 
-  let editing = false;
-  let editText = "";
-  let saving = false;
+let editing = false;
+let editText = "";
+let saving = false;
 
-  function startEdit() {
-    editText = comment.message;
-    editing = true;
-  }
+function startEdit() {
+	editText = comment.message;
+	editing = true;
+}
 
-  function cancelEdit() {
-    editing = false;
-    editText = "";
-  }
+function cancelEdit() {
+	editing = false;
+	editText = "";
+}
 
-  async function saveEdit() {
-    if (!editText.trim() || editText.trim() === comment.message) {
-      cancelEdit();
-      return;
-    }
-    saving = true;
-    try {
-      await onUpdate(comment.id, editText.trim());
-      editing = false;
-    } finally {
-      saving = false;
-    }
-  }
+async function saveEdit() {
+	if (!editText.trim() || editText.trim() === comment.message) {
+		cancelEdit();
+		return;
+	}
+	saving = true;
+	try {
+		await onUpdate(comment.id, editText.trim());
+		editing = false;
+	} finally {
+		saving = false;
+	}
+}
 
-  async function handleDelete() {
-    try {
-      await onDelete(comment.id);
-    } catch (error) {
-      console.error("Failed to delete comment", error);
-    }
-  }
+async function handleDelete() {
+	try {
+		await onDelete(comment.id);
+	} catch (error) {
+		console.error("Failed to delete comment", error);
+	}
+}
 </script>
 
 <div

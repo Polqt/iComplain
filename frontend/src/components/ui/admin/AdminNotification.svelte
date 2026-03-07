@@ -1,95 +1,95 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import Icon from "@iconify/svelte";
-  import type { Notification } from "../../../types/notifications.ts";
-  import { formatNotificationTimestamp } from "../../../utils/notificationConfig.ts";
-  import AdminLayout from "../../../components/layout/AdminLayout.svelte";
-  import {
-    fetchNotifications,
-    markAsRead as apiMarkAsRead,
-    markAllAsRead as apiMarkAllAsRead,
-  } from "../../../lib/api/notifications.ts";
-  import { goto } from "$app/navigation";
+import { onMount } from "svelte";
+import Icon from "@iconify/svelte";
+import type { Notification } from "../../../types/notifications.ts";
+import { formatNotificationTimestamp } from "../../../utils/notificationConfig.ts";
+import AdminLayout from "../../../components/layout/AdminLayout.svelte";
+import {
+	fetchNotifications,
+	markAsRead as apiMarkAsRead,
+	markAllAsRead as apiMarkAllAsRead,
+} from "../../../lib/api/notifications.ts";
+import { goto } from "$app/navigation";
 
-  const typeConfig = {
-    success: { icon: "lucide:check-circle", color: "text-success" },
-    info: { icon: "lucide:info", color: "text-info" },
-    warning: { icon: "lucide:alert-circle", color: "text-warning" },
-    error: { icon: "lucide:x-circle", color: "text-error" },
-  };
+const typeConfig = {
+	success: { icon: "lucide:check-circle", color: "text-success" },
+	info: { icon: "lucide:info", color: "text-info" },
+	warning: { icon: "lucide:alert-circle", color: "text-warning" },
+	error: { icon: "lucide:x-circle", color: "text-error" },
+};
 
-  let filter: "all" | "unread" = "all";
-  let searchQuery = "";
-  let notifications: Notification[] = [];
-  let loading = true;
-  let markError = "";
+let filter: "all" | "unread" = "all";
+let searchQuery = "";
+let notifications: Notification[] = [];
+let loading = true;
+let markError = "";
 
-  async function markAllRead() {
-    markError = "";
-    try {
-      await apiMarkAllAsRead();
-      notifications = notifications.map((n) => ({ ...n, read: true }));
-    } catch (e) {
-      console.error("Failed to mark all as read", e);
-      markError = "Could not mark all as read. Please try again.";
-      setTimeout(() => (markError = ""), 4000);
-    }
-  }
+async function markAllRead() {
+	markError = "";
+	try {
+		await apiMarkAllAsRead();
+		notifications = notifications.map((n) => ({ ...n, read: true }));
+	} catch (e) {
+		console.error("Failed to mark all as read", e);
+		markError = "Could not mark all as read. Please try again.";
+		setTimeout(() => (markError = ""), 4000);
+	}
+}
 
-  async function markRead(id: string) {
-    markError = "";
-    try {
-      await apiMarkAsRead(id);
-      notifications = notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n,
-      );
-    } catch (e) {
-      console.error("Failed to mark notification as read", e);
-      markError = "Could not update read status. Please try again.";
-      setTimeout(() => (markError = ""), 4000);
-    }
-  }
+async function markRead(id: string) {
+	markError = "";
+	try {
+		await apiMarkAsRead(id);
+		notifications = notifications.map((n) =>
+			n.id === id ? { ...n, read: true } : n,
+		);
+	} catch (e) {
+		console.error("Failed to mark notification as read", e);
+		markError = "Could not update read status. Please try again.";
+		setTimeout(() => (markError = ""), 4000);
+	}
+}
 
-  function safeActionUrl(url: string | null | undefined): string {
-    if (!url || typeof url !== "string") return "#";
-    const t = url.trim();
-    if (t.startsWith("http://") || t.startsWith("https://")) return t;
-    if (t.startsWith("/")) return t;
-    return "https://" + t;
-  }
+function safeActionUrl(url: string | null | undefined): string {
+	if (!url || typeof url !== "string") return "#";
+	const t = url.trim();
+	if (t.startsWith("http://") || t.startsWith("https://")) return t;
+	if (t.startsWith("/")) return t;
+	return "https://" + t;
+}
 
-  $: filtered = notifications.filter((n) => {
-    if (filter === "unread" && n.read) return false;
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      n.title.toLowerCase().includes(q) ||
-      n.message.toLowerCase().includes(q) ||
-      (n.actionUrl ?? "").toLowerCase().includes(q)
-    );
-  });
+$: filtered = notifications.filter((n) => {
+	if (filter === "unread" && n.read) return false;
+	const q = searchQuery.trim().toLowerCase();
+	if (!q) return true;
+	return (
+		n.title.toLowerCase().includes(q) ||
+		n.message.toLowerCase().includes(q) ||
+		(n.actionUrl ?? "").toLowerCase().includes(q)
+	);
+});
 
-  $: unreadCount = notifications.filter((n) => !n.read).length;
+$: unreadCount = notifications.filter((n) => !n.read).length;
 
-  onMount(async () => {
-    try {
-      loading = true;
-      const list = await fetchNotifications();
-      notifications = list.map((n) => ({
-        ...n,
-        timestamp: formatNotificationTimestamp(n.timestamp),
-      }));
-    } catch (e) {
-      console.error("Failed to load notifications", e);
-      notifications = [];
-    } finally {
-      loading = false;
-    }
-  });
+onMount(async () => {
+	try {
+		loading = true;
+		const list = await fetchNotifications();
+		notifications = list.map((n) => ({
+			...n,
+			timestamp: formatNotificationTimestamp(n.timestamp),
+		}));
+	} catch (e) {
+		console.error("Failed to load notifications", e);
+		notifications = [];
+	} finally {
+		loading = false;
+	}
+});
 
-  function navigateToTicket(ticketnumber: string) {
-    goto(`/tickets/${ticketnumber}`);
-  }
+function navigateToTicket(ticketnumber: string) {
+	goto(`/tickets/${ticketnumber}`);
+}
 </script>
 
 <AdminLayout>

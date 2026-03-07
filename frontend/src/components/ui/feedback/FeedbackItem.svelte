@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { TicketFeedback } from "../../../types/feedback.ts";
-  import { formatDate } from "../../../utils/date.ts";
+import type { TicketFeedback } from "../../../types/feedback.ts";
+import { formatDate } from "../../../utils/date.ts";
 
-  export let feedback: TicketFeedback;
-  export let compact: boolean = false;
+export let feedback: TicketFeedback;
+export let compact: boolean = false;
 </script>
 
 <div class="bg-base-100 rounded-lg border border-base-content/8 p-3">

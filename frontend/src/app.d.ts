@@ -10,14 +10,14 @@ declare global {
 			user: {
 				id: string;
 				email: string;
-				role: 'student' | 'admin';
+				role: "student" | "admin";
 			} | null;
 		}
 		interface PageData {
 			user?: {
 				id: string;
 				email: string;
-				role: 'student' | 'admin';
+				role: "student" | "admin";
 			};
 		}
 		// interface PageState {}

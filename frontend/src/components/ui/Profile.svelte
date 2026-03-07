@@ -1,39 +1,39 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { createEventDispatcher } from "svelte";
-  import type { User } from "../../types/user.ts";
-  import { deriveNameFromEmail, getInitials } from "../../utils/userConfig.ts";
-  import { authStore } from "../../stores/auth.store.ts";
+import Icon from "@iconify/svelte";
+import { createEventDispatcher } from "svelte";
+import type { User } from "../../types/user.ts";
+import { deriveNameFromEmail, getInitials } from "../../utils/userConfig.ts";
+import { authStore } from "../../stores/auth.store.ts";
 
-  let user: User | null = null;
+let user: User | null = null;
 
-  export let profileHref: string = "/profile";
-  export let settingsHref: string = "/settings";
-  export let helpHref: string = "/help";
+export let profileHref: string = "/profile";
+export let settingsHref: string = "/settings";
+export let helpHref: string = "/help";
 
-  $: ({ user } = $authStore);
+$: ({ user } = $authStore);
 
-  // Events
-  const dispatch = createEventDispatcher<{
-    logout: void;
-    profileClick: void;
-    settingsClick: void;
-  }>();
+// Events
+const dispatch = createEventDispatcher<{
+	logout: void;
+	profileClick: void;
+	settingsClick: void;
+}>();
 
-  function handleLogout() {
-    localStorage.removeItem("authToken");
-    sessionStorage.clear();
+function handleLogout() {
+	localStorage.removeItem("authToken");
+	sessionStorage.clear();
 
-    dispatch("logout");
-  }
+	dispatch("logout");
+}
 
-  function handleProfileClick() {
-    dispatch("profileClick");
-  }
+function handleProfileClick() {
+	dispatch("profileClick");
+}
 
-  function handleSettingsClick() {
-    dispatch("settingsClick");
-  }
+function handleSettingsClick() {
+	dispatch("settingsClick");
+}
 </script>
 
 <div class="dropdown dropdown-end">

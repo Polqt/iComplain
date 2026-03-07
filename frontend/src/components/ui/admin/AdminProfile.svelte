@@ -1,92 +1,100 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import AdminLayout from "../../layout/AdminLayout.svelte";
-  import AvatarUploadModal from "../../common/AvatarUploadModal.svelte";
-  import { authStore } from "../../../stores/auth.store.ts";
-  import type { User } from "../../../types/user.ts";
-  import { deriveNameFromEmail, getInitials } from "../../../utils/userConfig.ts";
-  import { updateProfile, uploadAvatar, deleteAvatar } from "../../../lib/api/user.ts";
+import Icon from "@iconify/svelte";
+import AdminLayout from "../../layout/AdminLayout.svelte";
+import AvatarUploadModal from "../../common/AvatarUploadModal.svelte";
+import { authStore } from "../../../stores/auth.store.ts";
+import type { User } from "../../../types/user.ts";
+import { deriveNameFromEmail, getInitials } from "../../../utils/userConfig.ts";
+import {
+	updateProfile,
+	uploadAvatar,
+	deleteAvatar,
+} from "../../../lib/api/user.ts";
 
-  let user: User | null = null;
-  let isLoading: boolean = true;
+let user: User | null = null;
+let isLoading: boolean = true;
 
-  let isEditing = false;
-  let editName = "";
-  let isSaving = false;
-  let errorMessage = "";
-  let successMessage = "";
-  let showAvatarModal = false;
+let isEditing = false;
+let editName = "";
+let isSaving = false;
+let errorMessage = "";
+let successMessage = "";
+let showAvatarModal = false;
 
-  $: ({ user, isLoading } = $authStore);
-  $: displayName = user?.name || deriveNameFromEmail(user?.email || "") || "Admin";
+$: ({ user, isLoading } = $authStore);
+$: displayName =
+	user?.name || deriveNameFromEmail(user?.email || "") || "Admin";
 
-  function startEditing() {
-    editName = user?.name || "";
-    isEditing = true;
-    errorMessage = "";
-    successMessage = "";
-  }
+function startEditing() {
+	editName = user?.name || "";
+	isEditing = true;
+	errorMessage = "";
+	successMessage = "";
+}
 
-  function cancelEditing() {
-    isEditing = false;
-    editName = "";
-    errorMessage = "";
-  }
+function cancelEditing() {
+	isEditing = false;
+	editName = "";
+	errorMessage = "";
+}
 
-  async function handleAvatarSave(file: File) {
-    isSaving = true;
-    try {
-      const updatedUser = await uploadAvatar(file);
-      authStore.updateUser(updatedUser);
-      successMessage = "Avatar updated!";
-      setTimeout(() => (successMessage = ""), 3000);
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Failed to upload avatar.";
-    } finally {
-      isSaving = false;
-    }
-  }
+async function handleAvatarSave(file: File) {
+	isSaving = true;
+	try {
+		const updatedUser = await uploadAvatar(file);
+		authStore.updateUser(updatedUser);
+		successMessage = "Avatar updated!";
+		setTimeout(() => (successMessage = ""), 3000);
+	} catch (error) {
+		errorMessage =
+			error instanceof Error ? error.message : "Failed to upload avatar.";
+	} finally {
+		isSaving = false;
+	}
+}
 
-  async function handleAvatarRemove() {
-    isSaving = true;
-    try {
-      const updatedUser = await deleteAvatar();
-      authStore.updateUser(updatedUser);
-      successMessage = "Avatar removed!";
-      setTimeout(() => (successMessage = ""), 3000);
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Failed to remove avatar.";
-    } finally {
-      isSaving = false;
-    }
-  }
+async function handleAvatarRemove() {
+	isSaving = true;
+	try {
+		const updatedUser = await deleteAvatar();
+		authStore.updateUser(updatedUser);
+		successMessage = "Avatar removed!";
+		setTimeout(() => (successMessage = ""), 3000);
+	} catch (error) {
+		errorMessage =
+			error instanceof Error ? error.message : "Failed to remove avatar.";
+	} finally {
+		isSaving = false;
+	}
+}
 
-  async function saveProfile() {
-    if (!editName.trim()) {
-      errorMessage = "Name cannot be empty.";
-      return;
-    }
+async function saveProfile() {
+	if (!editName.trim()) {
+		errorMessage = "Name cannot be empty.";
+		return;
+	}
 
-    if (editName.trim().length > 150) {
-      errorMessage = "Name must be 150 characters or fewer.";
-      return;
-    }
+	if (editName.trim().length > 150) {
+		errorMessage = "Name must be 150 characters or fewer.";
+		return;
+	}
 
-    isSaving = true;
-    errorMessage = "";
+	isSaving = true;
+	errorMessage = "";
 
-    try {
-      const updatedUser = await updateProfile({ name: editName.trim() });
-      authStore.updateUser(updatedUser);
-      isEditing = false;
-      successMessage = "Profile updated successfully!";
-      setTimeout(() => (successMessage = ""), 3000);
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : "Failed to update profile.";
-    } finally {
-      isSaving = false;
-    }
-  }
+	try {
+		const updatedUser = await updateProfile({ name: editName.trim() });
+		authStore.updateUser(updatedUser);
+		isEditing = false;
+		successMessage = "Profile updated successfully!";
+		setTimeout(() => (successMessage = ""), 3000);
+	} catch (error) {
+		errorMessage =
+			error instanceof Error ? error.message : "Failed to update profile.";
+	} finally {
+		isSaving = false;
+	}
+}
 </script>
 
 <svelte:head>

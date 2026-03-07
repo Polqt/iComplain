@@ -1,27 +1,28 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type {
-    HistoryItem,
-    HistoryFilterType,
-    HistorySortType,
-  } from "../../../types/history.ts";
-  import { historyConfig, formatRelativeTime } from "../../../utils/historyConfig.ts";
-  import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import type {
+	HistoryItem,
+	HistoryFilterType,
+	HistorySortType,
+} from "../../../types/history.ts";
+import {
+	historyConfig,
+	formatRelativeTime,
+} from "../../../utils/historyConfig.ts";
+import { goto } from "$app/navigation";
 
-  export let items: HistoryItem[] = [];
-  export let activeFilter: HistoryFilterType = "all";
-  export let searchQuery: string = "";
-  export let sortBy: HistorySortType = "newest";
-  export let onclearfilters: () => void = () => {};
+export let items: HistoryItem[] = [];
+export let activeFilter: HistoryFilterType = "all";
+export let searchQuery: string = "";
+export let sortBy: HistorySortType = "newest";
+export let onclearfilters: () => void = () => {};
 
-  function navigate(ticketId: string) {
-    goto(`tickets/${ticketId}`);
-  }
+function navigate(ticketId: string) {
+	goto(`tickets/${ticketId}`);
+}
 
-  $: hasAnyFilter =
-    activeFilter !== "all" ||
-    searchQuery.length > 0 ||
-    sortBy !== "newest";
+$: hasAnyFilter =
+	activeFilter !== "all" || searchQuery.length > 0 || sortBy !== "newest";
 </script>
 
 {#if items.length === 0}
@@ -69,8 +70,7 @@
       >
         <div class="card-body p-4">
           <div class="flex items-start justify-between gap-4">
-            <!-- Icon -->
-            <div class="flex-shrink-0 mt-0.5">
+            <div class="shrink-0 mt-0.5">
               <div
                 class="w-10 h-10 rounded-lg {historyConfig[item.action]
                   .bgColor} flex items-center justify-center"
@@ -110,10 +110,8 @@
                 {item.description}
               </p>
 
-              <!-- Admin Info and Timestamps -->
               <div class="flex items-center justify-between pt-3 border-t border-base-content/5">
                 <div class="flex items-center gap-4 flex-wrap text-xs text-base-content/60">
-                  <!-- Admin who made the change -->
                   {#if item.performedBy}
                     <div class="flex items-center gap-1">
                       <Icon icon="mdi:account" width="14" height="14" />
@@ -123,22 +121,19 @@
                     </div>
                   {/if}
 
-                  <!-- Time -->
                   <div class="flex items-center gap-1">
                     <Icon icon="mdi:clock-outline" width="14" height="14" />
                     <span>{formatRelativeTime(item.timestamp, item.date)}</span>
                   </div>
 
-                  <!-- Date -->
                   <div class="flex items-center gap-1">
                     <Icon icon="mdi:calendar-outline" width="14" height="14" />
                     <span>{item.date}</span>
                   </div>
                 </div>
 
-                <!-- Category Badge -->
                 {#if item.category}
-                  <div class="flex-shrink-0">
+                  <div class="shrink-0">
                     <span class="badge badge-outline badge-sm">
                       {item.category}
                     </span>

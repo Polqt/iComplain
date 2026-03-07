@@ -1,15 +1,15 @@
 <script>
-  import { goto } from "$app/navigation";
-  import Icon from "@iconify/svelte";
-  import Footer from "../components/layout/Footer.svelte";
-  import Header from "../components/layout/Header.svelte";
-  function handleGetStarted() {
-    goto("/signin");
-  }
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import Footer from "../components/layout/Footer.svelte";
+import Header from "../components/layout/Header.svelte";
+function handleGetStarted() {
+	goto("/signin");
+}
 
-  function handleLearnMore() {
-    goto("/learn-more");
-  }
+function handleLearnMore() {
+	goto("/learn-more");
+}
 </script>
 
 <svelte:head>

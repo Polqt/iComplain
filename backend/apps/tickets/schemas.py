@@ -175,7 +175,7 @@ class TicketHistoryItemSchema(Schema):
     ticketPk: int
     ticketId: str
     title: str
-    action: Literal["created", "updated", "resolved", "closed", "commented", "reopened"]
+    action: Literal["created", "updated", "resolved", "closed", "commented", "reopened", "feedback"]
     description: str
     timestamp: str
     date: str

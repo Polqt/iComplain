@@ -1,14 +1,14 @@
 <script lang="ts">
-  import TicketCreateModal from "./TicketCreateModal.svelte";
-  import { ticketsStore } from "../../../stores/tickets.store.ts";
-  import type { Ticket, TicketUpdatePayload } from "../../../types/tickets.ts";
+import TicketCreateModal from "./TicketCreateModal.svelte";
+import { ticketsStore } from "../../../stores/tickets.store.ts";
+import type { Ticket, TicketUpdatePayload } from "../../../types/tickets.ts";
 
-  export let open = false;
-  export let isLoading = false;
-  export let ticket: Ticket | null = null;
-  export let onclose: () => void = () => {};
+export let open = false;
+export let isLoading = false;
+export let ticket: Ticket | null = null;
+export let onclose: () => void = () => {};
 
-  $: formData = ticket ? { ...ticket } : {};
+$: formData = ticket ? { ...ticket } : {};
 
   async function handleSubmit(data: Partial<Ticket>, files?: File[] | null) {
     if (!ticket) return;

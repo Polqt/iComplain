@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { Ticket } from "../../../types/tickets.ts";
-  import CommentSection from "./CommentSection.svelte";
-  import { commentsStore } from "../../../stores/comment.store.ts";
+import Icon from "@iconify/svelte";
+import type { Ticket } from "../../../types/tickets.ts";
+import CommentSection from "./CommentSection.svelte";
+import { commentsStore } from "../../../stores/comment.store.ts";
 
-  export let ticket: Ticket | null = null;
+export let ticket: Ticket | null = null;
 
-  $: if (ticket) {
-    commentsStore.clearComments();
-  }
+$: if (ticket) {
+	commentsStore.clearComments();
+}
 </script>
 
 <div

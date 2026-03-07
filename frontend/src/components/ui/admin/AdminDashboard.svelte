@@ -1,51 +1,53 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
-  import AdminLayout from "../../layout/AdminLayout.svelte";
-  import TicketBoard from "../tickets/TicketBoard.svelte";
-  import ActivityFeed from "./ActivityFeed.svelte";
-  import type { DashboardStats, DashboardMetric } from "../../../types/dashboard.ts";
-  import { getDashboardStats } from "../../../lib/api/ticket.ts";
+import Icon from "@iconify/svelte";
+import { onMount } from "svelte";
+import AdminLayout from "../../layout/AdminLayout.svelte";
+import TicketBoard from "../tickets/TicketBoard.svelte";
+import ActivityFeed from "./ActivityFeed.svelte";
+import type {
+	DashboardStats,
+	DashboardMetric,
+} from "../../../types/dashboard.ts";
+import { getDashboardStats } from "../../../lib/api/ticket.ts";
 
-  let stats: DashboardStats | null = null;
-  let isLoading = true;
-  let error: string | null = null;
+let stats: DashboardStats | null = null;
+let isLoading = true;
+let error: string | null = null;
 
-  onMount(async () => {
-    try {
-      stats = await getDashboardStats();
-    } catch (err) {
-      error = err instanceof Error ? err.message : "Failed to load stats";
-      console.error("Dashboard stats error:", err);
-    } finally {
-      isLoading = false;
-    }
-  });
+onMount(async () => {
+	try {
+		stats = await getDashboardStats();
+	} catch (err) {
+		error = err instanceof Error ? err.message : "Failed to load stats";
+		console.error("Dashboard stats error:", err);
+	} finally {
+		isLoading = false;
+	}
+});
 
-  $: metrics = stats?.metrics ?? [];
-  $: volume = stats?.volume ?? [];
-  $: pendingMetric = metrics[0]; // Now first due to backend reorder
-  $: secondaryMetrics = metrics.slice(1);
+$: metrics = stats?.metrics ?? [];
+$: volume = stats?.volume ?? [];
+$: pendingMetric = metrics[0]; // Now first due to backend reorder
+$: secondaryMetrics = metrics.slice(1);
 
-  function getTrendIcon(metric: DashboardMetric) {
-    if (metric.is_increasing) return "mdi:trending-up";
-    return "mdi:trending-down";
-  }
+function getTrendIcon(metric: DashboardMetric) {
+	if (metric.is_increasing) return "mdi:trending-up";
+	return "mdi:trending-down";
+}
 
-  function getTrendColor(metric: DashboardMetric) {
-    if (metric.is_critical) {
-      return metric.is_increasing ? "text-error" : "text-success";
-    }
-    return metric.trend === "success" ? "text-success" : "text-error";
-  }
+function getTrendColor(metric: DashboardMetric) {
+	if (metric.is_critical) {
+		return metric.is_increasing ? "text-error" : "text-success";
+	}
+	return metric.trend === "success" ? "text-success" : "text-error";
+}
 </script>
 
 <AdminLayout>
   <div class="flex flex-col h-[calc(100vh-8rem)]">
-    <!-- Header with Title and Actions -->
     <div class="flex flex-wrap items-center justify-between gap-4 mb-8 shrink-0">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
+        <div class="w-10 h-10 rounded-2xl bg-linear-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
           <Icon icon="mdi:view-dashboard-outline" width="24" height="24" class="text-primary" />
         </div>
         <div>
@@ -85,12 +87,10 @@
           </button>
         </div>
       {:else}
-        <!-- PRIMARY KPI: Pending Tickets (Visually Dominant) -->
         {#if pendingMetric}
           <section>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <!-- Large Pending Card -->
-              <div class="lg:col-span-2 bg-gradient-to-br from-base-100 to-base-100/50 rounded-2xl border {pendingMetric.is_critical ? 'border-error/20 shadow-lg shadow-error/10' : 'border-base-content/5 shadow-md'} overflow-hidden hover:shadow-xl transition-all duration-300">
+              <div class="lg:col-span-2 bg-linear-to-br from-base-100 to-base-100/50 rounded-2xl border {pendingMetric.is_critical ? 'border-error/20 shadow-lg shadow-error/10' : 'border-base-content/5 shadow-md'} overflow-hidden hover:shadow-xl transition-all duration-300">
                 <div class="p-8 flex flex-col h-full">
                   <div class="flex items-start justify-between mb-6">
                     <div class="flex-1">
@@ -145,7 +145,7 @@
                           icon={getTrendIcon(metric)} 
                           width="14" 
                           height="14" 
-                          class="flex-shrink-0 {getTrendColor(metric)}"
+                          class="shrink-0 {getTrendColor(metric)}"
                         />
                         <span class="text-xs font-bold {getTrendColor(metric)}">
                           {metric.change}
@@ -159,9 +159,7 @@
           </section>
         {/if}
 
-        <!-- Volume and Activity Section -->
         <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <!-- Ticket Volume Tracker -->
           <div class="xl:col-span-2 bg-base-100/50 border border-base-content/5 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden">
             <div class="p-6">
               <div class="flex items-center justify-between mb-6">
@@ -186,7 +184,7 @@
                     <div class="flex flex-col items-center gap-2 flex-1">
                       <div class="w-full relative h-32 rounded-t-lg overflow-hidden bg-base-200/30 border border-base-content/5 border-b-0">
                         <div
-                          class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-primary/80 to-primary/40 transition-all duration-300"
+                          class="absolute bottom-0 inset-x-0 bg-linear-to-t from-primary/80 to-primary/40 transition-all duration-300"
                           style="height: {heightPercent}%"
                         ></div>
                       </div>
@@ -214,34 +212,15 @@
             </div>
           </div>
 
-          <!-- Recent Activity Feed -->
           <div class="bg-base-100/50 border border-base-content/5 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200">
             <ActivityFeed />
           </div>
         </section>
 
-        <!-- Kanban Board Section -->
-        <section class="mt-2">
+        <section class="mt-2 px-4 pt-6">
           <TicketBoard />
         </section>
       {/if}
     </div>
   </div>
 </AdminLayout>
-
-<style>
-  :global(.animate-accordion-down) {
-    animation: accordion-down 0.2s ease-out;
-  }
-
-  @keyframes accordion-down {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-</style>

@@ -1,50 +1,50 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { onDestroy } from "svelte";
-  import Icon from "@iconify/svelte";
-  import type { HistoryItem } from "../../../types/history.ts";
-  import {
-    historyConfig,
-    statusConfig,
-    priorityConfig,
-    formatRelativeTime,
-  } from "../../../utils/historyConfig.ts";
-  import { goto } from "$app/navigation";
+import { browser } from "$app/environment";
+import { onDestroy } from "svelte";
+import Icon from "@iconify/svelte";
+import type { HistoryItem } from "../../../types/history.ts";
+import {
+	historyConfig,
+	statusConfig,
+	priorityConfig,
+	formatRelativeTime,
+} from "../../../utils/historyConfig.ts";
+import { goto } from "$app/navigation";
 
-  export let item: HistoryItem;
+export let item: HistoryItem;
 
-  function navigate() {
-    goto(`tickets/${item.ticketId}`);
-  }
+function navigate() {
+	goto(`tickets/${item.ticketId}`);
+}
 
-  let menuOpen = false;
+let menuOpen = false;
 
-  function handleMenuKeydown(e: KeyboardEvent) {
-    if (e.key === "Escape") menuOpen = false;
-  }
+function handleMenuKeydown(e: KeyboardEvent) {
+	if (e.key === "Escape") menuOpen = false;
+}
 
-  $: menuId = `history-card-menu-${item.id}`;
-  $: timeLabel = formatRelativeTime(item.timestamp, item.date);
+$: menuId = `history-card-menu-${item.id}`;
+$: timeLabel = formatRelativeTime(item.timestamp, item.date);
 
-  function handleClickOutside(e: MouseEvent) {
-    const target = e.target as Node;
-    if (menuOpen) {
-      const menuEl = document.getElementById(menuId);
-      if (menuEl && !menuEl.contains(target)) menuOpen = false;
-    }
-  }
+function handleClickOutside(e: MouseEvent) {
+	const target = e.target as Node;
+	if (menuOpen) {
+		const menuEl = document.getElementById(menuId);
+		if (menuEl && !menuEl.contains(target)) menuOpen = false;
+	}
+}
 
-  $: if (browser) {
-    if (menuOpen) {
-      document.addEventListener("click", handleClickOutside);
-    } else {
-      document.removeEventListener("click", handleClickOutside);
-    }
-  }
+$: if (browser) {
+	if (menuOpen) {
+		document.addEventListener("click", handleClickOutside);
+	} else {
+		document.removeEventListener("click", handleClickOutside);
+	}
+}
 
-  onDestroy(() => {
-    if (browser) document.removeEventListener("click", handleClickOutside);
-  });
+onDestroy(() => {
+	if (browser) document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <svelte:window on:keydown={handleMenuKeydown} />

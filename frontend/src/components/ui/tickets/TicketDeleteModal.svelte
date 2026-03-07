@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { Ticket } from "../../../types/tickets.ts";
+import Icon from "@iconify/svelte";
+import type { Ticket } from "../../../types/tickets.ts";
 
-  export let open = false;
-  export let ticket: Ticket | null = null;
-  export let isLoading = false;
-  export let onclose: () => void = () => {};
-  export let onconfirm: () => void = () => {};
+export let open = false;
+export let ticket: Ticket | null = null;
+export let isLoading = false;
+export let onclose: () => void = () => {};
+export let onconfirm: () => void = () => {};
 </script>
 
 {#if open && ticket}

@@ -1,117 +1,115 @@
 <script lang="ts">
-  import { page } from "$app/stores";
-  import { goto } from "$app/navigation";
-  import Icon from "@iconify/svelte";
-  import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-  import {
-    statusConfig,
-    priorityConfig,
-    getPriorityKey,
-    priorityAccent,
-    priorityIcons,
-    getStepState,
-    pipelineSteps,
-  } from "../../../utils/ticketConfig.ts";
-  import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
-  import { ticketsStore } from "../../../stores/tickets.store.ts";
-  import { feedbackStore } from "../../../stores/feedback.store.ts";
-  import { onMount } from "svelte";
-  import { formatDate, formatDateTime } from "../../../utils/date.ts";
-  import {
-    getFileIcon,
-    getFileName,
-    isImage,
-  } from "../../../utils/attachment.ts";
-  import { authStore } from "../../../stores/auth.store.ts";
-  import { deriveNameFromEmail } from "../../../utils/userConfig.ts";
-  import AdminLayout from "../../../components/layout/AdminLayout.svelte";
-  import AdminTicketControl from "../../../components/ui/tickets/AdminTicketControl.svelte";
-  import TicketEdit from "../../../components/ui/tickets/TicketEdit.svelte";
-  import CommentSection from "../../../components/ui/comments/CommentSection.svelte";
-  import FeedbackForm from "../../../components/ui/feedback/FeedbackForm.svelte";
-  import FeedbackList from "../../../components/ui/feedback/FeedbackList.svelte";
+import { page } from "$app/stores";
+import { goto } from "$app/navigation";
+import Icon from "@iconify/svelte";
+import StudentLayout from "../../../components/layout/StudentLayout.svelte";
+import {
+	statusConfig,
+	priorityConfig,
+	getPriorityKey,
+	priorityAccent,
+	priorityIcons,
+	getStepState,
+	pipelineSteps,
+} from "../../../utils/ticketConfig.ts";
+import TicketDeleteModal from "../../../components/ui/tickets/TicketDeleteModal.svelte";
+import { ticketsStore } from "../../../stores/tickets.store.ts";
+import { feedbackStore } from "../../../stores/feedback.store.ts";
+import { onMount } from "svelte";
+import { formatDate, formatDateTime } from "../../../utils/date.ts";
+import {
+	getFileIcon,
+	getFileName,
+	isImage,
+} from "../../../utils/attachment.ts";
+import { authStore } from "../../../stores/auth.store.ts";
+import { deriveNameFromEmail } from "../../../utils/userConfig.ts";
+import AdminLayout from "../../../components/layout/AdminLayout.svelte";
+import AdminTicketControl from "../../../components/ui/tickets/AdminTicketControl.svelte";
+import TicketEdit from "../../../components/ui/tickets/TicketEdit.svelte";
+import CommentSection from "../../../components/ui/comments/CommentSection.svelte";
+import FeedbackForm from "../../../components/ui/feedback/FeedbackForm.svelte";
+import FeedbackList from "../../../components/ui/feedback/FeedbackList.svelte";
 
-  $: idParam = $page.params.id;
-  $: isNumericId = /^\d+$/.test(idParam ?? "");
-  $: ({ tickets, isLoading, error } = $ticketsStore);
-  $: ({ feedbacks } = $feedbackStore);
-  $: ({ role, user } = $authStore);
-  $: ticket = isNumericId
-    ? (tickets.find((t) => t.id === Number(idParam)) ?? null)
-    : (tickets.find((t) => t.ticket_number === idParam) ?? null);
+$: idParam = $page.params.id;
+$: isNumericId = /^\d+$/.test(idParam ?? "");
+$: ({ tickets, isLoading, error } = $ticketsStore);
+$: ({ feedbacks } = $feedbackStore);
+$: ({ role, user } = $authStore);
+$: ticket = isNumericId
+	? (tickets.find((t) => t.id === Number(idParam)) ?? null)
+	: (tickets.find((t) => t.ticket_number === idParam) ?? null);
 
-  $: existingFeedback = feedbacks[0] || null;
-  $: canSubmitFeedback = ticket?.status === "resolved" && role === "student";
+$: existingFeedback = feedbacks[0] || null;
+$: canSubmitFeedback = ticket?.status === "resolved" && role === "student";
 
-  $: canViewFeedback =
-    role === "admin" ||
-    ticket?.status === "closed" ||
-    existingFeedback !== null;
+$: canViewFeedback =
+	role === "admin" || ticket?.status === "closed" || existingFeedback !== null;
 
-  let showFeedbackForm = false;
+let showFeedbackForm = false;
 
-  onMount(async () => {
-    if (isNumericId) {
-      const id = Number(idParam);
-      const inStore = tickets.find((t) => t.id === id);
-      if (!inStore) await ticketsStore.loadTicketById(id);
-    } else {
-      const inStore = tickets.find((t) => t.ticket_number === idParam);
-      if (!inStore) await ticketsStore.loadTickets();
-    }
+onMount(async () => {
+	if (isNumericId) {
+		const id = Number(idParam);
+		const inStore = tickets.find((t) => t.id === id);
+		if (!inStore) await ticketsStore.loadTicketById(id);
+	} else {
+		const inStore = tickets.find((t) => t.ticket_number === idParam);
+		if (!inStore) await ticketsStore.loadTickets();
+	}
 
-    // Load feedback if we have the ticket and it's not already loaded
-    if (ticket?.id) {
-      await feedbackStore.loadFeedbackForTicket(ticket.id);
-    }
-  });
+	// Load feedback if we have the ticket and it's not already loaded
+	if (ticket?.id) {
+		await feedbackStore.loadFeedbackForTicket(ticket.id);
+	}
+});
 
-  $: if (ticket?.id) {
-    feedbackStore.loadFeedbackForTicket(ticket.id);
-  }
+$: if (ticket?.id) {
+	feedbackStore.loadFeedbackForTicket(ticket.id);
+}
 
-  let showEditModal = false;
-  let showDeleteModal = false;
+let showEditModal = false;
+let showDeleteModal = false;
 
-  async function handleDelete() {
-    if (!ticket) return;
-    const success = await ticketsStore.deleteTicket(ticket.id);
-    if (success) goto("/tickets");
-  }
+async function handleDelete() {
+	if (!ticket) return;
+	const success = await ticketsStore.deleteTicket(ticket.id);
+	if (success) goto("/tickets");
+}
 
-  async function handleFeedbackSaved() {
-    showFeedbackForm = false;
-    if (ticket?.id) {
-      await feedbackStore.loadFeedbackForTicket(ticket.id);
-      await ticketsStore.loadTicketById(ticket.id);
-    }
-  }
+async function handleFeedbackSaved() {
+	showFeedbackForm = false;
+	if (ticket?.id) {
+		await feedbackStore.loadFeedbackForTicket(ticket.id);
+		await ticketsStore.loadTicketById(ticket.id);
+	}
+}
 
-  $: pKey = ticket ? getPriorityKey(ticket.priority) : "low";
-  $: pAccent = priorityAccent[pKey] ?? "border-l-info";
-  $: pIcon = priorityIcons[pKey] ?? "mdi:minus";
-  $: timeline = ticket
-    ? [
-        {
-          icon: "mdi:ticket-outline",
-          color: "text-primary",
-          bg: "bg-primary/10",
-          label: "Ticket created",
-          time: formatDateTime(ticket.created_at),
-        },
-        ...(ticket.status !== "pending"
-          ? [
-              {
-                icon: "mdi:progress-clock",
-                color: "text-info",
-                bg: "bg-info/10",
-                label: "Status changed to " + statusConfig[ticket.status].label,
-                time: formatDateTime(ticket.updated_at),
-              },
-            ]
-          : []),
-      ]
-    : [];
+$: pKey = ticket ? getPriorityKey(ticket.priority) : "low";
+$: pAccent = priorityAccent[pKey] ?? "border-l-info";
+$: pIcon = priorityIcons[pKey] ?? "mdi:minus";
+$: timeline = ticket
+	? [
+			{
+				icon: "mdi:ticket-outline",
+				color: "text-primary",
+				bg: "bg-primary/10",
+				label: "Ticket created",
+				time: formatDateTime(ticket.created_at),
+			},
+			...(ticket.status !== "pending"
+				? [
+						{
+							icon: "mdi:progress-clock",
+							color: "text-info",
+							bg: "bg-info/10",
+							label: "Status changed to " + statusConfig[ticket.status].label,
+							time: formatDateTime(ticket.updated_at),
+						},
+					]
+				: []),
+		]
+	: [];
 </script>
 
 <svelte:component this={role === "admin" ? AdminLayout : StudentLayout}>

@@ -1,47 +1,49 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import AdminLayout from "../../../components/layout/AdminLayout.svelte";
-  import type { HelpSection } from "../../../types/help.ts";
-  import { loadHelpContent } from "../../../utils/helpConfig.ts";
+import Icon from "@iconify/svelte";
+import AdminLayout from "../../../components/layout/AdminLayout.svelte";
+import type { HelpSection } from "../../../types/help.ts";
+import { loadHelpContent } from "../../../utils/helpConfig.ts";
 
-  // Admin view always uses the admin help content.
-  const helpData = loadHelpContent("admin");
+// Admin view always uses the admin help content.
+const helpData = loadHelpContent("admin");
 
-  let activeTab: string = helpData.sections[0]?.id || "getting-started";
-  let searchQuery: string = "";
-  let openAccordions: Set<string> = new Set();
+let activeTab: string = helpData.sections[0]?.id || "getting-started";
+let searchQuery: string = "";
+let openAccordions: Set<string> = new Set();
 
-  // Computed
-  $: filteredSections = helpData.sections.filter((section: HelpSection) => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      section.title.toLowerCase().includes(query) ||
-      section.content.toLowerCase().includes(query) ||
-      section.faqs?.some(
-        (faq) =>
-          faq.question.toLowerCase().includes(query) ||
-          faq.answer.toLowerCase().includes(query)
-      )
-    );
-  });
+// Computed
+$: filteredSections = helpData.sections.filter((section: HelpSection) => {
+	if (!searchQuery.trim()) return true;
+	const query = searchQuery.toLowerCase();
+	return (
+		section.title.toLowerCase().includes(query) ||
+		section.content.toLowerCase().includes(query) ||
+		section.faqs?.some(
+			(faq) =>
+				faq.question.toLowerCase().includes(query) ||
+				faq.answer.toLowerCase().includes(query),
+		)
+	);
+});
 
-  $: activeSection = helpData.sections.find((s: HelpSection) => s.id === activeTab);
+$: activeSection = helpData.sections.find(
+	(s: HelpSection) => s.id === activeTab,
+);
 
-  // Functions
-  function toggleAccordion(id: string) {
-    if (openAccordions.has(id)) {
-      openAccordions.delete(id);
-    } else {
-      openAccordions.add(id);
-    }
-    openAccordions = openAccordions;
-  }
+// Functions
+function toggleAccordion(id: string) {
+	if (openAccordions.has(id)) {
+		openAccordions.delete(id);
+	} else {
+		openAccordions.add(id);
+	}
+	openAccordions = openAccordions;
+}
 
-  function setActiveTab(tabId: string) {
-    activeTab = tabId;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+function setActiveTab(tabId: string) {
+	activeTab = tabId;
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
 </script>
 
 <svelte:head>

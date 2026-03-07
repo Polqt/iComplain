@@ -1,15 +1,19 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import type { HistoryFilterType, HistorySortType } from "../../../types/history.ts";
+import Icon from "@iconify/svelte";
+import type {
+	HistoryFilterType,
+	HistorySortType,
+} from "../../../types/history.ts";
 
-  export let activeFilter: HistoryFilterType = "all";
-  export let sortBy: HistorySortType = "newest";
-  export let searchQuery: string = "";
-  export let totalCount: number = 0;
+export let activeFilter: HistoryFilterType = "all";
+export let sortBy: HistorySortType = "newest";
+export let searchQuery: string = "";
+export let totalCount: number = 0;
 
-  export let onclear: () => void = () => {};
+export let onclear: () => void = () => {};
 
-  $: hasActiveFilters = activeFilter !== "all" || searchQuery.length > 0 || sortBy !== "newest";
+$: hasActiveFilters =
+	activeFilter !== "all" || searchQuery.length > 0 || sortBy !== "newest";
 </script>
 
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

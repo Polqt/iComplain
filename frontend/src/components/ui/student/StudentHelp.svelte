@@ -1,33 +1,33 @@
 <script lang="ts">
-  import Icon from "@iconify/svelte";
-  import StudentLayout from "../../../components/layout/StudentLayout.svelte";
-  import {
-    filterHelpSections,
-    loadHelpContent,
-  } from "../../../utils/helpConfig.ts";
+import Icon from "@iconify/svelte";
+import StudentLayout from "../../../components/layout/StudentLayout.svelte";
+import {
+	filterHelpSections,
+	loadHelpContent,
+} from "../../../utils/helpConfig.ts";
 
-  // Student view always uses the student help content.
-  const helpData = loadHelpContent("student");
+// Student view always uses the student help content.
+const helpData = loadHelpContent("student");
 
-  let activeTab: string = helpData.sections[0]?.id || "getting-started";
-  let openAccordions: Set<string> = new Set();
+let activeTab: string = helpData.sections[0]?.id || "getting-started";
+let openAccordions: Set<string> = new Set();
 
-  $: filteredSections = filterHelpSections(helpData.sections);
-  $: activeSection = helpData.sections.find((s) => s.id === activeTab);
+$: filteredSections = filterHelpSections(helpData.sections);
+$: activeSection = helpData.sections.find((s) => s.id === activeTab);
 
-  function toggleAccordion(id: string) {
-    if (openAccordions.has(id)) {
-      openAccordions.delete(id);
-    } else {
-      openAccordions.add(id);
-    }
-    openAccordions = openAccordions;
-  }
+function toggleAccordion(id: string) {
+	if (openAccordions.has(id)) {
+		openAccordions.delete(id);
+	} else {
+		openAccordions.add(id);
+	}
+	openAccordions = openAccordions;
+}
 
-  function setActiveTab(tabId: string) {
-    activeTab = tabId;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+function setActiveTab(tabId: string) {
+	activeTab = tabId;
+	window.scrollTo({ top: 0, behavior: "smooth" });
+}
 </script>
 
 <svelte:head>

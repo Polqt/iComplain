@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { writable } from "svelte/store";
-  import type {
-    Ticket,
-    Category,
-    TicketPriority,
-  } from "../../../types/tickets.ts";
-  import {
-    statusConfig,
-    priorityConfig,
-    getPriorityKey,
-  } from "../../../utils/ticketConfig.js";
-  import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
-  import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
+import { writable } from "svelte/store";
+import type {
+	Ticket,
+	Category,
+	TicketPriority,
+} from "../../../types/tickets.ts";
+import {
+	statusConfig,
+	priorityConfig,
+	getPriorityKey,
+} from "../../../utils/ticketConfig.js";
+import Icon from "@iconify/svelte";
+import { onMount } from "svelte";
+import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
 
   export let open = false;
   export let mode: "create" | "edit" = "create";
@@ -27,31 +27,31 @@
 
   let selectedFiles: File[] = [];
 
-  export const categoriesStore = writable<Category[]>([]);
-  export const prioritiesStore = writable<TicketPriority[]>([]);
+export const categoriesStore = writable<Category[]>([]);
+export const prioritiesStore = writable<TicketPriority[]>([]);
 
-  export async function loadCategories() {
-    try {
-      const cats = await fetchCategories();
-      categoriesStore.set(cats);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+export async function loadCategories() {
+	try {
+		const cats = await fetchCategories();
+		categoriesStore.set(cats);
+	} catch (err) {
+		console.error(err);
+	}
+}
 
-  export async function loadPriorities() {
-    try {
-      const prios = await fetchPriorities();
-      prioritiesStore.set(prios);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+export async function loadPriorities() {
+	try {
+		const prios = await fetchPriorities();
+		prioritiesStore.set(prios);
+	} catch (err) {
+		console.error(err);
+	}
+}
 
-  onMount(() => {
-    loadCategories();
-    loadPriorities();
-  });
+onMount(() => {
+	loadCategories();
+	loadPriorities();
+});
 
   function handleSubmit(event: Event) {
     event.preventDefault();

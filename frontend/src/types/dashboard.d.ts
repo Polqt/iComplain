@@ -4,6 +4,8 @@ export type DashboardMetric = {
     change: string;
     subtitle: string;
     trend: string;
+    is_critical?: boolean;
+    is_increasing?: boolean;
 };
 export type TicketVolumeDataPoint = {
     day: string;
@@ -14,4 +16,5 @@ export type DashboardStats = {
     volume: TicketVolumeDataPoint[];
     status_breakdown: Record<string, number>;
     category_breakdown: Record<string, number>;
+    recent_activity?: any[];
 };
