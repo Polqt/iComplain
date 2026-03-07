@@ -1,0 +1,10 @@
+{% extends "emails/base.html" %}
+{% block title %}Ticket Created{% endblock %}
+{% block content %}
+<p>Hi {{ user.first_name|default:"there" }},</p>
+<p>Your ticket <strong>#{{ ticket.id }} &mdash; {{ ticket.title }}</strong> has been submitted successfully.</p>
+<p><strong>Category:</strong> {{ ticket.category.name }}<br>
+<strong>Priority:</strong> {{ ticket.priority }}<br>
+<strong>Status:</strong> {{ ticket.status }}</p>
+<p>We'll keep you updated as your ticket is reviewed and processed.</p>
+{% endblock %}

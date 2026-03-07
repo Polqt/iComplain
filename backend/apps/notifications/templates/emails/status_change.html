@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+{% block title %}Ticket Status Updated{% endblock %}
+{% block content %}
+<p>Hi {{ user.first_name|default:"there" }},</p>
+<p>The status of your ticket <strong>#{{ ticket.id }} &mdash; {{ ticket.title }}</strong> has been updated.</p>
+<p><strong>New Status:</strong> {{ new_status }}<br>
+{% if old_status %}<strong>Previous Status:</strong> {{ old_status }}<br>{% endif %}
+{% if changed_by %}<strong>Updated By:</strong> {{ changed_by }}{% endif %}</p>
+{% endblock %}

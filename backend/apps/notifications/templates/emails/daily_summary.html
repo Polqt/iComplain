@@ -1,0 +1,24 @@
+{% extends "emails/base.html" %}
+{% block title %}Daily Summary{% endblock %}
+{% block content %}
+<p>Hi {{ user.first_name|default:"Admin" }},</p>
+<p>Here is your daily ticket summary for <strong>{{ date }}</strong>:</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0;">
+  <tr style="background:#f4f4f5;">
+    <td style="padding:8px 12px;font-weight:600;">Open Tickets</td>
+    <td style="padding:8px 12px;text-align:right;">{{ open_count }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px 12px;font-weight:600;">In Progress</td>
+    <td style="padding:8px 12px;text-align:right;">{{ in_progress_count }}</td>
+  </tr>
+  <tr style="background:#f4f4f5;">
+    <td style="padding:8px 12px;font-weight:600;">Resolved Today</td>
+    <td style="padding:8px 12px;text-align:right;">{{ resolved_count }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px 12px;font-weight:600;">Escalated</td>
+    <td style="padding:8px 12px;text-align:right;">{{ escalated_count }}</td>
+  </tr>
+</table>
+{% endblock %}

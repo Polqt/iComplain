@@ -205,7 +205,6 @@ class DashboardStatsSchema(Schema):
     recent_activity: list[dict] | None = None  # For activity feed
 
 class ActivityLogSchema(Schema):
-    """Schema for activity log entries."""
     id: int
     action: Literal["created", "status_changed", "priority_changed", "assigned", "commented", "reopened", "resolved"]
     ticket_number: str
@@ -243,7 +242,6 @@ class ActivityLogSchema(Schema):
 
 
 class ActivityLogListSchema(Schema):
-    """Paginated activity log response."""
     items: list[ActivityLogSchema]
     total: int
     limit: int
