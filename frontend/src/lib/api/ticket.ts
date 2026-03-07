@@ -20,6 +20,51 @@ async function handleRes<T>(res: Response): Promise<T> {
 	return res.json() as Promise<T>;
 }
 
+function getFilenameFromDisposition(
+	contentDisposition: string | null,
+	fallback: string,
+): string {
+	if (!contentDisposition) return fallback;
+	const match = contentDisposition.match(/filename="?([^"]+)"?/i);
+	return match?.[1] || fallback;
+}
+
+async function downloadFile(
+	url: string,
+	fallbackFilename: string,
+	contentType = "application/octet-stream",
+): Promise<void> {
+	const res = await fetch(url, {
+		method: "GET",
+		credentials: "include",
+	});
+
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		throw new Error(body.message || body.detail || res.statusText);
+	}
+
+	const blob = await res.blob();
+	const fileBlob = blob.type ? blob : new Blob([blob], { type: contentType });
+	const filename = getFilenameFromDisposition(
+		res.headers.get("content-disposition"),
+		fallbackFilename,
+	);
+
+	saveBlob(fileBlob, filename);
+}
+
+function saveBlob(blob: Blob, filename: string): void {
+	const downloadUrl = URL.createObjectURL(blob);
+	const link = document.createElement("a");
+	link.href = downloadUrl;
+	link.download = filename;
+	document.body.appendChild(link);
+	link.click();
+	link.remove();
+	URL.revokeObjectURL(downloadUrl);
+}
+
 // Fetch tickets (paginated; defaults to first page of 50)
 export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
 	try {
@@ -246,6 +291,29 @@ export async function getActivityLogs(
 		return await handleRes<ActivityLogListResponse>(res);
 	} catch (error) {
 		console.error("Error fetching activity logs:", error);
+		throw error;
+	}
+}
+
+type CsvExportParams = {
+	startDate?: string;
+	endDate?: string;
+};
+
+export async function exportDashboardCsv(params: CsvExportParams = {}): Promise<void> {
+	try {
+		const query = new URLSearchParams();
+		if (params.startDate) query.set("start_date", params.startDate);
+		if (params.endDate) query.set("end_date", params.endDate);
+		const suffix = query.toString() ? `?${query}` : "";
+
+		await downloadFile(
+			`${BASE}/stats/dashboard/export-csv${suffix}`,
+			`tickets-export-${new Date().toISOString().slice(0, 10)}.csv`,
+			"text/csv;charset=utf-8",
+		);
+	} catch (error) {
+		console.error("Error exporting dashboard CSV:", error);
 		throw error;
 	}
 }

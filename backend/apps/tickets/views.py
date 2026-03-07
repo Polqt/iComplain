@@ -1,11 +1,16 @@
+import csv
+from datetime import date, timedelta
+from io import StringIO
+from typing import List
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db.models import Q, Count, Min, Prefetch
 from django.db import transaction
+from django.db.models import Count, Min, Prefetch, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import timedelta
-from typing import List
+
 from ninja import File, Form, Router, UploadedFile
 from ninja.security import SessionAuth
 from channels.layers import get_channel_layer
@@ -67,6 +72,205 @@ def get_priorities(request):
 
 def _active_tickets():
     return Ticket.objects.filter(archived_at__isnull=True)
+
+
+def _parse_iso_date(raw_date: str | None) -> date | None:
+    if not raw_date:
+        return None
+    try:
+        return date.fromisoformat(raw_date)
+    except ValueError as exc:
+        raise ValueError("Dates must use YYYY-MM-DD format.") from exc
+
+
+def _resolve_export_window(start_date: str | None, end_date: str | None) -> tuple[date, date]:
+    parsed_start = _parse_iso_date(start_date)
+    parsed_end = _parse_iso_date(end_date)
+    today = timezone.now().date()
+
+    if parsed_start is None and parsed_end is None:
+        parsed_end = today
+        parsed_start = today - timedelta(days=29)
+    elif parsed_start is None:
+        parsed_start = parsed_end - timedelta(days=29)
+    elif parsed_end is None:
+        parsed_end = today
+
+    if parsed_start > parsed_end:
+        raise ValueError("start_date cannot be later than end_date.")
+
+    return parsed_start, parsed_end
+
+
+def _get_tickets_for_window(start: date, end: date):
+    return (
+        _active_tickets()
+        .filter(created_at__date__gte=start, created_at__date__lte=end)
+        .select_related("student", "category", "priority")
+        .order_by("-created_at")
+    )
+
+
+def _calculate_dashboard_stats() -> DashboardStatsSchema:
+    now = timezone.now()
+    today = now.date()
+    last_month_start = (now - timedelta(days=30)).date()
+    this_week_start = (now - timedelta(days=7)).date()
+    previous_month_start = last_month_start - timedelta(days=30)
+
+    base = _active_tickets()
+
+    status_counts = dict(
+        base.values("status").annotate(count=Count("id")).values_list("status", "count")
+    )
+    last_month_status_counts = dict(
+        base.filter(created_at__date__lt=last_month_start)
+        .values("status")
+        .annotate(count=Count("id"))
+        .values_list("status", "count")
+    )
+
+    pending_tickets = status_counts.get("pending", 0)
+    resolved_tickets = status_counts.get("resolved", 0)
+    in_progress_tickets = status_counts.get("in_progress", 0)
+    last_month_pending = last_month_status_counts.get("pending", 0)
+    last_month_resolved = last_month_status_counts.get("resolved", 0)
+
+    pending_change = (
+        ((pending_tickets - last_month_pending) / last_month_pending * 100)
+        if last_month_pending > 0
+        else 0
+    )
+    resolved_change = (
+        ((resolved_tickets - last_month_resolved) / last_month_resolved * 100)
+        if last_month_resolved > 0
+        else 0
+    )
+
+    tickets_this_week = (
+        base.filter(comments__user__is_staff=True, created_at__gte=this_week_start)
+        .distinct()
+        .annotate(
+            first_response_time=Min(
+                "comments__created_at",
+                filter=Q(comments__user__is_staff=True),
+            )
+        )
+    )
+    response_times = []
+    for ticket in tickets_this_week:
+        if ticket.first_response_time:
+            response_times.append(
+                (ticket.first_response_time - ticket.created_at).total_seconds() / 3600
+            )
+    avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+
+    tickets_last_month = (
+        base.filter(
+            comments__user__is_staff=True,
+            created_at__date__gte=previous_month_start,
+            created_at__date__lt=last_month_start,
+        )
+        .distinct()
+        .annotate(
+            first_response_time=Min(
+                "comments__created_at",
+                filter=Q(comments__user__is_staff=True),
+            )
+        )
+    )
+    last_response_times = []
+    for ticket in tickets_last_month:
+        if ticket.first_response_time:
+            last_response_times.append(
+                (ticket.first_response_time - ticket.created_at).total_seconds() / 3600
+            )
+    last_month_avg_response = (
+        sum(last_response_times) / len(last_response_times)
+        if last_response_times
+        else avg_response_time
+    )
+
+    metrics = [
+        DashboardMetricsSchema(
+            title="Pending Tickets",
+            value=str(pending_tickets),
+            change=f"+{abs(pending_change):.0f}%"
+            if pending_change > 0
+            else f"-{abs(pending_change):.0f}%",
+            subtitle=f"Last Month {last_month_pending}",
+            trend="error" if pending_change > 0 else "success",
+            is_critical=True,
+            is_increasing=pending_change > 0,
+        ),
+        DashboardMetricsSchema(
+            title="In Progress",
+            value=str(in_progress_tickets),
+            change=f"{in_progress_tickets - last_month_status_counts.get('in_progress', 0):+d}",
+            subtitle="vs last month",
+            trend="success",
+            is_critical=False,
+            is_increasing=in_progress_tickets
+            > last_month_status_counts.get("in_progress", 0),
+        ),
+        DashboardMetricsSchema(
+            title="Resolved Tickets",
+            value=str(resolved_tickets),
+            change=f"+{abs(resolved_change):.0f}%"
+            if resolved_change >= 0
+            else f"-{abs(resolved_change):.0f}%",
+            subtitle=f"Last Month {last_month_resolved}",
+            trend="success" if resolved_change >= 0 else "warning",
+            is_critical=False,
+            is_increasing=resolved_change >= 0,
+        ),
+        DashboardMetricsSchema(
+            title="Response Time",
+            value=f"{avg_response_time:.1f} hrs" if avg_response_time else "N/A",
+            change=f"{(last_month_avg_response / avg_response_time):.1f}x faster"
+            if avg_response_time and last_month_avg_response
+            else "N/A",
+            subtitle=f"Last Month {last_month_avg_response:.1f} hrs"
+            if last_month_avg_response
+            else "N/A",
+            trend="success" if avg_response_time < last_month_avg_response else "error",
+            is_critical=False,
+            is_increasing=avg_response_time > last_month_avg_response,
+        ),
+    ]
+
+    days = ["S", "M", "T", "W", "T", "F", "S"]
+    volume_counts = (
+        base.filter(created_at__date__gte=today - timedelta(days=6))
+        .extra(select={"created_date": "DATE(created_at)"})
+        .values("created_date")
+        .annotate(count=Count("id"))
+        .values_list("created_date", "count")
+    )
+    volume_dict = dict(volume_counts)
+    volume_data = []
+    for i in range(7):
+        day_date = today - timedelta(days=6 - i)
+        volume_data.append(
+            TicketVolumeDataPointSchema(
+                day=days[(day_date.weekday() + 1) % 7],
+                value=volume_dict.get(day_date, 0),
+            )
+        )
+
+    category_breakdown = dict(
+        base.values("category__name")
+        .annotate(count=Count("id"))
+        .values_list("category__name", "count")
+    )
+
+    return DashboardStatsSchema(
+        metrics=metrics,
+        volume=volume_data,
+        status_breakdown=status_counts,
+        category_breakdown=category_breakdown,
+        recent_activity=None,
+    )
 
 
 PAGE_SIZE_DEFAULT = 50
@@ -738,141 +942,63 @@ def delete_feedback(request, id: int, feedback_id: int):
 def dashboard_stats(request):
     if not request.user.is_staff:
         return {"detail": "You do not have permission to view this data."}, 403
+    return _calculate_dashboard_stats()
 
-    now = timezone.now()
-    today = now.date()
-    last_month_start = (now - timedelta(days=30)).date()
-    this_week_start = (now - timedelta(days=7)).date()
-    
-    base = _active_tickets()
-    
-    all_counts = base.values('status').annotate(count=Count('id')).values_list('status', 'count')
-    status_counts = dict(all_counts)
-    
-    last_month_counts = base.filter(created_at__date__lt=last_month_start).values('status').annotate(count=Count('id')).values_list('status', 'count')
-    last_month_status_counts = dict(last_month_counts)
-    
-    total_tickets = base.count()
-    pending_tickets = status_counts.get('pending', 0)
-    resolved_tickets = status_counts.get('resolved', 0)
-    in_progress_tickets = status_counts.get('in_progress', 0)
-    
-    last_month_total = base.filter(created_at__date__lt=last_month_start).count()
-    last_month_pending = last_month_status_counts.get('pending', 0)
-    last_month_resolved = last_month_status_counts.get('resolved', 0)
-    
-    # Calculate changes
-    pending_change = ((pending_tickets - last_month_pending) / last_month_pending * 100) if last_month_pending > 0 else 0
-    resolved_change = ((resolved_tickets - last_month_resolved) / last_month_resolved * 100) if last_month_resolved > 0 else 0
-    
-    # Optimized response time calculation using aggregation
-    from django.db.models import Min as DjangoMin, Q as DjangoQ, F, ExpressionWrapper, DurationField
-    
-    tickets_this_week = base.filter(
-        comments__user__is_staff=True,
-        created_at__gte=this_week_start
-    ).distinct().annotate(
-        first_response_time=DjangoMin('comments__created_at', filter=DjangoQ(comments__user__is_staff=True))
+
+@router.get("/stats/dashboard/export-csv")
+def export_dashboard_csv(
+    request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+):
+    if not request.user.is_staff:
+        return {"detail": "You do not have permission to view this data."}, 403
+
+    try:
+        start, end = _resolve_export_window(start_date, end_date)
+    except ValueError as exc:
+        return {"detail": str(exc)}, 400
+
+    tickets = _get_tickets_for_window(start, end)
+
+    buffer = StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        [
+            "ticket_number",
+            "title",
+            "status",
+            "priority",
+            "category",
+            "student_email",
+            "building",
+            "room_name",
+            "created_at",
+            "updated_at",
+        ]
     )
-    
-    response_times = []
-    for ticket in tickets_this_week:
-        if ticket.first_response_time:
-            delta = ticket.first_response_time - ticket.created_at
-            response_times.append(delta.total_seconds() / 3600)
-    
-    avg_response_time = sum(response_times) / len(response_times) if response_times else 0
-    
-    # Compare with previous period
-    tickets_last_month = base.filter(
-        comments__user__is_staff=True,
-        created_at__date__gte=(last_month_start - timedelta(days=30)),
-        created_at__date__lt=last_month_start
-    ).distinct().annotate(
-        first_response_time=DjangoMin('comments__created_at', filter=DjangoQ(comments__user__is_staff=True))
-    )
-    
-    last_response_times = []
-    for ticket in tickets_last_month:
-        if ticket.first_response_time:
-            delta = ticket.first_response_time - ticket.created_at
-            last_response_times.append(delta.total_seconds() / 3600)
-    
-    last_month_avg_response = sum(last_response_times) / len(last_response_times) if last_response_times else avg_response_time
-    
-    # Reorder metrics with Pending as PRIMARY KPI (first)
-    metrics = [
-        DashboardMetricsSchema(
-            title="Pending Tickets",
-            value=str(pending_tickets),
-            change=f"+{abs(pending_change):.0f}%" if pending_change > 0 else f"-{abs(pending_change):.0f}%",
-            subtitle=f"Last Month {last_month_pending}",
-            trend="error" if pending_change > 0 else "success",
-            is_critical=True,  
-            is_increasing=pending_change > 0
-        ),
-        DashboardMetricsSchema(
-            title="In Progress",
-            value=str(in_progress_tickets),
-            change=f"{in_progress_tickets - last_month_status_counts.get('in_progress', 0):+d}",
-            subtitle="vs last month",
-            trend="success",
-            is_critical=False,
-            is_increasing=in_progress_tickets > last_month_status_counts.get('in_progress', 0)
-        ),
-        DashboardMetricsSchema(
-            title="Resolved Tickets",
-            value=str(resolved_tickets),
-            change=f"+{abs(resolved_change):.0f}%" if resolved_change >= 0 else f"-{abs(resolved_change):.0f}%",
-            subtitle=f"Last Month {last_month_resolved}",
-            trend="success" if resolved_change >= 0 else "warning",
-            is_critical=False,
-            is_increasing=resolved_change >= 0
-        ),
-        DashboardMetricsSchema(
-            title="Response Time",
-            value=f"{avg_response_time:.1f} hrs" if avg_response_time else "N/A",
-            change=f"{(last_month_avg_response / avg_response_time):.1f}x faster" if avg_response_time and last_month_avg_response else "N/A",
-            subtitle=f"Last Month {last_month_avg_response:.1f} hrs" if last_month_avg_response else "N/A",
-            trend="success" if avg_response_time < last_month_avg_response else "error",
-            is_critical=False,
-            is_increasing=avg_response_time > last_month_avg_response
-        ),
-    ]
-    
-    # Optimized volume data
-    volume_data = []
-    days = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-    
-    volume_counts = base.filter(
-        created_at__date__gte=today - timedelta(days=6)
-    ).extra(select={'created_date': 'DATE(created_at)'}).values('created_date').annotate(count=Count('id')).values_list('created_date', 'count')
-    
-    volume_dict = dict(volume_counts)
-    
-    for i in range(7):
-        day_date = today - timedelta(days=6-i)
-        count = volume_dict.get(day_date, 0)
-        volume_data.append(
-            TicketVolumeDataPointSchema(
-                day=days[(day_date.weekday() + 1) % 7],
-                value=count
-            )
+
+    for ticket in tickets:
+        writer.writerow(
+            [
+                ticket.ticket_number,
+                ticket.title,
+                ticket.status,
+                ticket.priority.name if ticket.priority else "",
+                ticket.category.name if ticket.category else "",
+                ticket.student.email if ticket.student else "",
+                ticket.building,
+                ticket.room_name,
+                ticket.created_at.isoformat(),
+                ticket.updated_at.isoformat(),
+            ]
         )
-        
-    status_breakdown = dict(status_counts)
-    
-    category_breakdown = dict(
-        base.values('category__name').annotate(count=Count('id')).values_list('category__name', 'count')
+
+    response = HttpResponse(buffer.getvalue(), content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = (
+        f'attachment; filename="tickets-export-{start.isoformat()}-to-{end.isoformat()}.csv"'
     )
-    
-    return DashboardStatsSchema(
-        metrics=metrics,
-        volume=volume_data,
-        status_breakdown=status_breakdown,
-        category_breakdown=category_breakdown,
-        recent_activity=None  # To be populated by activity feed component
-    )
+    return response
 
 
 @router.get("/activity/", response=ActivityLogListSchema)

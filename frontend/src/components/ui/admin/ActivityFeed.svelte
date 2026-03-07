@@ -3,8 +3,8 @@
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { getActivityLogs } from "../../../lib/api/ticket.ts";
-  import type { ActivityLog } from "../../../lib/api/ticket.ts";
   import { formattedTime } from "../../../utils/date.ts";
+  import type { ActivityLog } from "../../../types/tickets.ts";
 
   let activities: ActivityLog[] = [];
   let isLoading = true;
