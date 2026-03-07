@@ -3,5 +3,14 @@
 	"identifier": "default",
 	"description": "enables the default permissions",
 	"windows": ["main"],
-	"permissions": ["core:default"]
+	"permissions": [
+		"core:default",
+		{
+			"identifier": "http:default",
+			"allow": [
+				{ "url": "http://localhost:8000/**" },
+				{ "url": "http://127.0.0.1:8000/**" }
+			]
+		}
+	]
 }

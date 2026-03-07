@@ -14,10 +14,12 @@
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
+  import { authStore } from "../../../stores/auth.store.ts";
 
   let expandedTicketId: number | null = null;
 
   $: ({ tickets, isLoading } = $ticketsStore);
+  $: ({ role } = $authStore);
 
   onMount(async () => {
     if ($ticketsStore.tickets.length === 0) {
@@ -42,10 +44,10 @@
 
   function navigateToFullView(ticket: Ticket) {
     if (role === "admin") {
-      goto(`/tickets?ticket=${ticket.id}`);
+      goto(`/tickets?ticket=${ticket.ticket_number}`);
       return;
     }
-    goto(`/tickets/${ticket.id}`);
+    goto(`/tickets/${ticket.ticket_number}`);
   }
 </script>
 
@@ -186,7 +188,7 @@
 
               {#if isExpanded}
                 <div
-                  class="border-t border-black/10 dark:border-white/10 bg-base-100/60 p-4 space-y-3 animate-accordion-down"
+                  class="border-t border-black/10 dark:border-white/10 bg-base-100/60 p-4 space-y-3"
                 >
                   <div class="flex items-start gap-2">
                     <Icon
@@ -277,20 +279,3 @@
     {/each}
   </div>
 {/if}
-
-<style>
-  :global(.animate-accordion-down) {
-    animation: accordion-down 0.2s ease-out;
-  }
-
-  @keyframes accordion-down {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-</style>

@@ -24,7 +24,7 @@
   let pendingPriority: number | null = null;
   let isSaving = false;
   let highlightedTicketId: number | null = null;
-  let handledQueryTicketId: number | null = null;
+  let handledQueryTicketNumber: string | null = null;
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
   const ticketRowElements = new Map<number, HTMLButtonElement>();
 
@@ -79,12 +79,7 @@
     return bTime - aTime || b.id - a.id;
   });
 
-  $: queryTicketId = (() => {
-    const raw = $page.url.searchParams.get("ticket");
-    if (!raw) return null;
-    const parsed = Number(raw);
-    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-  })();
+  $: queryTicketNumber = $page.url.searchParams.get("ticket");
 
   $: {
     if (filteredTickets.length === 0) {
@@ -99,8 +94,8 @@
 
   $: if (
     !isLoading &&
-    queryTicketId !== null &&
-    handledQueryTicketId !== queryTicketId
+    queryTicketNumber !== null &&
+    handledQueryTicketNumber !== queryTicketNumber
   ) {
     searchQuery = "";
     statusFilter = "all";
@@ -108,12 +103,12 @@
     categoryFilter = "all";
     locationFilter = "all";
 
-    const exists = tickets.some((ticket) => ticket.id === queryTicketId);
-    if (exists) {
-      selectedTicketId = queryTicketId;
-      highlightTicket(queryTicketId);
+    const match = tickets.find((ticket) => ticket.ticket_number === queryTicketNumber);
+    if (match) {
+      selectedTicketId = match.id;
+      highlightTicket(match.id);
     }
-    handledQueryTicketId = queryTicketId;
+    handledQueryTicketNumber = queryTicketNumber;
   }
 
   onMount(async () => {
@@ -553,7 +548,7 @@
                   type="button"
                   class="btn btn-sm btn-outline gap-2"
                   onclick={() =>
-                    (window.location.href = `/history?ticket=${selectedTicket.id}`)}
+                    (window.location.href = `/history?ticket=${selectedTicket.ticket_number}`)}
                 >
                   <Icon icon="mdi:history" width="18" height="18" />
                   View History
