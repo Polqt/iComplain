@@ -8,11 +8,49 @@ import type {
 	DashboardStats,
 	DashboardMetric,
 } from "../../../types/dashboard.ts";
-import { getDashboardStats } from "../../../lib/api/ticket.ts";
+import {
+	getDashboardStats,
+	exportDashboardCsv,
+} from "../../../lib/api/ticket.ts";
 
 let stats: DashboardStats | null = null;
 let isLoading = true;
 let error: string | null = null;
+let actionError: string | null = null;
+let isExportingCsv = false;
+let isExportModalOpen = false;
+const today = new Date();
+const defaultStart = new Date();
+defaultStart.setDate(today.getDate() - 29);
+const formatDateInput = (value: Date) => value.toISOString().slice(0, 10);
+const isoToUsDate = (isoDate: string) => {
+	const [year, month, day] = isoDate.split("-");
+	return `${month}/${day}/${year}`;
+};
+const usDateToIso = (usDate: string): string | null => {
+	const match = usDate.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+	if (!match) return null;
+
+	const month = Number(match[1]);
+	const day = Number(match[2]);
+	const year = Number(match[3]);
+
+	if (month < 1 || month > 12 || day < 1 || year < 1000) return null;
+	const parsed = new Date(year, month - 1, day);
+	if (
+		parsed.getFullYear() !== year ||
+		parsed.getMonth() !== month - 1 ||
+		parsed.getDate() !== day
+	) {
+		return null;
+	}
+
+	return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+};
+let exportStartDate = formatDateInput(defaultStart);
+let exportEndDate = formatDateInput(today);
+let exportStartDisplay = isoToUsDate(exportStartDate);
+let exportEndDisplay = isoToUsDate(exportEndDate);
 
 onMount(async () => {
 	try {
@@ -41,6 +79,54 @@ function getTrendColor(metric: DashboardMetric) {
 	}
 	return metric.trend === "success" ? "text-success" : "text-error";
 }
+
+function openExportModal() {
+	actionError = null;
+	exportStartDisplay = isoToUsDate(exportStartDate);
+	exportEndDisplay = isoToUsDate(exportEndDate);
+	isExportModalOpen = true;
+}
+
+function closeExportModal() {
+	if (isExportingCsv) return;
+	isExportModalOpen = false;
+}
+
+async function handleExportCsv() {
+	if (isExportingCsv) return;
+	const parsedStart = usDateToIso(exportStartDisplay);
+	const parsedEnd = usDateToIso(exportEndDisplay);
+
+	if (!parsedStart || !parsedEnd) {
+		actionError = "Use MM/DD/YYYY format (example: 03/07/2026).";
+		return;
+	}
+
+	if (parsedStart > parsedEnd) {
+		actionError = "Start date cannot be later than end date.";
+		return;
+	}
+
+	exportStartDate = parsedStart;
+	exportEndDate = parsedEnd;
+	exportStartDisplay = isoToUsDate(parsedStart);
+	exportEndDisplay = isoToUsDate(parsedEnd);
+
+	actionError = null;
+	isExportingCsv = true;
+	try {
+		await exportDashboardCsv({
+			startDate: parsedStart,
+			endDate: parsedEnd,
+		});
+		isExportModalOpen = false;
+	} catch (err) {
+		actionError = err instanceof Error ? err.message : "Failed to export CSV";
+		console.error("Export CSV error:", err);
+	} finally {
+		isExportingCsv = false;
+	}
+}
 </script>
 
 <AdminLayout>
@@ -58,11 +144,10 @@ function getTrendColor(metric: DashboardMetric) {
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button class="btn btn-sm btn-primary gap-2 font-semibold shadow-lg hover:shadow-xl transition-shadow">
-          <Icon icon="mdi:chart-bar" width="18" height="18" />
-          Generate Report
-        </button>
-        <button class="btn btn-sm btn-outline gap-2">
+        <button
+          class="btn btn-sm btn-outline gap-2"
+          onclick={openExportModal}
+        >
           <Icon icon="mdi:download" width="18" height="18" />
           Export CSV
         </button>
@@ -223,4 +308,83 @@ function getTrendColor(metric: DashboardMetric) {
       {/if}
     </div>
   </div>
+
+  {#if isExportModalOpen}
+    <div class="modal modal-open">
+      <div class="modal-box p-0 max-w-lg border border-base-content/10 shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-4 bg-primary text-primary-content">
+          <h3 class="text-xl font-bold">Download Data</h3>
+          <button
+            type="button"
+            class="btn btn-sm btn-circle btn-ghost text-primary-content"
+            onclick={closeExportModal}
+            disabled={isExportingCsv}
+            aria-label="Close export modal"
+          >
+            <Icon icon="mdi:close" width="20" height="20" />
+          </button>
+        </div>
+
+        <div class="px-6 py-5 space-y-4 bg-base-100">
+          <div>
+            <p class="text-base font-semibold text-base-content mb-3">Date Range</p>
+            <div class="flex flex-wrap items-center gap-3">
+              <label class="input input-bordered flex items-center gap-2">
+                <span class="text-sm text-base-content/60">From</span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="MM/DD/YYYY"
+                  bind:value={exportStartDisplay}
+                />
+              </label>
+              <span class="text-base-content/50 font-medium">to</span>
+              <label class="input input-bordered flex items-center gap-2">
+                <span class="text-sm text-base-content/60">To</span>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="MM/DD/YYYY"
+                  bind:value={exportEndDisplay}
+                />
+              </label>
+            </div>
+            <p class="text-xs text-base-content/50 mt-2">Format: MM/DD/YYYY</p>
+          </div>
+
+          {#if actionError}
+            <div class="alert alert-warning shadow-sm">
+              <Icon icon="mdi:alert" width="18" height="18" />
+              <span class="text-sm">{actionError}</span>
+            </div>
+          {/if}
+        </div>
+
+        <div class="px-6 py-4 border-t border-base-content/10 bg-base-100 flex justify-end gap-2">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            onclick={closeExportModal}
+            disabled={isExportingCsv}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary gap-2"
+            onclick={handleExportCsv}
+            disabled={isExportingCsv}
+          >
+            <Icon icon="mdi:download" width="18" height="18" />
+            {isExportingCsv ? "Exporting..." : "Download CSV"}
+          </button>
+        </div>
+      </div>
+      <button
+        class="modal-backdrop"
+        aria-label="Close export modal backdrop"
+        onclick={closeExportModal}
+      ></button>
+    </div>
+  {/if}
 </AdminLayout>
