@@ -5,7 +5,7 @@
   import AdminLayout from "../../../components/layout/AdminLayout.svelte";
   import { ticketsStore } from "../../../stores/tickets.store.ts";
   import { fetchCategories } from "../../../lib/api/ticket.ts";
-  import type { TicketStatus, Category } from "../../../types/tickets.ts";
+  import type { TicketStatus, Category, Ticket } from "../../../types/tickets.ts";
   import { statusConfig } from "../../../utils/ticketConfig.ts";
   import AttachmentModal from "./AttachmentModal.svelte";
   import CommentSection from "../comments/CommentSection.svelte";
@@ -45,35 +45,49 @@
     new Set(tickets.map((t) => `${t.building} - ${t.room_name}`)),
   ).sort();
 
-  $: filteredTickets = tickets.filter((ticket) => {
-    const query = searchQuery.trim().toLowerCase();
-    const matchesQuery =
-      !query ||
-      ticket.title.toLowerCase().includes(query) ||
-      ticket.description.toLowerCase().includes(query) ||
-      ticket.ticket_number.toLowerCase().includes(query) ||
-      ticket.student.name?.toLowerCase().includes(query);
+  function getTicketSortTimestamp(ticket: Ticket): number {
+    const createdAt = Date.parse(ticket.created_at);
+    if (!Number.isNaN(createdAt)) return createdAt;
 
-    const matchesStatus =
-      statusFilter === "all" || ticket.status === statusFilter;
-    const matchesPriority =
-      priorityFilter === "all" ||
-      ticket.priority.name.toLowerCase() === priorityFilter;
-    const matchesCategory =
-      categoryFilter === "all" || ticket.category.name === categoryFilter;
+    const updatedAt = Date.parse(ticket.updated_at);
+    if (!Number.isNaN(updatedAt)) return updatedAt;
 
-    const locationLabel = `${ticket.building} - ${ticket.room_name}`;
-    const matchesLocation =
-      locationFilter === "all" || locationLabel === locationFilter;
+    return ticket.id;
+  }
 
-    return (
-      matchesQuery &&
-      matchesStatus &&
-      matchesPriority &&
-      matchesCategory &&
-      matchesLocation
+  $: filteredTickets = tickets
+    .filter((ticket) => {
+      const query = searchQuery.trim().toLowerCase();
+      const matchesQuery =
+        !query ||
+        ticket.title.toLowerCase().includes(query) ||
+        ticket.description.toLowerCase().includes(query) ||
+        ticket.ticket_number.toLowerCase().includes(query) ||
+        ticket.student.name?.toLowerCase().includes(query);
+
+      const matchesStatus =
+        statusFilter === "all" || ticket.status === statusFilter;
+      const matchesPriority =
+        priorityFilter === "all" ||
+        ticket.priority.name.toLowerCase() === priorityFilter;
+      const matchesCategory =
+        categoryFilter === "all" || ticket.category.name === categoryFilter;
+
+      const locationLabel = `${ticket.building} - ${ticket.room_name}`;
+      const matchesLocation =
+        locationFilter === "all" || locationLabel === locationFilter;
+
+      return (
+        matchesQuery &&
+        matchesStatus &&
+        matchesPriority &&
+        matchesCategory &&
+        matchesLocation
+      );
+    })
+    .sort(
+      (a, b) => getTicketSortTimestamp(b) - getTicketSortTimestamp(a),
     );
-  })
 
   $: queryTicketNumber = $page.url.searchParams.get("ticket");
 

@@ -7,6 +7,21 @@ export function formatNotificationTimestamp(iso: string): string {
 	return formatRelativeTime(iso, fallback);
 }
 
+export function normalizeNotificationActionUrl(
+	actionUrl: string | null | undefined,
+	role: string | null | undefined,
+): string | undefined {
+	if (!actionUrl) return undefined;
+
+	if (role !== "admin") return actionUrl;
+
+	const ticketPathMatch = actionUrl.match(/\/tickets\/([^/?#]+)/i);
+	if (!ticketPathMatch) return actionUrl;
+
+	const ticketNumber = ticketPathMatch[1];
+	return `/tickets?ticket=${encodeURIComponent(ticketNumber)}`;
+}
+
 export const notificationConfig = {
 	info: {
 		icon: "mdi:information-outline",
