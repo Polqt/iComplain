@@ -2,7 +2,10 @@
 import { onMount } from "svelte";
 import Icon from "@iconify/svelte";
 import type { Notification } from "../../../types/notifications.ts";
-import { formatNotificationTimestamp } from "../../../utils/notificationConfig.ts";
+import {
+	formatNotificationTimestamp,
+	normalizeNotificationActionUrl,
+} from "../../../utils/notificationConfig.ts";
 import AdminLayout from "../../../components/layout/AdminLayout.svelte";
 import {
 	fetchNotifications,
@@ -36,7 +39,8 @@ async function markAllRead() {
 	}
 }
 
-async function markRead(id: string) {
+async function markRead(id: string, event?: Event) {
+	event?.stopPropagation();
 	markError = "";
 	try {
 		await apiMarkAsRead(id);
@@ -48,14 +52,6 @@ async function markRead(id: string) {
 		markError = "Could not update read status. Please try again.";
 		setTimeout(() => (markError = ""), 4000);
 	}
-}
-
-function safeActionUrl(url: string | null | undefined): string {
-	if (!url || typeof url !== "string") return "#";
-	const t = url.trim();
-	if (t.startsWith("http://") || t.startsWith("https://")) return t;
-	if (t.startsWith("/")) return t;
-	return "https://" + t;
 }
 
 $: filtered = notifications.filter((n) => {
@@ -78,6 +74,7 @@ onMount(async () => {
 		notifications = list.map((n) => ({
 			...n,
 			timestamp: formatNotificationTimestamp(n.timestamp),
+			actionUrl: normalizeNotificationActionUrl(n.actionUrl, "admin"),
 		}));
 	} catch (e) {
 		console.error("Failed to load notifications", e);
@@ -87,8 +84,10 @@ onMount(async () => {
 	}
 });
 
-function navigateToTicket(ticketnumber: string) {
-	goto(`/tickets/${ticketnumber}`);
+function handleNotificationClick(notice: Notification) {
+	if (notice.actionUrl) {
+		goto(notice.actionUrl);
+	}
 }
 </script>
 
@@ -167,52 +166,107 @@ function navigateToTicket(ticketnumber: string) {
           </div>
         {:else}
           {#each filtered as notice}
-            <div
-              class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
-            >
-              <div class="card-body p-4">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex items-start gap-3">
-                    <div
-                      class="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center"
-                    >
-                      <Icon
-                        icon={typeConfig[notice.type].icon}
-                        width="20"
-                        height="20"
-                        class={typeConfig[notice.type].color}
-                      />
-                    </div>
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-2">
-                        <h3 class="font-semibold text-sm text-base-content">
-                          {notice.title}
-                        </h3>
-                        {#if !notice.read}
-                          <span class="badge badge-primary badge-xs">New</span>
-                        {/if}
-                      </div>
-                      <p class="text-sm text-base-content/70">
-                        {notice.message}
-                      </p>
+            {#if notice.actionUrl}
+              <button
+                type="button"
+                class="w-full text-left card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg cursor-pointer hover:border-base-content/20 transition-colors"
+                onclick={() => handleNotificationClick(notice)}
+              >
+                <div class="card-body p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
                       <div
-                        class="flex items-center gap-2 text-xs text-base-content/50"
+                        class="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center"
                       >
-                        <span>{notice.timestamp}</span>
+                        <Icon
+                          icon={typeConfig[notice.type].icon}
+                          width="20"
+                          height="20"
+                          class={typeConfig[notice.type].color}
+                        />
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                          <h3 class="font-semibold text-sm text-base-content">
+                            {notice.title}
+                          </h3>
+                          {#if !notice.read}
+                            <span class="badge badge-primary badge-xs">New</span>
+                          {/if}
+                        </div>
+                        <p class="text-sm text-base-content/70">
+                          {notice.message}
+                        </p>
+                        <div
+                          class="flex items-center gap-2 text-xs text-base-content/50"
+                        >
+                          <span>{notice.timestamp}</span>
+                        </div>
                       </div>
                     </div>
+                    {#if !notice.read}
+                      <span
+                        role="button"
+                        tabindex="0"
+                        class="btn btn-xs btn-ghost"
+                        onclick={(event) => markRead(notice.id, event)}
+                        onkeydown={(event) =>
+                          event.key === "Enter" && markRead(notice.id, event)}
+                      >
+                        Mark read
+                      </span>
+                    {/if}
                   </div>
-                  {#if !notice.read}
-                    <button
-                      class="btn btn-xs btn-ghost"
-                      onclick={() => markRead(notice.id)}
-                    >
-                      Mark read
-                    </button>
-                  {/if}
+                </div>
+              </button>
+            {:else}
+              <div
+                class="card bg-base-100 dark:bg-base-100 shadow-sm border border-base-content/5 rounded-lg"
+              >
+                <div class="card-body p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                      <div
+                        class="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center"
+                      >
+                        <Icon
+                          icon={typeConfig[notice.type].icon}
+                          width="20"
+                          height="20"
+                          class={typeConfig[notice.type].color}
+                        />
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                          <h3 class="font-semibold text-sm text-base-content">
+                            {notice.title}
+                          </h3>
+                          {#if !notice.read}
+                            <span class="badge badge-primary badge-xs">New</span>
+                          {/if}
+                        </div>
+                        <p class="text-sm text-base-content/70">
+                          {notice.message}
+                        </p>
+                        <div
+                          class="flex items-center gap-2 text-xs text-base-content/50"
+                        >
+                          <span>{notice.timestamp}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {#if !notice.read}
+                      <button
+                        class="btn btn-xs btn-ghost"
+                        onclick={(event) => markRead(notice.id, event)}
+                      >
+                        Mark read
+                      </button>
+                    {/if}
+                  </div>
                 </div>
               </div>
-            </div>
+            {/if}
           {/each}
 
           {#if filtered.length === 0}

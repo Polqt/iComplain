@@ -10,7 +10,10 @@ import type { Notification } from "../../types/notifications.js";
 import { formattedDate, mobileFormattedDate } from "../../utils/date.ts";
 import { authStore } from "../../stores/auth.store.ts";
 import { notificationStore } from "../../stores/notification.store.ts";
-import { formatNotificationTimestamp } from "../../utils/notificationConfig.ts";
+import {
+	formatNotificationTimestamp,
+	normalizeNotificationActionUrl,
+} from "../../utils/notificationConfig.ts";
 
 let showModal: boolean = false;
 let theme: string = "lofi";
@@ -19,6 +22,7 @@ let isMobile: boolean = false;
 $: notifications = $notificationStore.notifications.map((n) => ({
 	...n,
 	timestamp: formatNotificationTimestamp(n.timestamp),
+	actionUrl: normalizeNotificationActionUrl(n.actionUrl, $authStore.role),
 }));
 $: unreadCount = $notificationStore.unreadCount;
 
