@@ -67,8 +67,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Never use CORS_ALLOW_ALL_ORIGINS with CORS_ALLOW_CREDENTIALS in production.
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
-_cors_origins_raw = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
+_cors_origins_raw = os.getenv(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:5173,http://127.0.0.1:5173,https://tauri.localhost,tauri://localhost'
+)
 CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins_raw.split(',') if o.strip()]
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-language",
