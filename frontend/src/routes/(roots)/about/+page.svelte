@@ -156,6 +156,148 @@ import Header from "../../../components/layout/Header.svelte";
     </div>
   </section>
 
+  <!-- 3D feature showcase -->
+  <section class="w-full max-w-4xl px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16">
+    <div class="flex flex-col gap-4 sm:gap-5 mb-6 sm:mb-8">
+      <p
+        class="text-xs font-semibold tracking-widest uppercase text-base-content/35"
+      >
+        Main features
+      </p>
+      <h2 class="text-xl sm:text-2xl font-semibold text-base-content">
+        A quick visual of how iComplain works.
+      </h2>
+      <p class="text-sm sm:text-base text-base-content/60 max-w-2xl">
+        These cards shuffle through the core experience: students report issues,
+        admins track and assign them, and maintenance teams resolve them with a
+        clear history.
+      </p>
+    </div>
+
+    <div class="relative mx-auto max-w-md">
+      <div
+        class="pointer-events-none absolute inset-0 -translate-y-4 scale-110 rounded-[2rem] bg-gradient-to-br from-sky-500/10 via-emerald-400/5 to-amber-400/10 blur-3xl"
+      ></div>
+
+      <div class="relative h-64 sm:h-72 hero-card-shuffle">
+        <div
+          class="absolute inset-x-6 top-6 rounded-2xl border border-base-content/10 bg-base-200/80 shadow-xl shadow-base-content/10 transform rotate-[-6deg] -translate-y-2"
+        ></div>
+
+        <div
+          class="absolute inset-x-3 top-8 rounded-2xl border border-base-content/10 bg-base-100/90 shadow-xl shadow-base-content/10 transform rotate-[4deg] translate-y-1"
+        ></div>
+
+        <div
+          class="absolute inset-0 rounded-2xl border border-base-content/15 bg-base-100 shadow-2xl shadow-base-content/20 transform translate-y-4 translate-x-2 rotate-[-2deg] overflow-hidden"
+        >
+          <div class="flex items-center justify-between px-4 pt-4">
+            <div class="flex items-center gap-2">
+              <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+              <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wider">
+                Feature snapshot
+              </p>
+            </div>
+            <span class="badge badge-sm badge-outline text-[10px]">
+              Overview
+            </span>
+          </div>
+
+          <div class="mt-3 space-y-2 px-4 pb-4">
+            <div
+              class="flex items-center justify-between rounded-xl border border-emerald-400/20 bg-emerald-400/5 px-3 py-2"
+            >
+              <div>
+                <p class="text-[11px] font-medium text-base-content/70">
+                  Report instantly
+                </p>
+                <p class="text-[10px] text-base-content/45">
+                  Students submit complaints with locations, photos, and
+                  details.
+                </p>
+              </div>
+              <span class="badge badge-xs badge-info gap-1 text-[10px]">
+                REPORT
+              </span>
+            </div>
+
+            <div
+              class="flex items-center justify-between rounded-xl border border-amber-400/25 bg-amber-400/5 px-3 py-2"
+            >
+              <div>
+                <p class="text-[11px] font-medium text-base-content/70">
+                  Track progress
+                </p>
+                <p class="text-[10px] text-base-content/45">
+                  Everyone sees real-time status and comment history.
+                </p>
+              </div>
+              <span class="badge badge-xs badge-warning gap-1 text-[10px]">
+                TRACK
+              </span>
+            </div>
+
+            <div
+              class="flex items-center justify-between rounded-xl border border-base-content/10 bg-base-200/60 px-3 py-2"
+            >
+              <div>
+                <p class="text-[11px] font-medium text-base-content/70">
+                  Resolve clearly
+                </p>
+                <p class="text-[10px] text-base-content/45">
+                  Tickets close with a full, auditable history.
+                </p>
+              </div>
+              <span class="badge badge-xs badge-success gap-1 text-[10px]">
+                RESOLVE
+              </span>
+            </div>
+          </div>
+
+          <div class="border-t border-base-content/10 bg-base-100/90 px-4 py-3">
+            <div class="flex items-center justify-between text-[11px] text-base-content/55">
+              <div class="flex items-center gap-2">
+                <span class="h-1.5 w-1.5 rounded-full bg-sky-400"></span>
+                <span>Designed for a smoother campus experience</span>
+              </div>
+              <span class="text-[10px] text-base-content/40">
+                REPORT · TRACK · RESOLVE
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .hero-card-shuffle {
+      animation: heroCardShuffle 14s infinite ease-in-out;
+      transform-style: preserve-3d;
+    }
+
+    @keyframes heroCardShuffle {
+      0% {
+        transform: translateY(0) rotateX(0deg) rotateY(0deg);
+      }
+      20% {
+        transform: translateY(-6px) rotateX(8deg) rotateY(-6deg);
+      }
+      40% {
+        transform: translateY(4px) rotateX(-6deg) rotateY(4deg);
+      }
+      60% {
+        transform: translateY(-4px) rotateX(5deg) rotateY(6deg);
+      }
+      80% {
+        transform: translateY(2px) rotateX(-4deg) rotateY(-4deg);
+      }
+      100% {
+        transform: translateY(0) rotateX(0deg) rotateY(0deg);
+      }
+    }
+  </style>
+
   <div class="w-full max-w-4xl px-4 sm:px-6 lg:px-8">
     <div class="border-t border-base-content/10"></div>
   </div>
