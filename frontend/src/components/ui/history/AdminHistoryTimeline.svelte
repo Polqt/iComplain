@@ -18,7 +18,7 @@ export let sortBy: HistorySortType = "newest";
 export let onclearfilters: () => void = () => {};
 
 function navigate(ticketId: string) {
-	goto(`tickets/${ticketId}`);
+	goto(`/tickets/${ticketId}?from=history`);
 }
 
 $: hasAnyFilter =

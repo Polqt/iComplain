@@ -43,6 +43,7 @@ class TicketSchema(BaseModel):
     attachment: Optional[str] = None
     comments_count: int = 0
     has_feedback: bool = False
+    feedback_rating: Optional[int] = None
     
     class Config:
         from_attributes = True
@@ -61,10 +62,14 @@ class TicketSchema(BaseModel):
                     attachment_url = relative
                     
         has_feedback = False
+        feedback_rating = None
         try:
             has_feedback = bool(ticket.feedback)
+            if has_feedback:
+                feedback_rating = ticket.feedback.rating
         except AttributeError:
             has_feedback = False
+            feedback_rating = None
         
         data = {
             "id":            ticket.id,
@@ -81,7 +86,8 @@ class TicketSchema(BaseModel):
             "ticket_number": ticket.ticket_number,
             "attachment":    attachment_url,
             "comments_count": getattr(ticket, 'comments_count', 0),
-            "has_feedback":  has_feedback
+            "has_feedback":  has_feedback,
+            "feedback_rating": feedback_rating,
         }
         return cls.model_validate(data)
 

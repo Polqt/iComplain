@@ -14,7 +14,7 @@ import { goto } from "$app/navigation";
 export let item: HistoryItem;
 
 function navigate() {
-	goto(`tickets/${item.ticketId}`);
+	goto(`/tickets/${item.ticketId}?from=history`);
 }
 
 let menuOpen = false;

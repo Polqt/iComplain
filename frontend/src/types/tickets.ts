@@ -35,6 +35,7 @@ export type Ticket = {
 	updated_at: string;
 	comments_count?: number;
 	has_feedback?: boolean;
+	feedback_rating?: number | null;
 };
 
 export type TicketCreatePayload = {
