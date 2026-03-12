@@ -32,6 +32,7 @@
   import FeedbackList from "../../../components/ui/feedback/FeedbackList.svelte";
 
   $: idParam = $page.params.id;
+  $: fromHistory = $page.url.searchParams.get("from") === "history";
   $: isNumericId = /^\d+$/.test(idParam ?? "");
   $: ({ tickets, isLoading, error } = $ticketsStore);
   $: ({ feedbacks } = $feedbackStore);
@@ -42,6 +43,13 @@
 
   $: existingFeedback = feedbacks[0] || null;
   $: canSubmitFeedback = ticket?.status === "resolved" && role === "student";
+  $: backHref = fromHistory ? "/history" : "/tickets";
+  $: backLabel = fromHistory
+    ? "History"
+    : role === "admin"
+      ? "All Tickets"
+      : "My Tickets";
+  $: backButtonLabel = fromHistory ? "Back to history" : "Back to tickets";
 
   $: canViewFeedback =
     role === "admin" ||
@@ -146,10 +154,10 @@
       </p>
       <button
         class="btn btn-primary btn-sm gap-2 mt-2"
-        onclick={() => goto(role === "admin" ? "/admin/tickets" : "/tickets")}
+        onclick={() => goto(backHref)}
       >
         <Icon icon="mdi:arrow-left" width="15" height="15" />
-        Back to tickets
+        {backButtonLabel}
       </button>
     </div>
   {:else}
@@ -158,8 +166,7 @@
         <div class="flex items-center gap-2">
           <button
             class="btn btn-ghost btn-sm btn-circle"
-            onclick={() =>
-              goto(role === "admin" ? "/admin/tickets" : "/tickets")}
+            onclick={() => goto(backHref)}
             aria-label="Back"
           >
             <Icon icon="mdi:arrow-left" width="18" height="18" />
@@ -167,7 +174,7 @@
           <div class="breadcrumbs text-xs text-base-content/40 p-0">
             <ul>
               <li>
-                <span>{role === "admin" ? "All Tickets" : "My Tickets"}</span>
+                <span>{backLabel}</span>
               </li>
               <li>
                 <span class="font-mono text-base-content/60"

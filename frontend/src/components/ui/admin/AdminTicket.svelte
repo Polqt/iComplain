@@ -9,6 +9,7 @@
   import { statusConfig } from "../../../utils/ticketConfig.ts";
   import AttachmentModal from "./AttachmentModal.svelte";
   import CommentSection from "../comments/CommentSection.svelte";
+  import FeedbackBadge from "../feedback/FeedbackBadge.svelte";
 
   $: ({ tickets, isLoading } = $ticketsStore);
 
@@ -540,15 +541,31 @@
                   </button>
                 {/if}
 
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline gap-2"
-                  onclick={() =>
-                    (window.location.href = `/history?ticket=${selectedTicket.ticket_number}`)}
-                >
-                  <Icon icon="mdi:history" width="18" height="18" />
-                  View History
-                </button>
+                <div class="flex items-center gap-2 whitespace-nowrap">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline gap-2"
+                    onclick={() =>
+                      (window.location.href = `/history?ticket=${selectedTicket.ticket_number}`)}
+                  >
+                    <Icon icon="mdi:history" width="18" height="18" />
+                    View History
+                  </button>
+
+                  {#if selectedTicket.feedback_rating != null}
+                    <div class="ml-3 flex items-center gap-2">
+                      <span class="text-sm font-semibold text-base-content/60">
+                        Rating:
+                      </span>
+                      <FeedbackBadge
+                        rating={selectedTicket.feedback_rating}
+                        compact={true}
+                        size="md"
+                        showValue={false}
+                      />
+                    </div>
+                  {/if}
+                </div>
               </div>
             </div>
           {:else}
