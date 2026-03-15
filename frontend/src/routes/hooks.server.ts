@@ -15,6 +15,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 		"/tickets",
 		"/history",
 		"/notifications",
+		"/community-board",
+		"/help",
 	];
 
 	// Auth Routes

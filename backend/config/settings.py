@@ -11,15 +11,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is required. Set it in .env or your environment.")
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-NINJA_SKIP_SESSION_AUTH_CSRF = True
+NINJA_SKIP_SESSION_AUTH_CSRF = False
 
 # Google OAuth (school email sign-in)
 GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID', '')
 _allowed_domains_raw = os.getenv('ALLOWED_EMAIL_DOMAINS', 'usls.edu.ph')
-ALLOWED_EMAIL_DOMAINS = [d.strip() for d in _allowed_domains_raw.split(',') if d.strip()]
+ALLOWED_EMAIL_DOMAINS = [d.strip()
+                         for d in _allowed_domains_raw.split(',') if d.strip()]
 
 # Validate at startup: warn if domains are empty while Google OAuth is configured
 _logger = logging.getLogger(__name__)
@@ -71,7 +75,8 @@ _cors_origins_raw = os.getenv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,http://127.0.0.1:5173,https://tauri.localhost,tauri://localhost'
 )
-CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins_raw.split(',') if o.strip()]
+CORS_ALLOWED_ORIGINS = [o.strip()
+                        for o in _cors_origins_raw.split(',') if o.strip()]
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -205,15 +210,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
-# CSRF exemptions
+# CSRF exemptions -- only exempt truly public/token-auth endpoints
 CSRF_EXEMPT_API_PREFIXES = [
     '/api/users/register',  # Public signup
     '/api/users/login',     # Public login
+    '/api/users/google-login',  # Google OAuth (token-based, not session)
     '/api/webhooks/',       # Third-party webhooks using token signatures
-    '/api/tickets/',
-    '/api/notifications/',
 ]
 
 
@@ -228,9 +233,10 @@ EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD =  os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "")
 
 if not DEBUG and EMAIL_BACKEND.endswith("smtp.EmailBackend"):
     if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
-        raise RuntimeError("EMAIL_HOST_USER and EMAIL_HOST_PASSWORD must be set in production.")
+        raise RuntimeError(
+            "EMAIL_HOST_USER and EMAIL_HOST_PASSWORD must be set in production.")

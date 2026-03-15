@@ -1,12 +1,18 @@
 <script lang="ts">
-import { authStore } from "../../stores/auth.store.ts";
-import StudentHistory from "../../components/ui/student/StudentHistory.svelte";
-import AdminHistory from "../../components/ui/admin/AdminHistory.svelte";
+  import { goto } from "$app/navigation";
+  import { authStore } from "../../stores/auth.store.ts";
+  import StudentHistory from "../../components/ui/student/StudentHistory.svelte";
+  import AdminHistory from "../../components/ui/admin/AdminHistory.svelte";
 
-let isLoading: boolean = true;
-let role: string | null = null;
+  let isLoading: boolean = true;
+  let role: string | null = null;
+  let isAuthenticated: boolean = false;
 
-$: ({ isLoading, isAuthenticated, role } = $authStore);
+  $: ({ isLoading, isAuthenticated, role } = $authStore);
+
+  $: if (!isLoading && !isAuthenticated) {
+    goto("/not-signed-in", { replaceState: true });
+  }
 </script>
 
 {#if isLoading}

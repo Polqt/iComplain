@@ -51,13 +51,16 @@ export function handleAuthError(error: any): string {
 /**
  * Store user session data in local storage.
  */
-export function setUserSession(token: string, userId: string): void {}
+export function setUserSession(token: string, userId: string): void {
+	if (typeof window === "undefined") return;
+	localStorage.setItem("userId", userId);
+}
 
 /**
  * Get stored user session data from local storage.
  */
 export function getUserSession(): UserData | null {
-	if (typeof window === "undefined") {
+	if (typeof window !== "undefined") {
 		const data = localStorage.getItem("user");
 		return data ? JSON.parse(data) : null;
 	}
@@ -68,11 +71,11 @@ export function getUserSession(): UserData | null {
  * Clear user session data from local storage.
  */
 export function clearUserSession(userData: UserData | null): void {
-	if (typeof window === "undefined") return;
-
-	localStorage.removeItem("rememberMe");
-	localStorage.removeItem("user");
-	localStorage.removeItem("userId");
+	if (typeof window !== "undefined") {
+		localStorage.removeItem("rememberMe");
+		localStorage.removeItem("user");
+		localStorage.removeItem("userId");
+	}
 }
 
 /**

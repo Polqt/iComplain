@@ -113,7 +113,6 @@ export function validateField(
 	value: string,
 	option: { password?: string } = {},
 ): ValidationResult | PasswordValidationResult {
-	4;
 	const sanitized = sanitizeInput(value);
 
 	switch (fieldName) {
