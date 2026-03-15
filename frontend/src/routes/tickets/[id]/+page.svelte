@@ -74,10 +74,6 @@
     }
   });
 
-  $: if (ticket?.id) {
-    feedbackStore.loadFeedbackForTicket(ticket.id);
-  }
-
   let showEditModal = false;
   let showDeleteModal = false;
 
