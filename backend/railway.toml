@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
 
 [deploy]
-startCommand = "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p ${PORT:-8000} config.asgi:application"
+startCommand = "python scripts/start_railway.py"
 healthcheckPath = "/api/"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
