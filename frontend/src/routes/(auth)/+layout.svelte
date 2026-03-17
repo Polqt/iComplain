@@ -1,14 +1,16 @@
 <script lang="ts">
-import { page } from "$app/stores";
-import { onMount } from "svelte";
-import Header from "../../components/layout/Header.svelte";
+  import { page } from "$app/state";
+  import { onMount, type Snippet } from "svelte";
+  import Header from "../../components/layout/Header.svelte";
 
-$: isSignIn = $page.url.pathname.includes("/signin");
+  let { children }: { children: Snippet } = $props();
 
-onMount(() => {
-	const saved = localStorage.getItem("lofi") || "lofi";
-	document.documentElement.setAttribute("data-theme", saved);
-});
+  let isSignIn = $derived(page.url.pathname.includes("/signin"));
+
+  onMount(() => {
+    const saved = localStorage.getItem("lofi") || "lofi";
+    document.documentElement.setAttribute("data-theme", saved);
+  });
 </script>
 
 <div class="min-h-screen flex flex-col">
@@ -44,8 +46,8 @@ onMount(() => {
     <div
       class="lg:w-1/2 bg-base-100 flex items-center justify-center p-8 lg:p-12"
     >
-      <div class="w-full max-w-md">
-        <slot />
+      <div class={`w-full ${isSignIn ? "max-w-4xl" : "max-w-md"}`}>
+        {@render children()}
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path
 from django.conf.urls.static import static
 from ninja import NinjaAPI
@@ -14,7 +15,12 @@ api.add_router("tickets/", tickets_router)
 api.add_router("notifications/", notifications_router)
 api.add_router("/user/", user_router)
 
+
+def healthcheck(_request):
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("health/", healthcheck),
     path("api/", api.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

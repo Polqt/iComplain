@@ -27,6 +27,7 @@ django-ratelimit==4.1.0
 dnspython==2.8.0
 email-validator==2.3.0
 google-auth==2.48.0
+gunicorn==25.1.0
 hyperlink==21.0.0
 idna==3.11
 Incremental==24.11.0
