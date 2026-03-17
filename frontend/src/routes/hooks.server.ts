@@ -1,8 +1,24 @@
 import type { Handle, HandleServerError } from "@sveltejs/kit";
 import { redirect } from "@sveltejs/kit";
+import { PUBLIC_API_URL } from "$env/static/public";
+
+function isSameOriginApi(requestOrigin: string): boolean {
+	try {
+		const apiUrl = new URL(PUBLIC_API_URL);
+		return apiUrl.origin === requestOrigin;
+	} catch {
+		return false;
+	}
+}
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// Check for authentication via cookie or authorization header
+	// When the API is hosted on another origin (e.g. Vercel frontend + Railway backend),
+	// the Django session cookie is scoped to the API domain and is not visible here.
+	// In that setup, rely on the client-side auth bootstrap instead of SSR cookie redirects.
+	if (!isSameOriginApi(event.url.origin)) {
+		return resolve(event);
+	}
+
 	const sessionCookie = event.cookies.get("sessionid");
 	const authHeader = event.request.headers.get("authorization");
 	const hasAuthCookie = !!sessionCookie || !!authHeader;
