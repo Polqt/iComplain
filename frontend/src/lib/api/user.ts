@@ -1,7 +1,7 @@
-import { PUBLIC_API_URL } from "$env/static/public";
+import { apiFetch, invalidateCsrfToken } from "../../utils/api.ts";
 import type { RawAuthResponse, RawUser, User } from "../../types/user.ts";
 
-const BASE = `${PUBLIC_API_URL}/user`;
+const BASE = "/user";
 
 async function handleRes<T>(res: Response): Promise<T> {
 	if (!res.ok) {
@@ -25,13 +25,12 @@ function mapUser(raw: RawUser): User {
 }
 
 export async function register(email: string, password: string): Promise<User> {
-	const res = await fetch(`${BASE}/register`, {
+	const res = await apiFetch(`${BASE}/register`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({ email, password }),
-		credentials: "include",
 	});
 
 	const data = await handleRes<RawAuthResponse>(res);
@@ -39,16 +38,16 @@ export async function register(email: string, password: string): Promise<User> {
 		throw new Error(data.message || "Registration failed.");
 	}
 
+	invalidateCsrfToken();
 	return mapUser(data.user);
 }
 
 export async function login(email: string, password: string): Promise<User> {
-	const res = await fetch(`${BASE}/login`, {
+	const res = await apiFetch(`${BASE}/login`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 		},
-		credentials: "include",
 		body: JSON.stringify({ email, password }),
 	});
 
@@ -57,16 +56,16 @@ export async function login(email: string, password: string): Promise<User> {
 		throw new Error(data.message || "Login failed.");
 	}
 
+	invalidateCsrfToken();
 	return mapUser(data.user);
 }
 
 export async function googleLogin(idToken: string): Promise<User> {
-	const res = await fetch(`${BASE}/google-login`, {
+	const res = await apiFetch(`${BASE}/google-login`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 		},
-		credentials: "include",
 		body: JSON.stringify({ id_token: idToken }),
 	});
 
@@ -75,13 +74,13 @@ export async function googleLogin(idToken: string): Promise<User> {
 		throw new Error(data.message || "Google login failed.");
 	}
 
+	invalidateCsrfToken();
 	return mapUser(data.user);
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-	const res = await fetch(`${BASE}/profile`, {
+	const res = await apiFetch(`${BASE}/profile`, {
 		method: "GET",
-		credentials: "include",
 	});
 
 	if (!res.ok && (res.status === 401 || res.status === 403)) {
@@ -98,15 +97,16 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 export async function logout(): Promise<void> {
-	const res = await fetch(`${BASE}/logout`, {
+	const res = await apiFetch(`${BASE}/logout`, {
 		method: "POST",
-		credentials: "include",
 	});
 
 	if (!res.ok) {
 		const body = await res.json().catch(() => ({}));
 		throw new Error((body as { message?: string }).message || res.statusText);
 	}
+
+	invalidateCsrfToken();
 }
 
 export interface ProfileUpdate {
@@ -114,12 +114,11 @@ export interface ProfileUpdate {
 }
 
 export async function updateProfile(profileData: ProfileUpdate): Promise<User> {
-	const res = await fetch(`${BASE}/profile`, {
+	const res = await apiFetch(`${BASE}/profile`, {
 		method: "PATCH",
 		headers: {
 			"Content-Type": "application/json",
 		},
-		credentials: "include",
 		body: JSON.stringify(profileData),
 	});
 
@@ -135,9 +134,8 @@ export async function uploadAvatar(file: File): Promise<User> {
 	const formData = new FormData();
 	formData.append("file", file);
 
-	const res = await fetch(`${BASE}/profile/avatar`, {
+	const res = await apiFetch(`${BASE}/profile/avatar`, {
 		method: "POST",
-		credentials: "include",
 		body: formData,
 	});
 
@@ -150,9 +148,8 @@ export async function uploadAvatar(file: File): Promise<User> {
 }
 
 export async function deleteAvatar(): Promise<User> {
-	const res = await fetch(`${BASE}/profile/avatar`, {
+	const res = await apiFetch(`${BASE}/profile/avatar`, {
 		method: "DELETE",
-		credentials: "include",
 	});
 
 	const data = await handleRes<RawAuthResponse>(res);

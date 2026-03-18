@@ -1,4 +1,4 @@
-import { PUBLIC_API_URL } from "$env/static/public";
+import { apiFetch } from "../../utils/api.ts";
 import type { DashboardStats } from "../../types/dashboard.ts";
 import type {
 	ActivityLogListResponse,
@@ -10,7 +10,7 @@ import type {
 	TicketUpdatePayload,
 } from "../../types/tickets.ts";
 
-const BASE = `${PUBLIC_API_URL}/tickets`;
+const BASE = "/tickets";
 
 async function handleRes<T>(res: Response): Promise<T> {
 	if (!res.ok) {
@@ -34,9 +34,8 @@ async function downloadFile(
 	fallbackFilename: string,
 	contentType = "application/octet-stream",
 ): Promise<void> {
-	const res = await fetch(url, {
+	const res = await apiFetch(url, {
 		method: "GET",
-		credentials: "include",
 	});
 
 	if (!res.ok) {
@@ -68,10 +67,9 @@ function saveBlob(blob: Blob, filename: string): void {
 // Fetch tickets (paginated; defaults to first page of 50)
 export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
 	try {
-		const res = await fetch(`${BASE}/?limit=${limit}&offset=${offset}`, {
+		const res = await apiFetch(`${BASE}/?limit=${limit}&offset=${offset}`, {
 			method: "GET",
 			headers: { "Content-Type": "application/json" },
-			credentials: "include",
 		});
 		const data = await handleRes<TicketListResponse>(res);
 		return data.items;
@@ -84,12 +82,11 @@ export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
 // Fetch ticket by ID
 export async function fetchTicketById(id: number): Promise<Ticket> {
 	try {
-		const res = await fetch(`${BASE}/${id}`, {
+		const res = await apiFetch(`${BASE}/${id}`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			credentials: "include",
 		});
 
 		return await handleRes<Ticket>(res);
@@ -116,13 +113,12 @@ export async function createTicket(ticketData: TicketCreatePayload, attachment?:
             }
         }
 
-        const res = await fetch(`${BASE}/`, {
+        const res = await apiFetch(`${BASE}/`, {
             method: 'POST',
             headers: {
             
             },
             body: formData,
-            credentials: 'include',
         })
 
     return await handleRes<Ticket>(res);
@@ -152,10 +148,9 @@ export async function updateTicket(id: number, ticketData: TicketUpdatePayload, 
             }
         }
 
-        const res = await fetch(`${BASE}/${id}`, {
+        const res = await apiFetch(`${BASE}/${id}`, {
             method: 'PUT',
             body: formData,
-            credentials: 'include',
         })
 
         return await handleRes<Ticket>(res);
@@ -170,13 +165,12 @@ export async function adminPatchTicket(
 	patch: { status?: string; priority?: number },
 ): Promise<Ticket> {
 	try {
-		const res = await fetch(`${BASE}/${id}/admin`, {
+		const res = await apiFetch(`${BASE}/${id}/admin`, {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify(patch),
-			credentials: "include",
 		});
 
 		return await handleRes<Ticket>(res);
@@ -188,12 +182,11 @@ export async function adminPatchTicket(
 
 export async function deleteTicket(id: number): Promise<void> {
 	try {
-		const res = await fetch(`${BASE}/${id}`, {
+		const res = await apiFetch(`${BASE}/${id}`, {
 			method: "DELETE",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			credentials: "include",
 		});
 
 		if (!res.ok) {
@@ -209,20 +202,18 @@ export async function deleteTicket(id: number): Promise<void> {
 }
 
 export async function fetchCategories(): Promise<Category[]> {
-	const res = await fetch(`${BASE}/categories`, {
+	const res = await apiFetch(`${BASE}/categories`, {
 		method: "GET",
 		headers: { "Content-Type": "application/json" },
-		credentials: "include",
 	});
 	if (!res.ok) throw new Error("Failed to fetch categories");
 	return res.json() as Promise<Category[]>;
 }
 
 export async function fetchPriorities(): Promise<TicketPriority[]> {
-	const res = await fetch(`${BASE}/priorities`, {
+	const res = await apiFetch(`${BASE}/priorities`, {
 		method: "GET",
 		headers: { "Content-Type": "application/json" },
-		credentials: "include",
 	});
 	if (!res.ok) throw new Error("Failed to fetch priorities");
 	return res.json() as Promise<TicketPriority[]>;
@@ -233,12 +224,11 @@ export async function loadCommunityTickets(
 	offset = 0,
 ): Promise<Ticket[]> {
 	try {
-		const res = await fetch(
+		const res = await apiFetch(
 			`${BASE}/community?limit=${limit}&offset=${offset}`,
 			{
 				method: "GET",
 				headers: { "Content-Type": "application/json" },
-				credentials: "include",
 			},
 		);
 		const data = await handleRes<TicketListResponse>(res);
@@ -251,12 +241,11 @@ export async function loadCommunityTickets(
 
 export async function getDashboardStats(): Promise<DashboardStats> {
 	try {
-		const res = await fetch(`${BASE}/stats/dashboard`, {
+		const res = await apiFetch(`${BASE}/stats/dashboard`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			credentials: "include",
 		});
 
 		return await handleRes<DashboardStats>(res);
@@ -280,12 +269,11 @@ export async function getActivityLogs(
 			params.append("ticket_id", ticketId.toString());
 		}
 
-		const res = await fetch(`${BASE}/activity/?${params}`, {
+		const res = await apiFetch(`${BASE}/activity/?${params}`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			credentials: "include",
 		});
 
 		return await handleRes<ActivityLogListResponse>(res);

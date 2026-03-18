@@ -83,6 +83,7 @@ CORS_ALLOW_HEADERS = [
     "accept-language",
     "content-type",
     "origin",
+    "x-csrftoken",
 ]
 
 CORS_ALLOW_METHODS = (
@@ -99,9 +100,13 @@ CORS_ALLOW_METHODS = (
 if DEBUG:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SECURE = False
 else:
     SESSION_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 
 AUTH_USER_MODEL = 'users.CustomUser'

@@ -1,12 +1,11 @@
-import { PUBLIC_API_URL } from "$env/static/public";
+import { apiFetch } from "../../utils/api.ts";
 import type { HistoryItem } from "../../types/history.ts";
 
-const BASE = `${PUBLIC_API_URL}/tickets`;
+const BASE = "/tickets";
 
 export async function fetchTicketHistory(): Promise<HistoryItem[]> {
-    const res = await fetch(`${BASE}/history`, {
+    const res = await apiFetch(`${BASE}/history`, {
         method: "GET",
-        credentials: "include",
         headers: { Accept: "application/json" },
     });
     if (!res.ok) {

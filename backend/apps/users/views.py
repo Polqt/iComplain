@@ -6,6 +6,7 @@ from django.db import transaction
 from ninja import Router, File
 from ninja.files import UploadedFile
 from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.middleware.csrf import get_token
 from django.http import HttpRequest
 from PIL import Image
 from .utils import (
@@ -24,6 +25,11 @@ logger = logging.getLogger(__name__)
 
 User = get_user_model()
 router = Router(tags=["User"])
+
+
+@router.get("/csrf", response=dict)
+def csrf_token(request: HttpRequest):
+    return {"csrfToken": get_token(request)}
 
 @ratelimit(key='ip', rate='5/m', method='POST', block=True)
 @router.post("/login", response=AuthResponse)

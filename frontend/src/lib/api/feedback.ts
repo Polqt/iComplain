@@ -3,9 +3,9 @@ import type {
 	FeedbackCreatePayload,
 	FeedbackUpdatePayload,
 } from "../../types/feedback.ts";
-import { PUBLIC_API_URL } from "$env/static/public";
+import { apiFetch } from "../../utils/api.ts";
 
-const BASE = `${PUBLIC_API_URL}/tickets`;
+const BASE = "/tickets";
 
 async function handleRes<T>(res: Response): Promise<T> {
 	if (!res.ok) {
@@ -24,12 +24,11 @@ async function handleRes<T>(res: Response): Promise<T> {
 
 export async function getFeedback(ticketId: number): Promise<TicketFeedback> {
 	try {
-		const res = await fetch(`${BASE}/${ticketId}/feedback/`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/feedback/`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			credentials: "include",
 		});
 
 		return await handleRes<TicketFeedback>(res);
@@ -50,10 +49,9 @@ export async function createFeedback(
 			formData.append("comments", payload.comments);
 		}
 
-		const res = await fetch(`${BASE}/${ticketId}/feedback/`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/feedback/`, {
 			method: "POST",
 			body: formData,
-			credentials: "include",
 		});
 
 		return await handleRes<TicketFeedback>(res);
@@ -69,13 +67,12 @@ export async function updateFeedback(
 	payload: FeedbackUpdatePayload,
 ): Promise<TicketFeedback> {
 	try {
-		const res = await fetch(`${BASE}/${ticketId}/feedback/${feedbackId}`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/feedback/${feedbackId}`, {
 			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify(payload),
-			credentials: "include",
 		});
 
 		return await handleRes<TicketFeedback>(res);
@@ -93,9 +90,8 @@ export async function deleteFeedback(
 	feedbackId: number,
 ): Promise<void> {
 	try {
-		const res = await fetch(`${BASE}/${ticketId}/feedback/${feedbackId}`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/feedback/${feedbackId}`, {
 			method: "DELETE",
-			credentials: "include",
 		});
 
 		if (!res.ok) {

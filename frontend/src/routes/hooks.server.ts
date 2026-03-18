@@ -1,14 +1,9 @@
 import type { Handle, HandleServerError } from "@sveltejs/kit";
 import { redirect } from "@sveltejs/kit";
-import { PUBLIC_API_URL } from "$env/static/public";
+import { getApiOrigin } from "../utils/api.ts";
 
 function isSameOriginApi(requestOrigin: string): boolean {
-	try {
-		const apiUrl = new URL(PUBLIC_API_URL);
-		return apiUrl.origin === requestOrigin;
-	} catch {
-		return false;
-	}
+	return getApiOrigin(requestOrigin) === requestOrigin;
 }
 
 export const handle: Handle = async ({ event, resolve }) => {

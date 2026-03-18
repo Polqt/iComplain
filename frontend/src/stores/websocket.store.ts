@@ -1,6 +1,6 @@
-import { PUBLIC_API_URL } from "$env/static/public";
 import { writable } from "svelte/store";
 import type { WSMessage, WSStatus } from "../types/websocket.ts";
+import { getApiOrigin } from "../utils/api.ts";
 import { ticketsStore } from "./tickets.store.ts";
 import { commentsStore } from "./comment.store.ts";
 import { notificationStore } from "./notification.store.ts";
@@ -14,7 +14,11 @@ function createWebSocketStore() {
 	const BASE_DELAY = 1000;
 
 	function getWsUrl(): string {
-		const url = new URL(PUBLIC_API_URL);
+		const apiOrigin = getApiOrigin();
+		if (!apiOrigin) {
+			throw new Error("API origin is not configured.");
+		}
+		const url = new URL(apiOrigin);
 		const protocol = url.protocol === "https:" ? "wss:" : "ws:";
 		return `${protocol}//${url.host}/ws/tickets/`;
 	}

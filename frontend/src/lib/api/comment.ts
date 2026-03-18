@@ -1,11 +1,11 @@
-import { PUBLIC_API_URL } from "$env/static/public";
+import { apiFetch } from "../../utils/api.ts";
 import type {
 	CommentCreatePayload,
 	CommentUpdatePayload,
 	TicketComment,
 } from "../../types/comments.ts";
 
-const BASE = `${PUBLIC_API_URL}/tickets`;
+const BASE = "/tickets";
 
 async function handleRes<T>(res: Response): Promise<T> {
 	if (!res.ok) {
@@ -19,12 +19,11 @@ export async function fetchComments(
 	ticketId: number,
 ): Promise<TicketComment[]> {
 	try {
-		const res = await fetch(`${BASE}/${ticketId}/comments`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/comments`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			credentials: "include",
 		});
 		return await handleRes<TicketComment[]>(res);
 	} catch (error) {
@@ -41,10 +40,9 @@ export async function createComment(
 		const formData = new FormData();
 		formData.append("message", payload.message || "");
 
-		const res = await fetch(`${BASE}/${ticketId}/comments`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/comments`, {
 			method: "POST",
 			body: formData,
-			credentials: "include",
 		});
 
 		return await handleRes<TicketComment>(res);
@@ -65,10 +63,9 @@ export async function editComment(
 			formData.append("message", payload.message);
 		}
 
-		const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/comments/${commentId}`, {
 			method: "PUT",
 			body: formData,
-			credentials: "include",
 		});
 
 		return await handleRes<TicketComment>(res);
@@ -86,9 +83,8 @@ export async function deleteComment(
 	commentId: number,
 ): Promise<void> {
 	try {
-		const res = await fetch(`${BASE}/${ticketId}/comments/${commentId}`, {
+		const res = await apiFetch(`${BASE}/${ticketId}/comments/${commentId}`, {
 			method: "DELETE",
-			credentials: "include",
 		});
 
 		if (!res.ok) {
