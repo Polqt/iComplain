@@ -39,6 +39,41 @@ function joinApiPath(path: string): string {
 	return `${API_BASE}${suffix}`;
 }
 
+function describeApiTarget(path: string): string {
+	const requestUrl = joinApiPath(path);
+
+	if (isAbsoluteUrl(requestUrl)) {
+		return requestUrl;
+	}
+
+	const browserOrigin =
+		typeof window !== "undefined" ? window.location.origin : undefined;
+
+	return browserOrigin ? new URL(requestUrl, browserOrigin).toString() : requestUrl;
+}
+
+function createApiConnectivityError(path: string, cause: unknown): Error {
+	const apiOrigin = getApiOrigin() ?? API_BASE;
+	const error = new Error(
+		`Unable to reach the API at ${apiOrigin}. Check PUBLIC_API_URL and the backend CORS_ALLOWED_ORIGINS/CSRF_TRUSTED_ORIGINS configuration.`,
+	);
+
+	Object.assign(error, {
+		cause,
+		target: describeApiTarget(path),
+	});
+
+	return error;
+}
+
+async function requestApi(path: string, init: RequestInit): Promise<Response> {
+	try {
+		return await fetch(joinApiPath(path), init);
+	} catch (error) {
+		throw createApiConnectivityError(path, error);
+	}
+}
+
 export function getApiOrigin(fallbackOrigin?: string): string | null {
 	if (isAbsoluteUrl(API_BASE)) {
 		return new URL(API_BASE).origin;
@@ -67,7 +102,7 @@ export async function getCsrfToken(forceRefresh = false): Promise<string> {
 		return csrfTokenPromise;
 	}
 
-	csrfTokenPromise = fetch(joinApiPath("/user/csrf"), {
+	csrfTokenPromise = requestApi("/user/csrf", {
 		method: "GET",
 		credentials: "include",
 		headers: {
@@ -113,7 +148,7 @@ export async function apiFetch(
 		headers.set("X-CSRFToken", await getCsrfToken());
 	}
 
-	return fetch(joinApiPath(path), {
+	return requestApi(path, {
 		credentials: "include",
 		...init,
 		headers,

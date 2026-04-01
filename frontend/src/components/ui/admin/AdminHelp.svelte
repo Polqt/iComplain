@@ -61,6 +61,7 @@ function setActiveTab(tabId: string) {
           <p class="text-sm text-base-content/60">
             Learn how to manage tickets, generate reports, and use admin features
           </p>
+        </div>
         <div class="hidden sm:flex items-center gap-2 text-primary">
           <Icon icon="mdi:shield-account-outline" width="32" height="32" />
         </div>
