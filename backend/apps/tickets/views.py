@@ -53,6 +53,15 @@ User = get_user_model()
 channel_layer = get_channel_layer()
 
 
+def _safe_group_send(group: str, payload: dict) -> None:
+    if not channel_layer:
+        return
+    try:
+        async_to_sync(channel_layer.group_send)(group, payload)
+    except Exception:
+        logger.exception("WebSocket group_send failed", extra={"group": group})
+
+
 @router.get("/expensive-data", response=dict)
 def expensive_data(request):
     cache_key = "expensive_data"
@@ -491,7 +500,7 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: L
         logger.exception("notify_ticket_created failed",
                          extra={"ticket_id": ticket_obj.id})
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_ticket_update",
@@ -580,7 +589,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
                     file_type=f.content_type,
                 )
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_ticket_update",
@@ -629,7 +638,7 @@ def admin_update_ticket(request, id: int, payload: TicketAdminUpdateSchema):
     ticket.updated_at = timezone.now()
     ticket.save()
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_ticket_update",
@@ -664,7 +673,7 @@ def delete_ticket(request, id: int):
     ticket.archived_at = timezone.now()
     ticket.save(update_fields=["archived_at"])
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_ticket_update",
@@ -729,7 +738,7 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
             notify_ticket_comment(recipient_user=staff_user, ticket_id=ticket.id,
                                   ticket_number=ticket.ticket_number, ticket_title=ticket.title, message_preview=preview)
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_comment_update",
@@ -768,7 +777,7 @@ def edit_comment(request, id: int, comment_id: int, payload: TicketCommentUpdate
 
     comment.save()
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_comment_update",
@@ -802,7 +811,7 @@ def delete_comment(request, id: int, comment_id: int):
     if comment.user != request.user:
         return 403, {"detail": "You do not have permission to delete this comment."}
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_comment_update",
@@ -910,7 +919,7 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form
         logger.exception("notify_feedback_submitted failed",
                          extra={"ticket_id": ticket.id})
 
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_feedback_update",
@@ -947,7 +956,7 @@ def update_feedback(request, id: int, feedback_id: int, payload: TicketFeedbackU
     feedback.save()
 
     # Send WebSocket update (optional)
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_feedback_update",
@@ -976,7 +985,7 @@ def delete_feedback(request, id: int, feedback_id: int):
         return 400, {"detail": "Feedback can only be deleted within 24 hours of submission."}
 
     # Send WebSocket update before deleting
-    async_to_sync(channel_layer.group_send)(
+    _safe_group_send(
         "ticket_updates",
         {
             "type": "send_feedback_update",

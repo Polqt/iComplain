@@ -43,7 +43,8 @@ def _normalize_origin(value: str) -> str:
         return ""
 
     if "://" not in trimmed:
-        scheme = "http" if trimmed.startswith(("localhost", "127.0.0.1")) else "https"
+        scheme = "http" if trimmed.startswith(
+            ("localhost", "127.0.0.1")) else "https"
         trimmed = f"{scheme}://{trimmed}"
 
     parsed = urlparse(trimmed)
@@ -51,6 +52,7 @@ def _normalize_origin(value: str) -> str:
         return ""
 
     return f"{parsed.scheme}://{parsed.netloc}"
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -76,7 +78,8 @@ _allowed_hosts.extend(
     )
 )
 ALLOWED_HOSTS = _dedupe(
-    [host for host in (_normalize_host(value) for value in _allowed_hosts) if host]
+    [host for host in (_normalize_host(value)
+                       for value in _allowed_hosts) if host]
 )
 NINJA_SKIP_SESSION_AUTH_CSRF = False
 
@@ -138,7 +141,8 @@ if os.getenv("FRONTEND_URL", "").strip():
     _cors_origins.append(os.getenv("FRONTEND_URL", "").strip())
 
 CORS_ALLOWED_ORIGINS = _dedupe(
-    [origin for origin in (_normalize_origin(value) for value in _cors_origins) if origin]
+    [origin for origin in (_normalize_origin(value)
+                           for value in _cors_origins) if origin]
 )
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_HEADERS = [
@@ -194,7 +198,16 @@ TEMPLATES = [
     },
 ]
 
-if DEBUG:
+_redis_url = os.getenv("REDIS_URL", "").strip()
+_use_redis_channels = bool(_redis_url) and _redis_url.startswith(
+    ("redis://", "rediss://", "unix://"))
+
+if DEBUG or not _use_redis_channels:
+    if not DEBUG and not _use_redis_channels:
+        _logger.warning(
+            "REDIS_URL is missing or invalid for Channels; falling back to InMemoryChannelLayer. "
+            "Realtime events will only work reliably within a single process."
+        )
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels.layers.InMemoryChannelLayer"
@@ -205,7 +218,7 @@ else:
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
-                "hosts": [os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")],
+                "hosts": [_redis_url],
             },
         }
     }
