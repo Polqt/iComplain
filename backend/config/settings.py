@@ -60,12 +60,14 @@ if not SECRET_KEY:
         "SECRET_KEY environment variable is required. Set it in .env or your environment.")
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-_allowed_hosts = _split_env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+_allowed_hosts = _split_env_list('ALLOWED_HOSTS')
 _allowed_hosts.extend(
     filter(
         None,
         [
             os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip(),
+            "localhost",
+            "127.0.0.1",
             ".up.railway.app",
             ".railway.internal",
         ],
