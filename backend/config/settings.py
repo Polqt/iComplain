@@ -62,7 +62,14 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 _allowed_hosts = _split_env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 _allowed_hosts.extend(
-    filter(None, [os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip()])
+    filter(
+        None,
+        [
+            os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip(),
+            ".up.railway.app",
+            ".railway.internal",
+        ],
+    )
 )
 ALLOWED_HOSTS = _dedupe(
     [host for host in (_normalize_host(value) for value in _allowed_hosts) if host]
