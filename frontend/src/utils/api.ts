@@ -7,6 +7,10 @@ function isAbsoluteUrl(value: string): boolean {
 	return /^https?:\/\//i.test(value);
 }
 
+function hasNonHttpScheme(value: string): boolean {
+	return /^[a-z][a-z0-9+.-]*:/i.test(value);
+}
+
 function isLocalHost(value: string): boolean {
 	return /^(localhost|127(?:\.\d{1,3}){3})(:\d+)?(\/|$)/i.test(value);
 }
@@ -88,6 +92,31 @@ export function getApiOrigin(fallbackOrigin?: string): string | null {
 	}
 
 	return null;
+}
+
+export function resolveApiAssetUrl(
+	value: string | null | undefined,
+	fallbackOrigin?: string,
+): string | null {
+	if (!value) {
+		return null;
+	}
+
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return null;
+	}
+
+	if (isAbsoluteUrl(trimmed) || trimmed.startsWith("//") || hasNonHttpScheme(trimmed)) {
+		return trimmed;
+	}
+
+	const apiOrigin = getApiOrigin(fallbackOrigin);
+	if (!apiOrigin) {
+		return trimmed;
+	}
+
+	return new URL(trimmed, apiOrigin).toString();
 }
 
 let csrfToken: string | null = null;

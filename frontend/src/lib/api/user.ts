@@ -1,4 +1,4 @@
-import { apiFetch, invalidateCsrfToken } from "../../utils/api.ts";
+import { apiFetch, invalidateCsrfToken, resolveApiAssetUrl } from "../../utils/api.ts";
 import type { RawAuthResponse, RawUser, User } from "../../types/user.ts";
 
 const BASE = "/user";
@@ -20,7 +20,7 @@ function mapUser(raw: RawUser): User {
 		is_active: raw.is_active ?? true,
 		role,
 		name: raw.name ?? null,
-		avatar: raw.avatar ?? null,
+		avatar: resolveApiAssetUrl(raw.avatar),
 	};
 }
 
