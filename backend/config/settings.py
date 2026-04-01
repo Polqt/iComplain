@@ -1,5 +1,6 @@
 import logging
 import os
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -7,6 +8,49 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_APP_ORIGINS = (
+    "http://localhost:5173,"
+    "http://127.0.0.1:5173,"
+    "https://tauri.localhost,"
+    "tauri://localhost"
+)
+
+
+def _split_env_list(name: str, default: str = "") -> list[str]:
+    raw_value = os.getenv(name, default)
+    return [item.strip() for item in raw_value.split(",") if item.strip()]
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    return list(dict.fromkeys(values))
+
+
+def _normalize_host(value: str) -> str:
+    trimmed = value.strip()
+    if not trimmed:
+        return ""
+
+    if "://" not in trimmed:
+        trimmed = f"https://{trimmed}"
+
+    parsed = urlparse(trimmed)
+    return parsed.hostname or trimmed.split("/")[0].split(":")[0]
+
+
+def _normalize_origin(value: str) -> str:
+    trimmed = value.strip().rstrip("/")
+    if not trimmed:
+        return ""
+
+    if "://" not in trimmed:
+        scheme = "http" if trimmed.startswith(("localhost", "127.0.0.1")) else "https"
+        trimmed = f"{scheme}://{trimmed}"
+
+    parsed = urlparse(trimmed)
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -16,7 +60,13 @@ if not SECRET_KEY:
         "SECRET_KEY environment variable is required. Set it in .env or your environment.")
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+_allowed_hosts = _split_env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+_allowed_hosts.extend(
+    filter(None, [os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip()])
+)
+ALLOWED_HOSTS = _dedupe(
+    [host for host in (_normalize_host(value) for value in _allowed_hosts) if host]
+)
 NINJA_SKIP_SESSION_AUTH_CSRF = False
 
 # Google OAuth (school email sign-in)
@@ -71,12 +121,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Never use CORS_ALLOW_ALL_ORIGINS with CORS_ALLOW_CREDENTIALS in production.
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
-_cors_origins_raw = os.getenv(
-    'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5173,http://127.0.0.1:5173,https://tauri.localhost,tauri://localhost'
+_cors_origins = _split_env_list('CORS_ALLOWED_ORIGINS', DEFAULT_APP_ORIGINS)
+_cors_origins.extend(_split_env_list('APP_ORIGINS'))
+if os.getenv("FRONTEND_URL", "").strip():
+    _cors_origins.append(os.getenv("FRONTEND_URL", "").strip())
+
+CORS_ALLOWED_ORIGINS = _dedupe(
+    [origin for origin in (_normalize_origin(value) for value in _cors_origins) if origin]
 )
-CORS_ALLOWED_ORIGINS = [o.strip()
-                        for o in _cors_origins_raw.split(',') if o.strip()]
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -108,6 +160,8 @@ else:
     CSRF_COOKIE_SAMESITE = "None"
     CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 AUTH_USER_MODEL = 'users.CustomUser'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -154,8 +208,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 _database_url = os.getenv('DATABASE_URL', '').strip()
 if _database_url:
-    import urllib.parse as urlparse
-    _parsed = urlparse.urlparse(_database_url)
+    _parsed = urlparse(_database_url)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -236,9 +289,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # CSRF exemptions -- only exempt truly public/token-auth endpoints
 CSRF_EXEMPT_API_PREFIXES = [
-    '/api/users/register',  # Public signup
-    '/api/users/login',     # Public login
-    '/api/users/google-login',  # Google OAuth (token-based, not session)
+    '/api/user/register',  # Public signup
+    '/api/user/login',     # Public login
+    '/api/user/google-login',  # Google OAuth (token-based, not session)
     '/api/webhooks/',       # Third-party webhooks using token signatures
 ]
 
