@@ -68,6 +68,8 @@ _allowed_hosts.extend(
             os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip(),
             "localhost",
             "127.0.0.1",
+            "healthcheck.railway.app",
+            ".railway.app",
             ".up.railway.app",
             ".railway.internal",
         ],
