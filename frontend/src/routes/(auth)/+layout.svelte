@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { onMount, type Snippet } from "svelte";
-  import Header from "../../components/layout/Header.svelte";
 
   let { children }: { children: Snippet } = $props();
 
@@ -13,42 +12,58 @@
   });
 </script>
 
-<div class="min-h-screen flex flex-col">
-  <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <Header />
-  </div>
+<div class="min-h-screen flex flex-col lg:flex-row">
+  <!-- Left Side - Image Hero Section -->
+  <div
+    class="relative lg:w-1/2 bg-linear-to-br from-green-600 via-green-700 to-green-900 flex items-center justify-center overflow-hidden min-h-[40vh] lg:min-h-screen"
+  >
+    <!-- Background Image with Overlay -->
+    <div class="absolute inset-0">
+      <img
+        src="/images/lasalle.jpg"
+        alt="La Salle Campus"
+        class="w-full h-full object-cover opacity-30"
+      />
+      <div
+        class="absolute inset-0 bg-linear-to-br from-green-800/80 via-green-900/70 to-green-950/90"
+      ></div>
+    </div>
 
-  <div class="flex-1 flex flex-col lg:flex-row">
-    <div
-      class="relative lg:w-1/2 p-8 lg:p-12 flex flex-col justify-between overflow-hidden"
-    >
-      <div class="absolute inset-0 opacity-[0.03]"></div>
+    <!-- Content -->
+    <div class="relative z-10 px-8 py-12 lg:px-16 lg:py-20 w-full">
+      <!-- Logo -->
+      <div class="mb-16 lg:mb-20">
+        <img
+          src="/images/usls.png"
+          alt="USLS Logo"
+          class="h-16 lg:h-20 w-auto drop-shadow-2xl"
+        />
+      </div>
 
-      <div class="relative z-10">
-        <div class="flex items-center gap-3 mb-12">
-          <div
-            class="w-10 h-10 rounded-lg flex items-center justify-center"
-          ></div>
-        </div>
-
-        <div class="max-w-md">
-          <h1 class="text-4xl lg:text-5xl text-base-content leading-tight mb-4">
-            {isSignIn ? "The Campus Awaits" : "Start Making a Difference"}
-          </h1>
-          <p class="text-lg text-base-content/70 leading-relaxed mb-2">
-            {isSignIn
-              ? "Continue managing campus facilities with transparency and efficiency."
-              : "Join the movement to create a better campus environment for every Lasallian."}
-          </p>
-        </div>
+      <!-- Heading -->
+      <div class="max-w-xl">
+        <h1
+          class="text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-[1.1] mb-6 lg:mb-8"
+        >
+          {isSignIn ? "Welcome Back, Lasallian" : "Join the Movement"}
+        </h1>
+        <p
+          class="text-lg lg:text-xl text-green-50/90 leading-relaxed font-light"
+        >
+          {isSignIn
+            ? "Continue your journey in making our campus a better place for everyone."
+            : "Start making a difference in our campus community today."}
+        </p>
       </div>
     </div>
-    <div
-      class="lg:w-1/2 bg-base-100 flex items-center justify-center p-8 lg:p-12"
-    >
-      <div class={`w-full ${isSignIn ? "max-w-4xl" : "max-w-md"}`}>
-        {@render children()}
-      </div>
+  </div>
+
+  <!-- Right Side - Form Section -->
+  <div
+    class="lg:w-1/2 bg-base-100 flex items-center justify-center p-6 sm:p-8 lg:p-12 xl:p-16 min-h-[60vh] lg:min-h-screen"
+  >
+    <div class="w-full max-w-md">
+      {@render children()}
     </div>
   </div>
 </div>
