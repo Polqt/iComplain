@@ -31,7 +31,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	];
 
 	// Auth Routes
-	const authRoutes = ["/signin", "/signup", "/not-signed-in"];
+	const authRoutes = ["/signin", "/not-signed-in"];
 
 	// Check if current route is protected
 	const isProtectedRoute = protectedRoutes.some((path) =>

@@ -176,12 +176,12 @@ import Header from "../../../components/layout/Header.svelte";
 
     <div class="relative mx-auto max-w-md">
       <div
-        class="pointer-events-none absolute inset-0 -translate-y-4 scale-110 rounded-[2rem] bg-gradient-to-br from-sky-500/10 via-emerald-400/5 to-amber-400/10 blur-3xl"
+        class="pointer-events-none absolute inset-0 -translate-y-4 scale-110 rounded-4xl bg-linear-to-br from-sky-500/10 via-emerald-400/5 to-amber-400/10 blur-3xl"
       ></div>
 
       <div class="relative h-64 sm:h-72 hero-card-shuffle">
         <div
-          class="absolute inset-x-6 top-6 rounded-2xl border border-base-content/10 bg-base-200/80 shadow-xl shadow-base-content/10 transform rotate-[-6deg] -translate-y-2"
+          class="absolute inset-x-6 top-6 rounded-2xl border border-base-content/10 bg-base-200/80 shadow-xl shadow-base-content/10 transform -rotate-6 -translate-y-2"
         ></div>
 
         <div
@@ -189,7 +189,7 @@ import Header from "../../../components/layout/Header.svelte";
         ></div>
 
         <div
-          class="absolute inset-0 rounded-2xl border border-base-content/15 bg-base-100 shadow-2xl shadow-base-content/20 transform translate-y-4 translate-x-2 rotate-[-2deg] overflow-hidden"
+          class="absolute inset-0 rounded-2xl border border-base-content/15 bg-base-100 shadow-2xl shadow-base-content/20 transform translate-y-4 translate-x-2 -rotate-2 overflow-hidden"
         >
           <div class="flex items-center justify-between px-4 pt-4">
             <div class="flex items-center gap-2">

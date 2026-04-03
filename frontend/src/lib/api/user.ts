@@ -24,24 +24,6 @@ function mapUser(raw: RawUser): User {
 	};
 }
 
-export async function register(email: string, password: string): Promise<User> {
-	const res = await apiFetch(`${BASE}/register`, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({ email, password }),
-	});
-
-	const data = await handleRes<RawAuthResponse>(res);
-	if (!data.success || !data.user) {
-		throw new Error(data.message || "Registration failed.");
-	}
-
-	invalidateCsrfToken();
-	return mapUser(data.user);
-}
-
 export async function login(email: string, password: string): Promise<User> {
 	const res = await apiFetch(`${BASE}/login`, {
 		method: "POST",
