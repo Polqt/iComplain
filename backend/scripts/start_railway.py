@@ -2,10 +2,11 @@ import os
 import sys
 import time
 import subprocess
+import threading
 
 
 DEFAULT_PORT = "8000"
-DB_RETRY_ATTEMPTS = 12
+DB_RETRY_ATTEMPTS = 20
 DB_RETRY_DELAY_SECONDS = 5
 
 
@@ -25,9 +26,11 @@ def migrate_with_retries() -> None:
                 flush=True,
             )
             run_command(migrate_command)
+            print("Migrations complete.", flush=True)
             return
         except subprocess.CalledProcessError as exc:
             if attempt == DB_RETRY_ATTEMPTS:
+                print("Migrations failed after all retries. Exiting.", flush=True)
                 raise exc
 
             print(
@@ -36,6 +39,11 @@ def migrate_with_retries() -> None:
                 flush=True,
             )
             time.sleep(DB_RETRY_DELAY_SECONDS)
+
+
+def migrate_in_background() -> None:
+    thread = threading.Thread(target=migrate_with_retries, daemon=True)
+    thread.start()
 
 
 def start_daphne() -> None:
@@ -55,7 +63,7 @@ def start_daphne() -> None:
 
 
 def main() -> None:
-    migrate_with_retries()
+    migrate_in_background()
     start_daphne()
 
 
