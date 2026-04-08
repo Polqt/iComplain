@@ -23,7 +23,13 @@ from .utils import (
     map_priority_for_history,
     map_status_for_history,
 )
-from .validation import validate_file
+from .service import (
+    create_comment_with_attachments,
+    create_feedback_with_attachments,
+    create_ticket_with_attachments,
+    replace_ticket_attachments,
+    validate_attachments,
+)
 from apps.notifications.utils import notify_feedback_submitted, notify_ticket_created, notify_ticket_status_change, notify_ticket_comment
 
 from .schemas import (
@@ -454,8 +460,7 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: L
     # Validate attachments before creating the ticket to avoid orphaned tickets
     if attachment:
         try:
-            for f in attachment:
-                validate_file(f)
+            validate_attachments(attachment)
         except ValueError as e:
             return 400, {"detail": str(e)}
 
@@ -467,26 +472,13 @@ def create_ticket(request, ticket: TicketCreateSchema = Form(...), attachment: L
         priority = TicketPriority.objects.get(name="Medium")
     except TicketPriority.DoesNotExist:
         return 404, {"detail": "Default priority 'Medium' not found."}
-    # Create ticket + attachments atomically so DB changes roll back on failure
-    with transaction.atomic():
-        ticket_obj = Ticket.objects.create(
-            title=ticket.title,
-            description=ticket.description,
-            student=request.user,
-            category=category,
-            priority=priority,
-            building=ticket.building,
-            room_name=ticket.room_name,
-            status='pending'
-        )
-        if attachment:
-            for f in attachment:
-                TicketAttachment.objects.create(
-                    ticket=ticket_obj,
-                    uploaded_by=request.user,
-                    file_path=f,
-                    file_type=f.content_type,
-                )
+    ticket_obj = create_ticket_with_attachments(
+        ticket_data=ticket,
+        student=request.user,
+        category=category,
+        priority=priority,
+        attachments=attachment,
+    )
     # Notify admin users about the new ticket
     try:
         notify_ticket_created(
@@ -535,8 +527,7 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
     # Validate attachments before applying updates to avoid leaving ticket in inconsistent state
     if attachment:
         try:
-            for f in attachment:
-                validate_file(f)
+            validate_attachments(attachment)
         except ValueError as e:
             return 400, {"detail": str(e)}
 
@@ -576,18 +567,11 @@ def update_ticket(request, id: int, payload: TicketUpdateSchema = Form(...), att
     ticket.save()
 
     if attachment:
-        # remove existing attachments then add new ones inside a transaction
-        with transaction.atomic():
-            for existing in ticket.attachments_tickets.all():
-                existing.file_path.delete(save=False)
-                existing.delete()
-            for f in attachment:
-                TicketAttachment.objects.create(
-                    ticket=ticket,
-                    uploaded_by=request.user,
-                    file_path=f,
-                    file_type=f.content_type,
-                )
+        replace_ticket_attachments(
+            ticket=ticket,
+            uploaded_by=request.user,
+            attachments=attachment,
+        )
 
     _safe_group_send(
         "ticket_updates",
@@ -699,7 +683,7 @@ def get_comments(request, id: int):
 
 
 @router.post("/{id}/comments", response={200: TicketCommentSchema, 400: dict})
-def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(...), attachment: UploadedFile = File(None)):
+def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(...), attachment: List[UploadedFile] = File(None)):
     ticket = get_object_or_404(_active_tickets(), id=id)
 
     if ticket.status == 'closed':
@@ -707,26 +691,16 @@ def create_comment(request, id: int, payload: TicketCommentCreateSchema = Form(.
     # Validate attachments before creating the comment to avoid orphaned attachments
     if attachment:
         try:
-            for f in attachment:
-                validate_file(f)
+            validate_attachments(attachment)
         except ValueError as e:
             return 400, {"detail": str(e)}
 
-    # Create comment and attachments atomically
-    with transaction.atomic():
-        comment = TicketComment.objects.create(
-            ticket=ticket,
-            user=request.user,
-            message=payload.message
-        )
-        if attachment:
-            for f in attachment:
-                TicketAttachment.objects.create(
-                    comment=comment,
-                    uploaded_by=request.user,
-                    file_path=f,
-                    file_type=f.content_type,
-                )
+    comment = create_comment_with_attachments(
+        ticket=ticket,
+        user=request.user,
+        message=payload.message,
+        attachments=attachment,
+    )
 
     preview = (payload.message or "")[
         :80] + ("…" if len(payload.message or "") > 80 else "")
@@ -854,7 +828,7 @@ def get_feedback(request, id: int):
 
 
 @router.post("/{id}/feedback/", response={201: TicketFeedbackSchema, 400: dict, 403: dict})
-def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form(...), attachment: UploadedFile = File(None)):
+def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form(...), attachment: List[UploadedFile] = File(None)):
     ticket = get_object_or_404(_active_tickets(), id=id)
 
     # Only owner can submit feedback and only for resolved tickets
@@ -870,27 +844,17 @@ def create_feedback(request, id: int, payload: TicketFeedbackCreateSchema = Form
     # Validate attachments before creating feedback to avoid orphaned feedback or attachments
     if attachment:
         try:
-            for f in attachment:
-                validate_file(f)
+            validate_attachments(attachment)
         except ValueError as e:
             return 400, {"detail": str(e)}
 
-    # Create feedback and attachments atomically
-    with transaction.atomic():
-        feedback = TicketFeedback.objects.create(
-            ticket=ticket,
-            student=request.user,
-            rating=payload.rating,
-            comments=payload.comments
-        )
-        if attachment:
-            for f in attachment:
-                TicketAttachment.objects.create(
-                    feedback=feedback,
-                    uploaded_by=request.user,
-                    file_path=f,
-                    file_type=f.content_type,
-                )
+    feedback = create_feedback_with_attachments(
+        ticket=ticket,
+        student=request.user,
+        rating=payload.rating,
+        comments=payload.comments,
+        attachments=attachment,
+    )
 
     # Auto-close ticket upon feedback; record status history like update_ticket
     old_status = ticket.status

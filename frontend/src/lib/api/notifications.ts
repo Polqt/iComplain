@@ -1,16 +1,9 @@
 import { apiFetch } from "../../utils/api.ts";
 import type { Notification } from "../../types/notifications.ts";
+import { parseApiResponse } from "./core.ts";
 
 const BASE = "/notifications";
 const INAPP = `${BASE}/inapp`;
-
-async function handleRes(res: Response) {
-	if (!res.ok) {
-		const body = await res.json().catch(() => ({}));
-		throw new Error((body as { detail?: string }).detail || res.statusText);
-	}
-	return res.json();
-}
 
 export async function fetchNotifications(
 	limit: number = 50,
@@ -19,7 +12,7 @@ export async function fetchNotifications(
 		method: "GET",
 		headers: { Accept: "application/json" },
 	});
-	const data = await handleRes(res);
+	const data = await parseApiResponse<Notification[]>(res);
 	return (data ?? []) as Notification[];
 }
 
@@ -29,7 +22,7 @@ export async function markAsRead(id: string): Promise<Notification> {
 		headers: { "Content-Type": "application/json", Accept: "application/json" },
 		body: JSON.stringify({ read: true }),
 	});
-	return handleRes(res) as Promise<Notification>;
+	return parseApiResponse<Notification>(res);
 }
 
 export async function markAllAsRead(): Promise<{ marked: number }> {
@@ -37,7 +30,7 @@ export async function markAllAsRead(): Promise<{ marked: number }> {
 		method: "POST",
 		headers: { Accept: "application/json" },
 	});
-	return handleRes(res) as Promise<{ marked: number }>;
+	return parseApiResponse<{ marked: number }>(res);
 }
 
 export async function deleteNotification(id: string): Promise<void> {
@@ -45,8 +38,5 @@ export async function deleteNotification(id: string): Promise<void> {
 		method: "DELETE",
 		headers: { Accept: "application/json" },
 	});
-	if (!res.ok) {
-		const body = await res.json().catch(() => ({}));
-		throw new Error((body as { detail?: string }).detail || res.statusText);
-	}
+	if (!res.ok) await parseApiResponse<{ ok: true }>(res);
 }

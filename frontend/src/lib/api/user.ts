@@ -1,15 +1,8 @@
 import { apiFetch, invalidateCsrfToken, resolveApiAssetUrl } from "../../utils/api.ts";
+import { parseApiResponse, requestJson } from "./core.ts";
 import type { RawAuthResponse, RawUser, User } from "../../types/user.ts";
 
 const BASE = "/user";
-
-async function handleRes<T>(res: Response): Promise<T> {
-	if (!res.ok) {
-		const body = await res.json().catch(() => ({}));
-		throw new Error((body as { message?: string }).message || res.statusText);
-	}
-	return res.json() as Promise<T>;
-}
 
 function mapUser(raw: RawUser): User {
 	const role = raw.role ?? "student";
@@ -25,7 +18,7 @@ function mapUser(raw: RawUser): User {
 }
 
 export async function login(email: string, password: string): Promise<User> {
-	const res = await apiFetch(`${BASE}/login`, {
+	const data = await requestJson<RawAuthResponse>(`${BASE}/login`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -33,7 +26,6 @@ export async function login(email: string, password: string): Promise<User> {
 		body: JSON.stringify({ email, password }),
 	});
 
-	const data = await handleRes<RawAuthResponse>(res);
 	if (!data.success || !data.user) {
 		throw new Error(data.message || "Login failed.");
 	}
@@ -43,7 +35,7 @@ export async function login(email: string, password: string): Promise<User> {
 }
 
 export async function googleLogin(idToken: string): Promise<User> {
-	const res = await apiFetch(`${BASE}/google-login`, {
+	const data = await requestJson<RawAuthResponse>(`${BASE}/google-login`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -51,7 +43,6 @@ export async function googleLogin(idToken: string): Promise<User> {
 		body: JSON.stringify({ id_token: idToken }),
 	});
 
-	const data = await handleRes<RawAuthResponse>(res);
 	if (!data.success || !data.user) {
 		throw new Error(data.message || "Google login failed.");
 	}
@@ -69,7 +60,7 @@ export async function getCurrentUser(): Promise<User | null> {
 		return null;
 	}
 
-	const data = await handleRes<RawAuthResponse>(res);
+	const data = await parseApiResponse<RawAuthResponse>(res);
 
 	if (!data.success || !data.user) {
 		return null;
@@ -79,14 +70,9 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 export async function logout(): Promise<void> {
-	const res = await apiFetch(`${BASE}/logout`, {
+	await requestJson<RawAuthResponse>(`${BASE}/logout`, {
 		method: "POST",
 	});
-
-	if (!res.ok) {
-		const body = await res.json().catch(() => ({}));
-		throw new Error((body as { message?: string }).message || res.statusText);
-	}
 
 	invalidateCsrfToken();
 }
@@ -96,7 +82,7 @@ export interface ProfileUpdate {
 }
 
 export async function updateProfile(profileData: ProfileUpdate): Promise<User> {
-	const res = await apiFetch(`${BASE}/profile`, {
+	const data = await requestJson<RawAuthResponse>(`${BASE}/profile`, {
 		method: "PATCH",
 		headers: {
 			"Content-Type": "application/json",
@@ -104,7 +90,6 @@ export async function updateProfile(profileData: ProfileUpdate): Promise<User> {
 		body: JSON.stringify(profileData),
 	});
 
-	const data = await handleRes<RawAuthResponse>(res);
 	if (!data.success || !data.user) {
 		throw new Error(data.message || "Failed to update profile.");
 	}
@@ -116,12 +101,11 @@ export async function uploadAvatar(file: File): Promise<User> {
 	const formData = new FormData();
 	formData.append("file", file);
 
-	const res = await apiFetch(`${BASE}/profile/avatar`, {
+	const data = await requestJson<RawAuthResponse>(`${BASE}/profile/avatar`, {
 		method: "POST",
 		body: formData,
 	});
 
-	const data = await handleRes<RawAuthResponse>(res);
 	if (!data.success || !data.user) {
 		throw new Error(data.message || "Failed to upload avatar.");
 	}
@@ -130,11 +114,10 @@ export async function uploadAvatar(file: File): Promise<User> {
 }
 
 export async function deleteAvatar(): Promise<User> {
-	const res = await apiFetch(`${BASE}/profile/avatar`, {
+	const data = await requestJson<RawAuthResponse>(`${BASE}/profile/avatar`, {
 		method: "DELETE",
 	});
 
-	const data = await handleRes<RawAuthResponse>(res);
 	if (!data.success || !data.user) {
 		throw new Error(data.message || "Failed to remove avatar.");
 	}

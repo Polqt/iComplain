@@ -57,3 +57,25 @@ class UserAuthApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(payload["success"])
         self.assertEqual(payload["user"]["email"], self.user.email)
+
+    def test_logout_contract(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.post("/api/user/logout")
+        payload = response.json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(payload["success"])
+        self.assertIsNone(payload["user"])
+
+    def test_google_login_rejects_missing_or_invalid_token(self) -> None:
+        response = self.client.post(
+            "/api/user/google-login",
+            data=json.dumps({"id_token": "invalid-token"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertFalse(payload["success"])
+        self.assertIsNone(payload["user"])

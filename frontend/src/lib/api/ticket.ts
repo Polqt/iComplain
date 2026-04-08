@@ -1,4 +1,5 @@
 import { apiFetch } from "../../utils/api.ts";
+import { parseApiResponse } from "./core.ts";
 import type { DashboardStats } from "../../types/dashboard.ts";
 import type {
 	ActivityLogListResponse,
@@ -11,14 +12,6 @@ import type {
 } from "../../types/tickets.ts";
 
 const BASE = "/tickets";
-
-async function handleRes<T>(res: Response): Promise<T> {
-	if (!res.ok) {
-		const body = await res.json().catch(() => ({}));
-		throw new Error(body.message || body.detail || res.statusText);
-	}
-	return res.json() as Promise<T>;
-}
 
 function getFilenameFromDisposition(
 	contentDisposition: string | null,
@@ -71,7 +64,7 @@ export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
 			method: "GET",
 			headers: { "Content-Type": "application/json" },
 		});
-		const data = await handleRes<TicketListResponse>(res);
+		const data = await parseApiResponse<TicketListResponse>(res);
 		return data.items;
 	} catch (error) {
 		console.error("Error fetching tickets:", error);
@@ -89,7 +82,7 @@ export async function fetchTicketById(id: number): Promise<Ticket> {
 			},
 		});
 
-		return await handleRes<Ticket>(res);
+		return await parseApiResponse<Ticket>(res);
 	} catch (error) {
 		console.error(`Error fetching ticket with ID ${id}:`, error);
 		throw error;
@@ -121,7 +114,7 @@ export async function createTicket(ticketData: TicketCreatePayload, attachment?:
             body: formData,
         })
 
-    return await handleRes<Ticket>(res);
+	return await parseApiResponse<Ticket>(res);
     } catch (error) {
         console.error('Error creating ticket:', error);
         throw error;
@@ -153,7 +146,7 @@ export async function updateTicket(id: number, ticketData: TicketUpdatePayload, 
             body: formData,
         })
 
-        return await handleRes<Ticket>(res);
+		return await parseApiResponse<Ticket>(res);
     } catch (error) {
         console.error(`Error updating ticket with ID ${id}:`, error);
         throw error;
@@ -173,7 +166,7 @@ export async function adminPatchTicket(
 			body: JSON.stringify(patch),
 		});
 
-		return await handleRes<Ticket>(res);
+		return await parseApiResponse<Ticket>(res);
 	} catch (error) {
 		console.error(`Error patching ticket with ID ${id}:`, error);
 		throw error;
@@ -231,7 +224,7 @@ export async function loadCommunityTickets(
 				headers: { "Content-Type": "application/json" },
 			},
 		);
-		const data = await handleRes<TicketListResponse>(res);
+		const data = await parseApiResponse<TicketListResponse>(res);
 		return data.items;
 	} catch (error) {
 		console.error(`Error fetching community tickets:`, error);
@@ -248,7 +241,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 			},
 		});
 
-		return await handleRes<DashboardStats>(res);
+		return await parseApiResponse<DashboardStats>(res);
 	} catch (error) {
 		console.error("Error fetching dashboard stats:", error);
 		throw error;
@@ -276,7 +269,7 @@ export async function getActivityLogs(
 			},
 		});
 
-		return await handleRes<ActivityLogListResponse>(res);
+		return await parseApiResponse<ActivityLogListResponse>(res);
 	} catch (error) {
 		console.error("Error fetching activity logs:", error);
 		throw error;

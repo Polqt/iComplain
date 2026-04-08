@@ -1,4 +1,5 @@
 from ninja import Schema
+from datetime import datetime
 
 
 class EmailNotificationSchema(Schema):
@@ -6,7 +7,7 @@ class EmailNotificationSchema(Schema):
     user: int
     ticket: int
     event: str
-    sent_at: str
+    sent_at: datetime
     status: str
 
 
@@ -18,8 +19,8 @@ class EmailNotificationCreateSchema(Schema):
 
 
 class InAppNotificationSchema(Schema):
-    id: str 
-    type: str 
+    id: str
+    type: str
     title: str
     message: str
     timestamp: str  # ISO or formatted

@@ -1,3 +1,7 @@
+import json
+import logging
+import time
+import uuid
 from typing import Callable
 
 from django.conf import settings
@@ -6,6 +10,7 @@ from django.conf import settings
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 CSRF_EXEMPT_API_PREFIXES = tuple(
     getattr(settings, "CSRF_EXEMPT_API_PREFIXES", ()))
+logger = logging.getLogger("request")
 
 
 # checks the path and returns True if the path starts with any prefix mentioned in CSRF_EXEMPT_API.
@@ -44,5 +49,33 @@ def disable_csrf(get_response: Callable):
             setattr(request, "_dont_enforce_csrf_checks", True)
 
         return get_response(request)
+
+    return middleware
+
+
+def request_logging(get_response: Callable):
+    def middleware(request):
+        started = time.perf_counter()
+        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        request.request_id = request_id
+
+        response = get_response(request)
+
+        duration_ms = round((time.perf_counter() - started) * 1000, 2)
+        response["X-Request-ID"] = request_id
+
+        logger.info(
+            json.dumps(
+                {
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.path,
+                    "status": response.status_code,
+                    "duration_ms": duration_ms,
+                }
+            )
+        )
+
+        return response
 
     return middleware

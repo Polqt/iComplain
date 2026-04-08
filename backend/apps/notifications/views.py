@@ -14,11 +14,29 @@ from .utils import serialize_inapp_notification
 router = Router(auth=SessionAuth())
 
 
+def serialize_email_notification(notification: EmailNotification) -> dict:
+    return {
+        "id": notification.id,
+        "user": notification.user_id,
+        "ticket": notification.ticket_id,
+        "event": notification.event,
+        "sent_at": notification.sent_at,
+        "status": notification.status,
+    }
+
+
 @router.get("/inapp/", response=list[InAppNotificationSchema])
 def list_inapp_notifications(request, limit: int = 50):
     qs = InAppNotification.objects.filter(
         user=request.user).select_related("ticket")[:limit]
     return [serialize_inapp_notification(n) for n in qs]
+
+
+@router.post("/inapp/mark-all-read/", response={200: dict})
+def mark_all_inapp_read(request):
+    updated = InAppNotification.objects.filter(
+        user=request.user, read=False).update(read=True)
+    return 200, {"marked": updated}
 
 
 @router.patch("/inapp/{notification_id}/", response=InAppNotificationSchema)
@@ -30,13 +48,6 @@ def mark_inapp_read(request, notification_id: int, payload: InAppNotificationMar
     n.read = payload.read
     n.save(update_fields=["read"])
     return serialize_inapp_notification(n)
-
-
-@router.post("/inapp/mark-all-read/", response={200: dict})
-def mark_all_inapp_read(request):
-    updated = InAppNotification.objects.filter(
-        user=request.user, read=False).update(read=True)
-    return 200, {"marked": updated}
 
 
 @router.delete("/inapp/{notification_id}/", response={204: None})
@@ -51,7 +62,8 @@ def delete_inapp_notification(request, notification_id: int):
 
 @router.get("/", response=list[EmailNotificationSchema])
 def list_email_notifications(request):
-    return list(EmailNotification.objects.filter(user=request.user))
+    notifications = EmailNotification.objects.filter(user=request.user)
+    return [serialize_email_notification(n) for n in notifications]
 
 
 @router.post("/", response={201: EmailNotificationSchema, 403: dict})
@@ -64,4 +76,4 @@ def create_email_notification(request, payload: EmailNotificationCreateSchema):
         event=payload.event,
         status=payload.status,
     )
-    return 201, notification
+    return 201, serialize_email_notification(notification)
