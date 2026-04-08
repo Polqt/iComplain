@@ -337,5 +337,7 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "")
 
 if not DEBUG and EMAIL_BACKEND.endswith("smtp.EmailBackend"):
     if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
-        raise RuntimeError(
-            "EMAIL_HOST_USER and EMAIL_HOST_PASSWORD must be set in production.")
+        _logger.warning(
+            "EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are not set; "
+            "email sending will fail in production."
+        )
