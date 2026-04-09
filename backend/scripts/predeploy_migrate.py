@@ -38,5 +38,13 @@ def migrate_with_retries() -> None:
             time.sleep(DB_RETRY_DELAY_SECONDS)
 
 
+def seed_admin_from_env() -> None:
+    seed_command = [sys.executable, "manage.py", "seed_admin_from_env"]
+    print("Running admin seed command...", flush=True)
+    run_command(seed_command)
+    print("Admin seed command complete.", flush=True)
+
+
 if __name__ == "__main__":
     migrate_with_retries()
+    seed_admin_from_env()
