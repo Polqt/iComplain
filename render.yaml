@@ -5,8 +5,7 @@ services:
     rootDir: backend
     plan: free
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    preDeployCommand: python scripts/predeploy_migrate.py
-    startCommand: python scripts/start_server.py
+    startCommand: python scripts/predeploy_migrate.py && python scripts/start_server.py
     healthCheckPath: /health/
     envVars:
       - key: SECRET_KEY
