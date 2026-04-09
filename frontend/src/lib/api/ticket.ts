@@ -1,4 +1,4 @@
-import { apiFetch } from "../../utils/api.ts";
+import { apiFetch, resolveApiAssetUrl } from "../../utils/api.ts";
 import { parseApiResponse } from "./core.ts";
 import type { DashboardStats } from "../../types/dashboard.ts";
 import type {
@@ -12,6 +12,16 @@ import type {
 } from "../../types/tickets.ts";
 
 const BASE = "/tickets";
+
+function normalizeTicketAvatar(ticket: Ticket): Ticket {
+	return {
+		...ticket,
+		student: {
+			...ticket.student,
+			avatar: resolveApiAssetUrl(ticket.student?.avatar),
+		},
+	};
+}
 
 function getFilenameFromDisposition(
 	contentDisposition: string | null,
@@ -65,7 +75,7 @@ export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
 			headers: { "Content-Type": "application/json" },
 		});
 		const data = await parseApiResponse<TicketListResponse>(res);
-		return data.items;
+		return data.items.map(normalizeTicketAvatar);
 	} catch (error) {
 		console.error("Error fetching tickets:", error);
 		throw error;
@@ -82,7 +92,7 @@ export async function fetchTicketById(id: number): Promise<Ticket> {
 			},
 		});
 
-		return await parseApiResponse<Ticket>(res);
+		return normalizeTicketAvatar(await parseApiResponse<Ticket>(res));
 	} catch (error) {
 		console.error(`Error fetching ticket with ID ${id}:`, error);
 		throw error;
@@ -114,7 +124,7 @@ export async function createTicket(ticketData: TicketCreatePayload, attachment?:
             body: formData,
         })
 
-	return await parseApiResponse<Ticket>(res);
+	return normalizeTicketAvatar(await parseApiResponse<Ticket>(res));
     } catch (error) {
         console.error('Error creating ticket:', error);
         throw error;
@@ -146,7 +156,7 @@ export async function updateTicket(id: number, ticketData: TicketUpdatePayload, 
             body: formData,
         })
 
-		return await parseApiResponse<Ticket>(res);
+		return normalizeTicketAvatar(await parseApiResponse<Ticket>(res));
     } catch (error) {
         console.error(`Error updating ticket with ID ${id}:`, error);
         throw error;
@@ -166,7 +176,7 @@ export async function adminPatchTicket(
 			body: JSON.stringify(patch),
 		});
 
-		return await parseApiResponse<Ticket>(res);
+		return normalizeTicketAvatar(await parseApiResponse<Ticket>(res));
 	} catch (error) {
 		console.error(`Error patching ticket with ID ${id}:`, error);
 		throw error;
@@ -225,7 +235,7 @@ export async function loadCommunityTickets(
 			},
 		);
 		const data = await parseApiResponse<TicketListResponse>(res);
-		return data.items;
+		return data.items.map(normalizeTicketAvatar);
 	} catch (error) {
 		console.error(`Error fetching community tickets:`, error);
 		throw error;

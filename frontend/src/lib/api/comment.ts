@@ -1,4 +1,4 @@
-import { apiFetch } from "../../utils/api.ts";
+import { apiFetch, resolveApiAssetUrl } from "../../utils/api.ts";
 import type {
 	CommentCreatePayload,
 	CommentUpdatePayload,
@@ -6,6 +6,16 @@ import type {
 } from "../../types/comments.ts";
 
 const BASE = "/tickets";
+
+function normalizeCommentAvatar(comment: TicketComment): TicketComment {
+	return {
+		...comment,
+		user: {
+			...comment.user,
+			avatar: resolveApiAssetUrl(comment.user?.avatar),
+		},
+	};
+}
 
 async function handleRes<T>(res: Response): Promise<T> {
 	if (!res.ok) {
@@ -25,7 +35,8 @@ export async function fetchComments(
 				"Content-Type": "application/json",
 			},
 		});
-		return await handleRes<TicketComment[]>(res);
+		const comments = await handleRes<TicketComment[]>(res);
+		return comments.map(normalizeCommentAvatar);
 	} catch (error) {
 		console.error(`Error fetching comments for ticket ${ticketId}:`, error);
 		throw error;
@@ -45,7 +56,8 @@ export async function createComment(
 			body: formData,
 		});
 
-		return await handleRes<TicketComment>(res);
+		const comment = await handleRes<TicketComment>(res);
+		return normalizeCommentAvatar(comment);
 	} catch (error) {
 		console.error(`Error creating comment for ticket ${ticketId}:`, error);
 		throw error;
@@ -68,7 +80,8 @@ export async function editComment(
 			body: formData,
 		});
 
-		return await handleRes<TicketComment>(res);
+		const comment = await handleRes<TicketComment>(res);
+		return normalizeCommentAvatar(comment);
 	} catch (error) {
 		console.error(
 			`Error editing comment ${commentId} for ticket ${ticketId}:`,

@@ -19,7 +19,6 @@
   let scrollContainer: HTMLDivElement;
 
   onMount(async () => {
-    wsStore.connect();
     await commentsStore.loadCommentsForTicket(ticketId);
     await tick();
     scrollToBottom();

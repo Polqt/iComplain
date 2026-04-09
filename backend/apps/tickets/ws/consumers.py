@@ -6,7 +6,10 @@ class TicketNotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope.get("user")
         if not user or not user.is_authenticated:
-            await self.close()
+            # Accept then close with a policy code so clients don't see a hard
+            # handshake failure (e.g., noisy browser error spam).
+            await self.accept()
+            await self.close(code=1008)
             return
 
         # Join the global ticket updates group
