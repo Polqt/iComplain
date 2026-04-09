@@ -96,6 +96,7 @@
         google?: {
           accounts: {
             id: {
+              initialize: (c: object) => void;
               prompt: () => void;
             };
           };
@@ -103,9 +104,15 @@
       }
     ).google;
 
-    if (g?.accounts?.id) {
-      g.accounts.id.prompt();
-    }
+    if (!g?.accounts?.id) return;
+
+    g.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: (res: { credential: string }) => handleGoogleCallback(res),
+      ux_mode: "popup",
+    });
+
+    g.accounts.id.prompt();
   }
 
   onMount(async () => {
