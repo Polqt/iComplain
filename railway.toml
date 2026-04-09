@@ -1,9 +1,0 @@
-[build]
-builder = "nixpacks"
-buildCommand = "cd backend && pip install -r requirements.txt && python manage.py collectstatic --noinput"
-
-[deploy]
-startCommand = "cd backend && python scripts/start_railway.py"
-healthcheckPath = "/health/"
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3

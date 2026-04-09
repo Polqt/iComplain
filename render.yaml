@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: icomplain-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python scripts/predeploy_migrate.py
+    startCommand: python scripts/start_server.py
+    healthCheckPath: /health/
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: icomplain-backend.onrender.com
+      - key: FRONTEND_URL
+        value: https://i-complain.vercel.app
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://i-complain.vercel.app,http://localhost:5173,http://127.0.0.1:5173,https://tauri.localhost,tauri://localhost
+      - key: GOOGLE_OAUTH2_CLIENT_ID
+        sync: false
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: usls.edu.ph
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false

@@ -67,13 +67,10 @@ _allowed_hosts.extend(
     filter(
         None,
         [
-            os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip(),
+            os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip(),
             "localhost",
             "127.0.0.1",
-            "healthcheck.railway.app",
-            ".railway.app",
-            ".up.railway.app",
-            ".railway.internal",
+            ".onrender.com",
         ],
     )
 )
