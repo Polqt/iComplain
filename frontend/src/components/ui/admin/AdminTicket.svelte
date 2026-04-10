@@ -321,23 +321,46 @@
                     : ''}"
                   onclick={() => (selectedTicketId = ticket.id)}
                 >
-                  <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-semibold font-mono">
-                      {ticket.ticket_number}
-                    </span>
-                  </div>
-                  <p class="text-sm font-semibold truncate">
-                    {ticket.student.name || "Anonymous"}
-                  </p>
-                  <div class="flex items-center justify-between gap-2 mt-1">
-                    <p class="text-xs text-base-content/55 truncate">
-                      {ticket.title}
-                    </p>
-                    {#if ticket.comments_count && ticket.comments_count > 0}
-                      <span class="badge badge-info badge-sm">
-                        {ticket.comments_count}
-                      </span>
+                  <div class="flex items-center gap-2.5">
+                    {#if ticket.student.avatar}
+                      <div class="avatar shrink-0">
+                        <div class="w-8 h-8 rounded-full">
+                          <img
+                            src={ticket.student.avatar}
+                            alt={ticket.student.name ?? "Student"}
+                            class="object-cover"
+                          />
+                        </div>
+                      </div>
+                    {:else}
+                      <div class="avatar placeholder shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-info/15 text-info">
+                          <span class="text-xs font-bold">
+                            {getInitials(ticket.student.name)}
+                          </span>
+                        </div>
+                      </div>
                     {/if}
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center justify-between mb-0.5">
+                        <span class="text-xs font-semibold font-mono text-base-content/50">
+                          {ticket.ticket_number}
+                        </span>
+                      </div>
+                      <p class="text-sm font-semibold truncate">
+                        {ticket.student.name || "Anonymous"}
+                      </p>
+                      <div class="flex items-center justify-between gap-2 mt-0.5">
+                        <p class="text-xs text-base-content/55 truncate">
+                          {ticket.title}
+                        </p>
+                        {#if ticket.comments_count && ticket.comments_count > 0}
+                          <span class="badge badge-info badge-sm">
+                            {ticket.comments_count}
+                          </span>
+                        {/if}
+                      </div>
+                    </div>
                   </div>
                 </button>
               {/each}
@@ -372,15 +395,27 @@
               class="px-4 py-3 border-b border-base-content/8 bg-base-200/70 flex items-center justify-between gap-3 shrink-0"
             >
               <div class="flex items-center gap-3 min-w-0">
-                <div class="avatar placeholder shrink-0">
-                  <div
-                    class="w-10 h-10 rounded-full bg-info/15 ring-1 ring-info/20 text-info"
-                  >
-                    <span class="text-xs font-bold">
-                      {getInitials(selectedTicket.student.name)}
-                    </span>
+                {#if selectedTicket.student.avatar}
+                  <div class="avatar shrink-0">
+                    <div class="w-10 h-10 rounded-full ring-1 ring-info/20">
+                      <img
+                        src={selectedTicket.student.avatar}
+                        alt={selectedTicket.student.name ?? "Student"}
+                        class="object-cover"
+                      />
+                    </div>
                   </div>
-                </div>
+                {:else}
+                  <div class="avatar placeholder shrink-0">
+                    <div
+                      class="w-10 h-10 rounded-full bg-info/15 ring-1 ring-info/20 text-info"
+                    >
+                      <span class="text-xs font-bold">
+                        {getInitials(selectedTicket.student.name)}
+                      </span>
+                    </div>
+                  </div>
+                {/if}
                 <div class="min-w-0">
                   <p class="text-sm font-bold truncate">
                     {selectedTicket.student.name || "Anonymous"}
