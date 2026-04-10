@@ -312,12 +312,19 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media / file uploads
 # When CLOUDINARY_URL is set, use Cloudinary for persistent cloud storage.
 # Otherwise fall back to local filesystem (dev only — ephemeral on Render).
+MEDIA_URL = '/media/'
 if _use_cloudinary:
     CLOUDINARY_STORAGE = {'CLOUDINARY_URL': _cloudinary_url}
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = '/media/'
+    # Django 4.2+ uses STORAGES dict; DEFAULT_FILE_STORAGE is legacy (pre-4.2)
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 else:
-    MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Ensure MEDIA_ROOT is always defined (used by urls.py static() in dev)
