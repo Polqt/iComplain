@@ -90,29 +90,23 @@
     }
   }
 
+  type GoogleAccounts = {
+    accounts: {
+      id: {
+        initialize: (c: object) => void;
+        prompt: () => void;
+      };
+    };
+  };
+
+  function getGoogleAccounts(): GoogleAccounts["accounts"] | undefined {
+    return (window as unknown as { google?: GoogleAccounts }).google?.accounts;
+  }
+
   function handleGoogleSignIn(): void {
-    const g = (
-      window as unknown as {
-        google?: {
-          accounts: {
-            id: {
-              initialize: (c: object) => void;
-              prompt: () => void;
-            };
-          };
-        };
-      }
-    ).google;
-
-    if (!g?.accounts?.id) return;
-
-    g.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: (res: { credential: string }) => handleGoogleCallback(res),
-      ux_mode: "popup",
-    });
-
-    g.accounts.id.prompt();
+    const accounts = getGoogleAccounts();
+    if (!accounts?.id) return;
+    accounts.id.prompt();
   }
 
   onMount(async () => {
@@ -123,19 +117,9 @@
     const MAX_RETRIES = 50;
 
     const initGoogle = () => {
-      const g = (
-        window as unknown as {
-          google?: {
-            accounts: {
-              id: {
-                initialize: (c: object) => void;
-              };
-            };
-          };
-        }
-      ).google;
+      const accounts = getGoogleAccounts();
 
-      if (!g?.accounts?.id) {
+      if (!accounts?.id) {
         retryCount += 1;
         if (retryCount > MAX_RETRIES) {
           generalError =
@@ -146,9 +130,10 @@
         return;
       }
 
-      g.accounts.id.initialize({
+      accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: (res: { credential: string }) => handleGoogleCallback(res),
+        ux_mode: "popup",
       });
     };
 

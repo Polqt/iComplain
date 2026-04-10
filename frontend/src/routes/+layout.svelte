@@ -12,8 +12,9 @@ const { children } = $props();
 onMount(() => {
 	authStore.checkAuth();
 
-	// Websocket connection
+	// Websocket connection — skip while auth check is still in flight
 	unsubscribeAuth = authStore.subscribe(($auth) => {
+		if ($auth.isLoading) return;
 		if ($auth.isAuthenticated) {
 			wsStore.connect();
 		} else {
