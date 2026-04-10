@@ -8,6 +8,8 @@ billiard==4.2.4
 cbor2==5.8.0
 celery==5.6.2
 certifi==2026.1.4
+cloudinary==1.44.1
+django-cloudinary-storage==0.3.0
 cffi==2.0.0
 channels==4.3.2
 channels_redis==4.3.0

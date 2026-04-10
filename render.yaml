@@ -26,6 +26,8 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
+      - key: CLOUDINARY_URL
+        sync: false
       - key: EMAIL_HOST_USER
         sync: false
       - key: EMAIL_HOST_PASSWORD

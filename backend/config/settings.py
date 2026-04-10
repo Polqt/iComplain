@@ -96,6 +96,9 @@ if not ALLOWED_EMAIL_DOMAINS and GOOGLE_OAUTH2_CLIENT_ID:
 
 # Application definition
 
+_cloudinary_url = os.getenv("CLOUDINARY_URL", "").strip()
+_use_cloudinary = bool(_cloudinary_url)
+
 INSTALLED_APPS = [
     'daphne',
     'django.contrib.admin',
@@ -104,6 +107,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    *(['cloudinary_storage', 'cloudinary'] if _use_cloudinary else []),
     'corsheaders',
     'ninja',
     'channels',
@@ -125,9 +129,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'ninja.compatibility.files.fix_request_files_middleware'
 ]
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Cross-origin: frontend uses credentials: 'include'.
 # Never use CORS_ALLOW_ALL_ORIGINS with CORS_ALLOW_CREDENTIALS in production.
@@ -307,6 +308,21 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Media / file uploads
+# When CLOUDINARY_URL is set, use Cloudinary for persistent cloud storage.
+# Otherwise fall back to local filesystem (dev only — ephemeral on Render).
+if _use_cloudinary:
+    CLOUDINARY_STORAGE = {'CLOUDINARY_URL': _cloudinary_url}
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = '/media/'
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Ensure MEDIA_ROOT is always defined (used by urls.py static() in dev)
+if 'MEDIA_ROOT' not in dir():
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # CSRF exemptions -- only exempt truly public/token-auth endpoints
