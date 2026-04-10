@@ -45,6 +45,14 @@ def seed_admin_from_env() -> None:
     print("Admin seed command complete.", flush=True)
 
 
+def populate_initial_data() -> None:
+    seed_command = [sys.executable, "manage.py", "populate_initial_data"]
+    print("Running initial data population (categories & priorities)...", flush=True)
+    run_command(seed_command)
+    print("Initial data population complete.", flush=True)
+
+
 if __name__ == "__main__":
     migrate_with_retries()
     seed_admin_from_env()
+    populate_initial_data()
