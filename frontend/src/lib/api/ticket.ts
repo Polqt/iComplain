@@ -67,15 +67,15 @@ function saveBlob(blob: Blob, filename: string): void {
 	URL.revokeObjectURL(downloadUrl);
 }
 
-// Fetch tickets (paginated; defaults to first page of 50)
-export async function fetchTickets(limit = 50, offset = 0): Promise<Ticket[]> {
+// Fetch tickets (paginated; defaults to first page of 20)
+export async function fetchTickets(limit = 20, offset = 0): Promise<TicketListResponse> {
 	try {
 		const res = await apiFetch(`${BASE}/?limit=${limit}&offset=${offset}`, {
 			method: "GET",
 			headers: { "Content-Type": "application/json" },
 		});
 		const data = await parseApiResponse<TicketListResponse>(res);
-		return data.items.map(normalizeTicketAvatar);
+		return { ...data, items: data.items.map(normalizeTicketAvatar) };
 	} catch (error) {
 		console.error("Error fetching tickets:", error);
 		throw error;
@@ -223,9 +223,9 @@ export async function fetchPriorities(): Promise<TicketPriority[]> {
 }
 
 export async function loadCommunityTickets(
-	limit = 50,
+	limit = 20,
 	offset = 0,
-): Promise<Ticket[]> {
+): Promise<TicketListResponse> {
 	try {
 		const res = await apiFetch(
 			`${BASE}/community?limit=${limit}&offset=${offset}`,
@@ -235,7 +235,7 @@ export async function loadCommunityTickets(
 			},
 		);
 		const data = await parseApiResponse<TicketListResponse>(res);
-		return data.items.map(normalizeTicketAvatar);
+		return { ...data, items: data.items.map(normalizeTicketAvatar) };
 	} catch (error) {
 		console.error(`Error fetching community tickets:`, error);
 		throw error;

@@ -65,7 +65,7 @@ describe("ticketsStore", () => {
 	});
 
 	it("loadTickets stores API tickets", async () => {
-		fetchTicketsMock.mockResolvedValue([ticket]);
+		fetchTicketsMock.mockResolvedValue({ items: [ticket], total: 1, limit: 20, offset: 0 });
 
 		await ticketsStore.loadTickets();
 		const state = get(ticketsStore);
@@ -73,16 +73,18 @@ describe("ticketsStore", () => {
 		expect(state.currentView).toBe("personal");
 		expect(state.tickets).toHaveLength(1);
 		expect(state.tickets[0].ticket_number).toBe("TKT-00001");
+		expect(state.total).toBe(1);
 	});
 
 	it("loadCommunityTickets switches view and stores tickets", async () => {
-		loadCommunityMock.mockResolvedValue([ticket]);
+		loadCommunityMock.mockResolvedValue({ items: [ticket], total: 1, limit: 20, offset: 0 });
 
 		await ticketsStore.loadCommunityTickets();
 		const state = get(ticketsStore);
 
 		expect(state.currentView).toBe("community");
 		expect(state.tickets).toHaveLength(1);
+		expect(state.total).toBe(1);
 	});
 
 	it("createTicket prepends new ticket", async () => {

@@ -74,8 +74,12 @@ export type Column = {
 export type TicketsState = {
 	tickets: Ticket[];
 	isLoading: boolean;
+	isLoadingMore: boolean;
 	error: string | null;
 	currentView: "personal" | "community";
+	total: number;
+	offset: number;
+	pageSize: number;
 };
 
 export type PipelineStep = {

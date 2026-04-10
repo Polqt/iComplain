@@ -12,7 +12,8 @@ import { COMMUNITY_STATUSES } from "../../utils/paginationConfig.ts";
 import Icon from "@iconify/svelte";
 import CommentDrawer from "../../components/ui/comments/CommentDrawer.svelte";
 
-$: ({ tickets, isLoading, error } = $ticketsStore);
+$: ({ tickets, isLoading, isLoadingMore, error, total } = $ticketsStore);
+$: hasMore = tickets.length < total;
 
 onMount(async () => {
 	await ticketsStore.loadCommunityTickets();
@@ -148,6 +149,24 @@ function handleUpvoteToggle(ticket: Ticket) {
                   onUpvoteToggle={handleUpvoteToggle}
                 />
               {/each}
+
+              {#if hasMore}
+                <div class="flex justify-center py-3">
+                  <button
+                    class="btn btn-ghost btn-sm gap-2 text-base-content/50 hover:text-base-content text-xs"
+                    onclick={() => ticketsStore.loadMoreCommunityTickets()}
+                    disabled={isLoadingMore}
+                  >
+                    {#if isLoadingMore}
+                      <span class="loading loading-spinner loading-xs"></span>
+                      Loading…
+                    {:else}
+                      <Icon icon="mdi:chevron-down" width="16" height="16" />
+                      Load more ({total - tickets.length} remaining)
+                    {/if}
+                  </button>
+                </div>
+              {/if}
             </div>
           {/if}
         </div>

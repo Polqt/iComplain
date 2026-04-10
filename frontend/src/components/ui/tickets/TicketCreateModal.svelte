@@ -182,11 +182,11 @@ onMount(() => {
             </div>
 
             <div class="form-control gap-1.5">
-              <label
+              <span
                 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide"
               >
                 Priority
-              </label>
+              </span>
               {#if mode === "create"}
                 <div class="flex items-center h-12 px-3 rounded-xl border border-base-content/10 bg-base-200/40 gap-2">
                   <Icon icon="mdi:shield-account-outline" class="w-4 h-4 text-base-content/30 shrink-0" />

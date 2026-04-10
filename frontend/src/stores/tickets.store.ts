@@ -1,6 +1,5 @@
 import { get, writable, type Readable } from "svelte/store";
 import type {
-	RawTicket,
 	Ticket,
 	TicketCreatePayload,
 	TicketsState,
@@ -21,13 +20,15 @@ interface TicketsStore extends Readable<TicketsState> {
     setLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;
 
-    loadTickets: () => Promise<void>;
+    loadTickets: (pageSize?: number) => Promise<void>;
+    loadMoreTickets: () => Promise<void>;
     loadTicketById: (id: number) => Promise<Ticket | null>;
     createTicket: (ticketData: TicketCreatePayload, attachment?: File | File[] | null) => Promise<Ticket | null>;
     updateTicket: (id: number, updates: TicketUpdatePayload, attachment?: File | File[] | null) => Promise<Ticket | null>;
     deleteTicket: (id: number) => Promise<boolean>;
     adminPatchTicket: (id: number, patch: { status?: string; priority?: number }) => Promise<Ticket | null>;
     loadCommunityTickets: () => Promise<void>;
+    loadMoreCommunityTickets: () => Promise<void>;
     reloadTickets: () => Promise<void>;
 
     addTicketToStore: (ticket: Ticket) => void;
@@ -36,18 +37,24 @@ interface TicketsStore extends Readable<TicketsState> {
     adjustCommentCount: (ticketId: number, delta: number) => void;
 }
 
+const PAGE_SIZE = 20;
+
 function createTicketsStore(): TicketsStore {
     const { subscribe, update, set } = writable<TicketsState>({
         tickets: [],
         isLoading: false,
+        isLoadingMore: false,
         error: null,
         currentView: "personal",
+        total: 0,
+        offset: 0,
+        pageSize: PAGE_SIZE,
     });
 
     return {
         subscribe,
         setTickets(tickets: Ticket[]) {
-            update(s => ({ ...s, tickets, isLoading: false, error: null }));
+            update(s => ({ ...s, tickets, isLoading: false, error: null, total: tickets.length, offset: tickets.length }));
         },
 
         setLoading(isLoading: boolean) {
@@ -59,48 +66,64 @@ function createTicketsStore(): TicketsStore {
         },
 
         async loadCommunityTickets(): Promise<void> {
-            update((state) => ({ ...state, isLoading: true, error: null, currentView: "community" }));
+            update((state) => ({ ...state, isLoading: true, error: null, currentView: "community", offset: 0, pageSize: PAGE_SIZE }));
 
             try {
-                const tickets: RawTicket[] = await apiGetCommunity();
-
-                const mappedTickets = tickets.map((t) => ({
-                    ...t,
-                    category: t.category ?? { id: 0, name: "Unknown" },
-                    priority: t.priority ?? { id: 0, name: "Unknown", level: 0, color_code: "#000" },
-                }));
-
-                update(s => ({ ...s, tickets: mappedTickets, isLoading: false, error: null }));
+                const { items, total } = await apiGetCommunity(PAGE_SIZE, 0);
+                update(s => ({ ...s, tickets: items, isLoading: false, error: null, offset: PAGE_SIZE, total }));
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                update(s => ({
-                    ...s,
-                    isLoading: false,
-                    error: `Failed to load tickets: ${errorMessage}`,
-                }))
+                update(s => ({ ...s, isLoading: false, error: `Failed to load tickets: ${errorMessage}` }));
             }
         },
 
-        async loadTickets(): Promise<void> {
-            update((state) => ({ ...state, isLoading: true, error: null, currentView: "personal" }));
+        async loadMoreCommunityTickets(): Promise<void> {
+            const state = get({ subscribe });
+            if (state.isLoadingMore || state.tickets.length >= state.total) return;
 
+            update(s => ({ ...s, isLoadingMore: true }));
             try {
-                const tickets: RawTicket[] =  await fetchTickets();
-                
-                const mappedTickets = tickets.map((t) => ({
-                    ...t,
-                    category: t.category ?? { id: 0, name: "Unknown" },
-                    priority: t.priority ?? { id: 0, name: "Unknown", level: 0, color_code: "#000" },
-                }));
-
-                update(s => ({ ...s, tickets: mappedTickets, isLoading: false, error: null }));
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                const { items } = await apiGetCommunity(state.pageSize, state.offset);
                 update(s => ({
                     ...s,
-                    isLoading: false,
-                    error: `Failed to load tickets: ${errorMessage}`,
-                }))
+                    tickets: [...s.tickets, ...items],
+                    isLoadingMore: false,
+                    offset: s.offset + s.pageSize,
+                }));
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({ ...s, isLoadingMore: false, error: `Failed to load more: ${errorMessage}` }));
+            }
+        },
+
+        async loadTickets(pageSize = PAGE_SIZE): Promise<void> {
+            update((state) => ({ ...state, isLoading: true, error: null, currentView: "personal", offset: 0, pageSize }));
+
+            try {
+                const { items, total } = await fetchTickets(pageSize, 0);
+                update(s => ({ ...s, tickets: items, isLoading: false, error: null, offset: pageSize, total }));
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({ ...s, isLoading: false, error: `Failed to load tickets: ${errorMessage}` }));
+            }
+        },
+
+        async loadMoreTickets(): Promise<void> {
+            const state = get({ subscribe });
+            if (state.isLoadingMore || state.tickets.length >= state.total) return;
+
+            update(s => ({ ...s, isLoadingMore: true }));
+            try {
+                const { items } = await fetchTickets(state.pageSize, state.offset);
+                update(s => ({
+                    ...s,
+                    tickets: [...s.tickets, ...items],
+                    isLoadingMore: false,
+                    offset: s.offset + s.pageSize,
+                }));
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                update(s => ({ ...s, isLoadingMore: false, error: `Failed to load more: ${errorMessage}` }));
             }
         },
 
@@ -151,6 +174,7 @@ function createTicketsStore(): TicketsStore {
                         tickets: [newTicket, ...s.tickets],
                         isLoading: false,
                         error: null,
+                        total: s.total + 1,
                     }))
                 }
 
@@ -222,6 +246,7 @@ function createTicketsStore(): TicketsStore {
                     tickets: s.tickets.filter(t => t.id !== id),
                     isLoading: false,
                     error: null,
+                    total: Math.max(0, s.total - 1),
                 }))
 
                 return true;

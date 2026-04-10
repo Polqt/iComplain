@@ -28,7 +28,8 @@ let selectedReport: Ticket | null = null;
 let formData: Partial<Ticket> = {};
 let successMessage: string = "";
 
-$: ({ tickets, isLoading, error } = $ticketsStore);
+$: ({ tickets, isLoading, isLoadingMore, error, total } = $ticketsStore);
+$: hasMore = tickets.length < total;
 
 $: columns = columnConfigs.map((config) => ({
 	...config,
@@ -231,211 +232,251 @@ function navigateToTicket(ticketnumber: string) {
         </button>
       </div>
     {:else if viewMode === "grid"}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1 overflow-y-hidden pb-2 min-h-0">
-        {#each columns as column}
-          <div class="flex flex-col min-h-0">
-            <div
-              class="flex items-center justify-between px-4 py-2.5 mb-2.5 shrink-0
-                        bg-base-200/60 rounded-xl border border-base-content/8
-                        border-l-[3px] {columnAccent[column.id]}"
-            >
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="w-2 h-2 rounded-full {column.dotColor} shrink-0"
-                ></span>
-                <span
-                  class="text-xs font-bold {column.color} tracking-widest uppercase truncate"
-                >
-                  {column.title}
-                </span>
-                <span
-                  class="text-xs font-mono text-base-content/35 shrink-0 ml-0.5"
-                >
-                  {column.reports.length}
-                </span>
-              </div>
-              {#if column.id === "pending"}
-                <button
-                  class="btn btn-ghost btn-xs btn-circle shrink-0
-                         text-base-content/30 hover:text-primary hover:bg-primary/10"
-                  onclick={() => openModal("create")}
-                  aria-label="Add ticket"
-                >
-                  <Icon icon="mdi:plus" width="14" height="14" />
-                </button>
-              {/if}
-            </div>
-
-            <div class="flex flex-col gap-2.5 overflow-y-auto flex-1 min-h-0">
-              {#each column.reports as report (report.id)}
-                <TicketCard
-                  {report}
-                  onEdit={(r) => openModal("edit", r)}
-                  onDelete={(r) => openModal("delete", r)}
-                />
-              {/each}
-
-              {#if column.reports.length === 0}
-                <div
-                  class="flex flex-col items-center justify-center gap-2.5 flex-1
-                            border-2 border-dashed border-base-content/8 rounded-xl py-10"
-                >
-                  <Icon
-                    icon="mdi:inbox-outline"
-                    width="26"
-                    height="26"
-                    class="text-base-content/15"
-                  />
-                  <p class="text-xs text-base-content/25 font-medium">
-                    No tickets
-                  </p>
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/each}
-      </div>
-    {:else}
-      <div class="flex-1 overflow-y-auto min-h-0">
-        <div
-          class="grid grid-cols-[1fr_130px_110px_90px_100px] gap-4
-                    px-4 py-2 mb-1 border-b border-base-content/8
-                    text-[10px] font-bold uppercase tracking-widest text-base-content/35"
-        >
-          <span>Ticket</span>
-          <span class="text-center">Category</span>
-          <span class="text-center">Status</span>
-          <span class="text-center">Priority</span>
-          <span class="text-right">Date</span>
-        </div>
-
-        <div class="space-y-1.5 relative">
+      <div class="flex flex-col flex-1 min-h-0 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1 overflow-y-hidden pb-2 min-h-0">
           {#each columns as column}
-            {#each column.reports as report (report.id)}
+            <div class="flex flex-col min-h-0">
               <div
-                class="group relative bg-base-100 rounded-xl border border-base-content/6
-                       hover:border-base-content/18 hover:shadow-sm
-                       transition-all duration-150 cursor-pointer z-0 hover:z-10"
-                role="button"
-                tabindex="0"
-                aria-label={`Open ticket ${report.title}`}
-                onclick={() => navigateToTicket(report.ticket_number)}
-                onkeydown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigateToTicket(report.ticket_number);
-                  }
-                }}
+                class="flex items-center justify-between px-4 py-2.5 mb-2.5 shrink-0
+                          bg-base-200/60 rounded-xl border border-base-content/8
+                          border-l-[3px] {columnAccent[column.id]}"
               >
-                <div
-                  class="grid grid-cols-[1fr_130px_110px_90px_100px] gap-4 items-center px-4 py-3 pr-10"
-                >
-                  <div class="min-w-0">
-                    <span
-                      class="text-[10px] font-mono text-base-content/30 block mb-0.5"
-                      >{report.ticket_number}</span
-                    >
-                    <p class="font-semibold text-sm text-base-content truncate">
-                      {report.title}
-                    </p>
-                    <p class="text-[11px] text-base-content/45 truncate mt-0.5">
-                      {report.building} · {report.room_name}
-                    </p>
-                  </div>
-                  <div class="flex justify-center">
-                    <span
-                      class="text-[11px] bg-base-200 text-base-content/55 rounded-full px-2.5 py-0.5 truncate max-w-30"
-                    >
-                      {report.category.name}
-                    </span>
-                  </div>
-                  <div class="flex justify-center">
-                    <span
-                      class="badge badge-xs {statusConfig[report.status]
-                        .color} font-semibold"
-                    >
-                      {statusConfig[report.status].label}
-                    </span>
-                  </div>
-                  <div class="flex justify-center">
-                    <span
-                      class="badge badge-xs {priorityConfig[
-                        getPriorityKey(report.priority)
-                      ].color} font-semibold"
-                    >
-                      {priorityConfig[getPriorityKey(report.priority)].label}
-                    </span>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-[11px] text-base-content/40">
-                      {new Date(report.created_at).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-2 h-2 rounded-full {column.dotColor} shrink-0"
+                  ></span>
+                  <span
+                    class="text-xs font-bold {column.color} tracking-widest uppercase truncate"
+                  >
+                    {column.title}
+                  </span>
+                  <span
+                    class="text-xs font-mono text-base-content/35 shrink-0 ml-0.5"
+                  >
+                    {column.reports.length}
+                  </span>
                 </div>
-
-                <div
-                  class="absolute top-1/2 -translate-y-1/2 right-3
-                         opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50"
-                  onclick={(e) => e.stopPropagation()}
-                  role="none"
-                >
-                  <div class="dropdown dropdown-end">
-                    <button
-                      type="button"
-                      tabindex="0"
-                      class="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-base-content"
-                    >
-                      <Icon icon="mdi:dots-horizontal" width="15" height="15" />
-                    </button>
-                    <ul
-                      tabindex="-1"
-                      role="menu"
-                      class="dropdown-content menu bg-base-100 border border-base-content/10
-                             rounded-xl shadow-xl z-50 w-40 p-1.5 text-sm"
-                    >
-                      {#if report.status === "pending"}
-                        <li>
-                          <button
-                            type="button"
-                            class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-base-200"
-                            onclick={(e) => {
-                              e.stopPropagation();
-                              openModal("edit", report);
-                            }}
-                          >
-                            <Icon
-                              icon="mdi:pencil-outline"
-                              width="14"
-                              height="14"
-                            /> Edit
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            type="button"
-                            class="flex items-center gap-2 rounded-lg px-3 py-2 text-error hover:bg-error/10"
-                            onclick={(e) => {
-                              e.stopPropagation();
-                              openModal("delete", report);
-                            }}
-                          >
-                            <Icon
-                              icon="mdi:delete-outline"
-                              width="14"
-                              height="14"
-                            /> Delete
-                          </button>
-                        </li>
-                      {/if}
-                    </ul>
-                  </div>
-                </div>
+                {#if column.id === "pending"}
+                  <button
+                    class="btn btn-ghost btn-xs btn-circle shrink-0
+                           text-base-content/30 hover:text-primary hover:bg-primary/10"
+                    onclick={() => openModal("create")}
+                    aria-label="Add ticket"
+                  >
+                    <Icon icon="mdi:plus" width="14" height="14" />
+                  </button>
+                {/if}
               </div>
-            {/each}
+
+              <div class="flex flex-col gap-2.5 overflow-y-auto flex-1 min-h-0">
+                {#each column.reports as report (report.id)}
+                  <TicketCard
+                    {report}
+                    onEdit={(r) => openModal("edit", r)}
+                    onDelete={(r) => openModal("delete", r)}
+                  />
+                {/each}
+
+                {#if column.reports.length === 0}
+                  <div
+                    class="flex flex-col items-center justify-center gap-2.5 flex-1
+                              border-2 border-dashed border-base-content/8 rounded-xl py-10"
+                  >
+                    <Icon
+                      icon="mdi:inbox-outline"
+                      width="26"
+                      height="26"
+                      class="text-base-content/15"
+                    />
+                    <p class="text-xs text-base-content/25 font-medium">
+                      No tickets
+                    </p>
+                  </div>
+                {/if}
+              </div>
+            </div>
           {/each}
         </div>
+
+        {#if hasMore}
+          <div class="flex justify-center shrink-0 pb-2">
+            <button
+              class="btn btn-ghost btn-sm gap-2 text-base-content/50 hover:text-base-content text-xs"
+              onclick={() => ticketsStore.loadMoreTickets()}
+              disabled={isLoadingMore}
+            >
+              {#if isLoadingMore}
+                <span class="loading loading-spinner loading-xs"></span>
+                Loading…
+              {:else}
+                <Icon icon="mdi:chevron-down" width="16" height="16" />
+                Load more ({total - tickets.length} remaining)
+              {/if}
+            </button>
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <div class="flex flex-col flex-1 min-h-0 gap-3">
+        <div class="flex-1 overflow-y-auto min-h-0">
+          <div
+            class="grid grid-cols-[1fr_130px_110px_90px_100px] gap-4
+                      px-4 py-2 mb-1 border-b border-base-content/8
+                      text-[10px] font-bold uppercase tracking-widest text-base-content/35"
+          >
+            <span>Ticket</span>
+            <span class="text-center">Category</span>
+            <span class="text-center">Status</span>
+            <span class="text-center">Priority</span>
+            <span class="text-right">Date</span>
+          </div>
+
+          <div class="space-y-1.5 relative">
+            {#each columns as column}
+              {#each column.reports as report (report.id)}
+                <div
+                  class="group relative bg-base-100 rounded-xl border border-base-content/6
+                         hover:border-base-content/18 hover:shadow-sm
+                         transition-all duration-150 cursor-pointer z-0 hover:z-10"
+                  role="button"
+                  tabindex="0"
+                  aria-label={`Open ticket ${report.title}`}
+                  onclick={() => navigateToTicket(report.ticket_number)}
+                  onkeydown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigateToTicket(report.ticket_number);
+                    }
+                  }}
+                >
+                  <div
+                    class="grid grid-cols-[1fr_130px_110px_90px_100px] gap-4 items-center px-4 py-3 pr-10"
+                  >
+                    <div class="min-w-0">
+                      <span
+                        class="text-[10px] font-mono text-base-content/30 block mb-0.5"
+                        >{report.ticket_number}</span
+                      >
+                      <p class="font-semibold text-sm text-base-content truncate">
+                        {report.title}
+                      </p>
+                      <p class="text-[11px] text-base-content/45 truncate mt-0.5">
+                        {report.building} · {report.room_name}
+                      </p>
+                    </div>
+                    <div class="flex justify-center">
+                      <span
+                        class="text-[11px] bg-base-200 text-base-content/55 rounded-full px-2.5 py-0.5 truncate max-w-30"
+                      >
+                        {report.category.name}
+                      </span>
+                    </div>
+                    <div class="flex justify-center">
+                      <span
+                        class="badge badge-xs {statusConfig[report.status]
+                          .color} font-semibold"
+                      >
+                        {statusConfig[report.status].label}
+                      </span>
+                    </div>
+                    <div class="flex justify-center">
+                      <span
+                        class="badge badge-xs {priorityConfig[
+                          getPriorityKey(report.priority)
+                        ].color} font-semibold"
+                      >
+                        {priorityConfig[getPriorityKey(report.priority)].label}
+                      </span>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-[11px] text-base-content/40">
+                        {new Date(report.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    class="absolute top-1/2 -translate-y-1/2 right-3
+                           opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50"
+                    onclick={(e) => e.stopPropagation()}
+                    role="none"
+                  >
+                    <div class="dropdown dropdown-end">
+                      <button
+                        type="button"
+                        tabindex="0"
+                        class="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-base-content"
+                      >
+                        <Icon icon="mdi:dots-horizontal" width="15" height="15" />
+                      </button>
+                      <ul
+                        tabindex="-1"
+                        role="menu"
+                        class="dropdown-content menu bg-base-100 border border-base-content/10
+                               rounded-xl shadow-xl z-50 w-40 p-1.5 text-sm"
+                      >
+                        {#if report.status === "pending"}
+                          <li>
+                            <button
+                              type="button"
+                              class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-base-200"
+                              onclick={(e) => {
+                                e.stopPropagation();
+                                openModal("edit", report);
+                              }}
+                            >
+                              <Icon
+                                icon="mdi:pencil-outline"
+                                width="14"
+                                height="14"
+                              /> Edit
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              type="button"
+                              class="flex items-center gap-2 rounded-lg px-3 py-2 text-error hover:bg-error/10"
+                              onclick={(e) => {
+                                e.stopPropagation();
+                                openModal("delete", report);
+                              }}
+                            >
+                              <Icon
+                                icon="mdi:delete-outline"
+                                width="14"
+                                height="14"
+                              /> Delete
+                            </button>
+                          </li>
+                        {/if}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            {/each}
+          </div>
+        </div>
+
+        {#if hasMore}
+          <div class="flex justify-center shrink-0 pb-2">
+            <button
+              class="btn btn-ghost btn-sm gap-2 text-base-content/50 hover:text-base-content text-xs"
+              onclick={() => ticketsStore.loadMoreTickets()}
+              disabled={isLoadingMore}
+            >
+              {#if isLoadingMore}
+                <span class="loading loading-spinner loading-xs"></span>
+                Loading…
+              {:else}
+                <Icon icon="mdi:chevron-down" width="16" height="16" />
+                Load more ({total - tickets.length} remaining)
+              {/if}
+            </button>
+          </div>
+        {/if}
       </div>
     {/if}
   </div>

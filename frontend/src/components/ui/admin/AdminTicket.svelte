@@ -11,7 +11,8 @@
   import CommentSection from "../comments/CommentSection.svelte";
   import FeedbackBadge from "../feedback/FeedbackBadge.svelte";
 
-  $: ({ tickets, isLoading } = $ticketsStore);
+  $: ({ tickets, isLoading, isLoadingMore, total } = $ticketsStore);
+  $: hasMore = tickets.length < total;
 
   let categories: Category[] = [];
   let selectedTicketId: number | null = null;
@@ -124,7 +125,7 @@
 
   onMount(async () => {
     await Promise.all([
-      ticketsStore.loadTickets(),
+      ticketsStore.loadTickets(100),
       fetchCategories().then((cats) => (categories = cats)),
     ]);
   });
@@ -340,6 +341,23 @@
                   </div>
                 </button>
               {/each}
+
+              {#if hasMore}
+                <button
+                  type="button"
+                  class="w-full px-3 py-3 text-xs text-base-content/50 hover:text-base-content hover:bg-base-200 transition-colors flex items-center justify-center gap-1.5"
+                  onclick={() => ticketsStore.loadMoreTickets()}
+                  disabled={isLoadingMore}
+                >
+                  {#if isLoadingMore}
+                    <span class="loading loading-spinner loading-xs"></span>
+                    Loading…
+                  {:else}
+                    <Icon icon="mdi:chevron-down" width="14" height="14" />
+                    Load {total - tickets.length} more
+                  {/if}
+                </button>
+              {/if}
             {/if}
           </div>
         </div>

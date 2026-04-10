@@ -23,7 +23,12 @@ function createWebSocketStore() {
 		return `${protocol}//${url.host}/ws/tickets/`;
 	}
 
-	function connect() {
+	function connect(delayMs = 0) {
+		if (delayMs > 0) {
+			setTimeout(() => connect(0), delayMs);
+			return;
+		}
+
 		if (
 			socket?.readyState === WebSocket.OPEN ||
 			socket?.readyState === WebSocket.CONNECTING
