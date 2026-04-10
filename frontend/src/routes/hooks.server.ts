@@ -30,6 +30,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		"/help",
 	];
 
+	// Admin-only routes
+	const adminRoutes = ["/admin"];
+
 	// Auth Routes
 	const authRoutes = ["/signin", "/not-signed-in"];
 
@@ -37,12 +40,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isProtectedRoute = protectedRoutes.some((path) =>
 		event.url.pathname.startsWith(path),
 	);
+	const isAdminRoute = adminRoutes.some((path) =>
+		event.url.pathname.startsWith(path),
+	);
 	const isAuthRoute = authRoutes.some((path) =>
 		event.url.pathname.startsWith(path),
 	);
 
 	// Redirect unauthenticated users from protected routes
-	if (isProtectedRoute && !hasAuthCookie) {
+	if ((isProtectedRoute || isAdminRoute) && !hasAuthCookie) {
 		return redirect(303, "/not-signed-in");
 	}
 

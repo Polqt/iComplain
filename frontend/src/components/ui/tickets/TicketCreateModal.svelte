@@ -26,6 +26,10 @@ import { fetchCategories, fetchPriorities } from "../../../lib/api/ticket.ts";
   ) => void = () => {};
 
   let selectedFiles: File[] = [];
+  let fileError: string = "";
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
 export const categoriesStore = writable<Category[]>([]);
 export const prioritiesStore = writable<TicketPriority[]>([]);
@@ -64,7 +68,24 @@ onMount(() => {
 
   function handleFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    selectedFiles = Array.from(input.files ?? []);
+    const files = Array.from(input.files ?? []);
+    fileError = "";
+
+    const invalid = files.find((f) => !ALLOWED_TYPES.includes(f.type));
+    if (invalid) {
+      fileError = `"${invalid.name}" is not a supported format. Use PNG, JPG, PDF, or WebP.`;
+      input.value = "";
+      return;
+    }
+
+    const oversized = files.find((f) => f.size > MAX_FILE_SIZE);
+    if (oversized) {
+      fileError = `"${oversized.name}" exceeds the 5 MB limit.`;
+      input.value = "";
+      return;
+    }
+
+    selectedFiles = files;
   }
 
   function removeFile(index: number) {
@@ -162,22 +183,15 @@ onMount(() => {
 
             <div class="form-control gap-1.5">
               <label
-                for="priority"
                 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide"
               >
                 Priority
               </label>
               {#if mode === "create"}
-                <select
-                  id="priority"
-                  bind:value={formData.priority}
-                  class="select select-bordered w-full rounded-xl text-sm focus:border-primary focus:outline-none"
-                  disabled={true}
-                >
-                  {#each $prioritiesStore as p}
-                    <option value={p.id}>{p.name}</option>
-                  {/each}
-                </select>
+                <div class="flex items-center h-12 px-3 rounded-xl border border-base-content/10 bg-base-200/40 gap-2">
+                  <Icon icon="mdi:shield-account-outline" class="w-4 h-4 text-base-content/30 shrink-0" />
+                  <span class="text-xs text-base-content/40">Set by admin after review</span>
+                </div>
               {:else if formData.priority}
                 <div
                   class="flex items-center h-12 px-3 rounded-xl border border-base-content/15 bg-base-200/50"
@@ -281,9 +295,15 @@ onMount(() => {
                 type="file"
                 class="hidden"
                 onchange={handleFileChange}
-                accept="image/*,application/pdf,image/webp"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
                 multiple
             />
+            {#if fileError}
+              <p class="text-xs text-error flex items-center gap-1 mt-1">
+                <Icon icon="mdi:alert-circle-outline" class="w-3.5 h-3.5 shrink-0" />
+                {fileError}
+              </p>
+            {/if}
           </div>
 
           {#if canEditPriorityStatus}

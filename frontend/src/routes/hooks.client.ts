@@ -8,8 +8,17 @@ export const handleError: HandleClientError = async ({
 }) => {
 	const errorId = crypto.randomUUID();
 
+	const userMessage =
+		status === 404
+			? "Page not found."
+			: status === 403
+				? "You don't have permission to view this page."
+				: status === 401
+					? "You need to sign in to continue."
+					: message || "Something went wrong. Please try again.";
+
 	return {
-		message: "Whoops!",
+		message: userMessage,
 		errorId,
 	};
 };

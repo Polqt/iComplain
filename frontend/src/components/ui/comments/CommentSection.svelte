@@ -74,18 +74,22 @@
       ? 'bg-base-200 rounded-2xl border border-base-content/15 flex-1'
       : 'bg-base-100 rounded-2xl border border-base-content/8 p-5 flex-1'}"
 >
-  {#if $wsStore === "connected"}
-    <div
-      class="flex items-center gap-1.5 shrink-0 {isMessenger
-        ? 'px-4 py-2 border-b border-base-content/10'
-        : 'px-5 pt-4 pb-0'}"
-    >
-      <span
-        class="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"
-      ></span>
+  <div
+    class="flex items-center gap-1.5 shrink-0 {isMessenger
+      ? 'px-4 py-2 border-b border-base-content/10'
+      : 'px-5 pt-4 pb-0'}"
+  >
+    {#if $wsStore === "connected"}
+      <span class="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"></span>
       <span class="text-[10px] text-base-content/30 font-medium">Live</span>
-    </div>
-  {/if}
+    {:else if $wsStore === "connecting"}
+      <span class="w-1.5 h-1.5 rounded-full bg-warning inline-block animate-pulse"></span>
+      <span class="text-[10px] text-warning/60 font-medium">Connecting…</span>
+    {:else}
+      <span class="w-1.5 h-1.5 rounded-full bg-error/50 inline-block"></span>
+      <span class="text-[10px] text-error/50 font-medium">Offline — updates paused</span>
+    {/if}
+  </div>
 
   <div
     bind:this={scrollContainer}
@@ -122,13 +126,15 @@
             class="text-error/60"
           />
         </div>
-        <p class="text-xs text-base-content/50">{error}</p>
+        <p class="text-xs font-semibold text-base-content/60">Failed to load comments</p>
+        <p class="text-xs text-base-content/40 max-w-48">{error}</p>
         <button
           type="button"
-          class="btn btn-ghost btn-xs rounded-lg text-xs"
+          class="btn btn-sm btn-outline btn-error rounded-lg text-xs gap-1.5"
           onclick={() => commentsStore.loadCommentsForTicket(ticketId)}
         >
-          Try again
+          <Icon icon="mdi:refresh" width="14" height="14" />
+          Retry
         </button>
       </div>
     {:else if comments.length === 0}

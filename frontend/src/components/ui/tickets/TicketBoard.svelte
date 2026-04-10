@@ -79,7 +79,7 @@
 </div>
 
 {#if isLoading}
-  <div class="grid grid-cols-4 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     {#each [1, 2, 3, 4] as _}
       <div class="flex flex-col gap-3">
         <div class="skeleton h-12 rounded-xl"></div>
@@ -97,7 +97,7 @@
     <p class="text-sm font-semibold">No tickets yet</p>
   </div>
 {:else}
-  <div class="grid grid-cols-4 gap-4 h-full min-h-0">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 h-full min-h-0">
     {#each columns as column}
       <div
         class="flex flex-col min-h-0 h-full bg-base-200/20 rounded-2xl overflow-hidden border border-base-content/5"

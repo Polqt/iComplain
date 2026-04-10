@@ -76,7 +76,10 @@ function createAuthStore(): AuthStore {
 		async logout(): Promise<void> {
 			try {
 				await apiLogout();
-			} catch {}
+			} catch {
+				// Server-side logout failed (network error, session already expired).
+				// Clear client state regardless so the user is signed out locally.
+			}
 
 			clearAuthState();
 

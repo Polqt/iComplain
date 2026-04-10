@@ -26,6 +26,7 @@ let viewMode: ViewMode = "grid";
 let modalMode: ModalMode = null;
 let selectedReport: Ticket | null = null;
 let formData: Partial<Ticket> = {};
+let successMessage: string = "";
 
 $: ({ tickets, isLoading, error } = $ticketsStore);
 
@@ -68,7 +69,11 @@ function closeModal() {
         payload,
         files && files.length ? files : undefined,
       );
-      if (created) closeModal();
+      if (created) {
+        closeModal();
+        successMessage = "Ticket submitted successfully!";
+        setTimeout(() => (successMessage = ""), 4000);
+      }
     } else if (modalMode === "edit" && selectedReport) {
       const categoryId =
         typeof data.category === "number" ? data.category : data.category?.id;
@@ -83,7 +88,11 @@ function closeModal() {
         selectedReport.id,
         payload,
       );
-      if (updated) closeModal();
+      if (updated) {
+        closeModal();
+        successMessage = "Ticket updated successfully!";
+        setTimeout(() => (successMessage = ""), 4000);
+      }
     }
   }
 
@@ -160,8 +169,17 @@ function navigateToTicket(ticketnumber: string) {
       </div>
     {/if}
 
+    {#if successMessage}
+      <div class="toast toast-top toast-end z-9999">
+        <div class="alert alert-success shadow-lg rounded-xl gap-2 text-sm">
+          <Icon icon="mdi:check-circle-outline" width="18" height="18" />
+          <span>{successMessage}</span>
+        </div>
+      </div>
+    {/if}
+
     {#if isLoading}
-      <div class="grid grid-cols-4 gap-3 flex-1">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
         {#each columnConfigs as _, i}
           <div class="flex flex-col gap-3">
             <div class="skeleton h-11 w-full rounded-xl"></div>
@@ -213,7 +231,7 @@ function navigateToTicket(ticketnumber: string) {
         </button>
       </div>
     {:else if viewMode === "grid"}
-      <div class="grid grid-cols-4 gap-3 flex-1 overflow-y-hidden pb-2 min-h-0">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1 overflow-y-hidden pb-2 min-h-0">
         {#each columns as column}
           <div class="flex flex-col min-h-0">
             <div
