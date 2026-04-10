@@ -90,11 +90,18 @@
     }
   }
 
+  type PromptNotification = {
+    isNotDisplayed: () => boolean;
+    isSkippedMoment: () => boolean;
+    getDismissedReason: () => string;
+    getMomentType: () => string;
+  };
+
   type GoogleAccounts = {
     accounts: {
       id: {
         initialize: (c: object) => void;
-        prompt: () => void;
+        prompt: (momentListener?: (n: PromptNotification) => void) => void;
       };
     };
   };
@@ -106,7 +113,19 @@
   function handleGoogleSignIn(): void {
     const accounts = getGoogleAccounts();
     if (!accounts?.id) return;
-    accounts.id.prompt();
+    accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // Browser blocked One Tap (e.g. user previously dismissed it).
+        // Re-initialize without FedCM and prompt again.
+        accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (res: { credential: string }) => handleGoogleCallback(res),
+          cancel_on_tap_outside: false,
+          use_fedcm_for_prompt: false,
+        });
+        accounts.id.prompt();
+      }
+    });
   }
 
   onMount(async () => {
@@ -133,7 +152,8 @@
       accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: (res: { credential: string }) => handleGoogleCallback(res),
-        ux_mode: "popup",
+        cancel_on_tap_outside: false,
+        use_fedcm_for_prompt: false,
       });
     };
 
