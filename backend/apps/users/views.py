@@ -1,5 +1,4 @@
 import logging
-import os
 from django_ratelimit.decorators import ratelimit
 from django.conf import settings
 from django.db import transaction
@@ -214,15 +213,14 @@ def upload_avatar(request: HttpRequest, file: UploadedFile = File(...)):  # noqa
             user=None,
         )
 
-    old_avatar = user.avatar_file
-    old_path = old_avatar.path if old_avatar else None
+    old_avatar = user.avatar_file or None
 
     user.avatar_file = file
     user.avatar_url = ""
     user.save(update_fields=["avatar_file", "avatar_url"])
 
-    if old_path and old_path != user.avatar_file.path:
-        transaction.on_commit(lambda: _safe_delete_file(old_path))
+    if old_avatar:
+        transaction.on_commit(lambda: _safe_delete_file(old_avatar))
 
     return AuthResponse(
         success=True,
@@ -231,12 +229,11 @@ def upload_avatar(request: HttpRequest, file: UploadedFile = File(...)):  # noqa
     )
 
 
-def _safe_delete_file(path: str) -> None:
+def _safe_delete_file(avatar_file) -> None:
     try:
-        if os.path.exists(path):
-            os.remove(path)
-    except OSError as e:
-        logger.warning("Failed to delete old avatar file %s: %s", path, e)
+        avatar_file.delete(save=False)
+    except Exception as e:
+        logger.warning("Failed to delete old avatar file %s: %s", avatar_file.name, e)
 
 
 @router.delete("/profile/avatar", response=AuthResponse)
@@ -249,14 +246,14 @@ def delete_avatar(request: HttpRequest):
             user=None,
         )
 
-    old_path = user.avatar_file.path if user.avatar_file else None
+    old_avatar = user.avatar_file or None
 
     user.avatar_file = None
     user.avatar_url = ""
     user.save(update_fields=["avatar_file", "avatar_url"])
 
-    if old_path:
-        transaction.on_commit(lambda: _safe_delete_file(old_path))
+    if old_avatar:
+        transaction.on_commit(lambda: _safe_delete_file(old_avatar))
 
     return AuthResponse(
         success=True,
